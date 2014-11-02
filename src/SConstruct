@@ -1,0 +1,14 @@
+import ocaml
+import os
+
+env = Environment(
+		ENV = os.environ,
+        OCAML_PACKS="sedlex",
+        OCAML_CODE='native',       # could be 'bytecode'
+        OCAML_DEBUG=0,
+        OCAML_PROFILE=0
+)
+env.Tool('ocaml', '.')
+#o = env.OcamlObject('test', 'test.ml')
+#l = env.OcamlLibrary('lib', 'lib.ml')
+env.OcamlProgram('test', 'test.ml', OCAML_LIBS=[], OCAML_OBJS=[])

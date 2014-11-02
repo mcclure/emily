@@ -12,6 +12,8 @@
 
 ### One language
 
+### Define by behavior, not nature
+
 ## DRY/SWYM
 
 ## No parser
