@@ -1,4 +1,6 @@
-import ocaml
+# Main build file. See ../doc/build.md
+
+#import ocaml
 import os
 
 env = Environment(
