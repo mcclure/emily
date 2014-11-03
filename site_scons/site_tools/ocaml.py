@@ -6,7 +6,7 @@
 # - make it portable (currently only tested on Unix)
 # - Lex and Yacc builders
 #
-# Source: http://www.scons.org/wiki/OcamlBuilder , accessed 11-2-2014
+# Originally based on: http://www.scons.org/wiki/OcamlBuilder , accessed 11-2-2014
 
 import os
 def read_command(cmd):
@@ -96,11 +96,22 @@ def find_packages(env):
         s = "%s query %%s -separator ' ' %s" % (
                 env['OCAMLFIND'], " ".join( packs)
         )
+        # Standard bits
         i = read_command(s % '-i-format')
         l = read_command(s % '-l-format')
         code = when_code(env, 'byte', 'native')
         a = read_command(s % '-predicates %s -a-format' % code)
-        r = " %s %s %s " % ( l[0][:-1], i[0][:-1], a[0][:-1] )
+        r = " %s %s %s " % ( l[0][:-1], i[0][:-1], a[0][:-1] ) #-1 to snip newline
+        # One more check: Do we need a ppx processor?
+        ppx = ''
+        for pack in packs:
+                package_dir = read_command(s % '')[0][:-1]
+                ppx_path = os.path.join(package_dir, 'ppx_' + pack)
+                if is_installed(ppx_path):
+                        if ppx:
+                                ppx += " "
+                        ppx += ("-ppx " + ppx_path)
+        r += ppx
         return r
 def cleaner(files, env, lib=False):
         files = map(str, files)
