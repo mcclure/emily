@@ -1,6 +1,9 @@
 let digit = [%sedlex.regexp? '0'..'9']
 let number = [%sedlex.regexp? Plus digit]
 
+let dequote s =
+  let len = String.length s in String.sub s 1 (len-1)
+
 let rec token buf =
   let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
   match%sedlex buf with
@@ -9,7 +12,7 @@ let rec token buf =
   | white_space -> print_endline "WHITESPACE"; token buf
   | number -> Printf.printf "Number %s\n" (Sedlexing.Latin1.lexeme buf); token buf
   | letter, Star ('A'..'Z' | 'a'..'z' | digit) -> Printf.printf "Identifier %s\n" (Sedlexing.Latin1.lexeme buf); token buf
-  | '"', Star (Compl '"'), '"' -> Printf.printf "String %s\n" (Sedlexing.Latin1.lexeme buf); token buf (* TODO strip quotes*)
+  | '"', Star (Compl '"'), '"' -> Printf.printf "String \"%s\"\n" (dequote (Sedlexing.Latin1.lexeme buf)); token buf (* TODO strip quotes*)
   | Chars "(){}[]" -> Printf.printf "Grouper %s\n" (Sedlexing.Latin1.lexeme buf); token buf
   | Plus (Chars "`~!@$%^&*-+=|':,<.>/?") -> Printf.printf "Op %s\n" (Sedlexing.Latin1.lexeme buf); token buf
   | 128 .. 255 -> print_endline "Non ASCII"
