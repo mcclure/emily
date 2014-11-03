@@ -13,4 +13,4 @@ env = Environment(
 env.Tool('ocaml', '.')
 #o = env.OcamlObject('test', 'test.ml')
 #l = env.OcamlLibrary('lib', 'lib.ml')
-env.OcamlProgram('test', 'test.ml', OCAML_LIBS=[], OCAML_OBJS=[])
+env.OcamlProgram('emily', 'main.ml', OCAML_LIBS=[], OCAML_OBJS=[])
