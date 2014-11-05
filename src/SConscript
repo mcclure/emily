@@ -11,6 +11,6 @@ env = Environment(
         OCAML_PROFILE=0
 )
 env.Tool('ocaml', '.')
-#o = env.OcamlObject('test', 'test.ml')
+o = env.OcamlObject('tokenize', 'test.ml')
 #l = env.OcamlLibrary('lib', 'lib.ml')
-env.OcamlProgram('emily', 'main.ml', OCAML_LIBS=[], OCAML_OBJS=[])
+env.OcamlProgram('emily', 'main.ml', OCAML_LIBS=[], OCAML_OBJS=[o])
