@@ -1,4 +1,3 @@
-^.sconsign.dblite
-^site_scons/site_tools/ocaml.py
-^build/
+^_build/
+^package/
 .DS_Store
