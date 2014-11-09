@@ -6,8 +6,13 @@ type codePosition = {
 type tokenGroupKind = 
 	Plain | Scoped | Box
 
+type tokenGroupBinding =
+	| Inline  (* Not a closure *)
+	| Nullary (* No argument *)
+	| Binding of string (* Argument *)
+
 type tokenGroup = {
-	suspend : bool;    (* Is this a closure? Potentially cannot be true except by macros *)
+	binding : tokenGroupBinding; (* Is this a closure? Does it have an argument? *)
 	kind : tokenGroupKind;
 	items : tokenContents list;
 	(* Array? *)
@@ -19,7 +24,6 @@ and tokenContents =
 	| Atom   of string (* Potentially cannot be created except by macros *)
 	| Number of float
 	| Group of tokenGroup
-
 
 type token = {
 	at : codePosition;

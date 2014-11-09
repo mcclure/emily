@@ -22,5 +22,9 @@ let rec token buf =
   | _ -> failwith "Unexpected character"
 
 let tokenize channel =
-  let lexbuf = Sedlexing.Latin1.from_stream (Stream.of_channel channel) in
+  let lexbuf = Sedlexing.Utf8.from_channel channel in
+  token lexbuf
+
+let tokenize_string str
+  let lexbuf = Sedlexing.Utf8.from_string str in
   token lexbuf
