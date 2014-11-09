@@ -22,6 +22,14 @@
 
 ## Privilege ease over correctness
 
+Programming should be easy.
+
 ### Correctness should be *possible*
+
+## It is my job to make it hard for you to do something wrong by accident. It is not my job to make it hard for you to do something wrong on purpose.
+
+## Don't pay for what you don't use
+
+C++ gets this backward
 
 ## Deployability is all-important

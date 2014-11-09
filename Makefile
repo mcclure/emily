@@ -1,9 +1,9 @@
-package/emily: main.native
+package/emily: _build/src/main.native
 	mkdir -p $(@D)
-	mv $< $@
+	cp $< $@
 
-.PHONY: src/main.native
-src/main.native:
+.PHONY: _build/src/main.native
+_build/src/main.native:
 	ocamlbuild -use-ocamlfind src/main.native
 
 clean:
