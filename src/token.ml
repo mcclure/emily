@@ -1,31 +1,31 @@
 type codePosition = {
-	fileName : string option;
-	lineNumber : int;
+    fileName : string option;
+    lineNumber : int;
 }
 
 type tokenGroupKind = 
-	Plain | Scoped | Box
+    Plain | Scoped | Box
 
-type tokenGroupBinding =
-	| Inline  (* Not a closure *)
-	| Nullary (* No argument *)
-	| Binding of string (* Argument *)
+type tokenGroupKind =
+    | Plain                        (*  *)
+    | Scoped                       (*  *)
+    | Box                          (*  *)
+    | Closure                      (* No-argument function *)
+    | ClosureWithBinding of string (* Function with argument *)
 
 type tokenGroup = {
-	binding : tokenGroupBinding; (* Is this a closure? Does it have an argument? *)
-	kind : tokenGroupKind;
-	items : tokenContents list;
-	(* Array? *)
+    kind : tokenGroupKind; (* Group kind and closure data, if any *)
+    items : tokenContents array;
 }
 and tokenContents = 
-	| Word of string   (* Alphanum *)
-	| Symbol of string (* Punctuation *)
-	| String of string (* "Quoted" *)
-	| Atom   of string (* Potentially cannot be created except by macros *)
-	| Number of float
-	| Group of tokenGroup
+    | Word of string   (* Alphanum *)
+    | Symbol of string (* Punctuation-- must be macro'd out by execution time *)
+    | String of string (* "Quoted" *)
+    | Atom   of string (* Potentially cannot be created except by macros *)
+    | Number of float
+    | Group of tokenGroup
 
 type token = {
-	at : codePosition;
-	contents : tokenContents
+    at : codePosition;
+    contents : tokenContents;
 }

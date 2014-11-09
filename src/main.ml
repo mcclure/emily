@@ -1,4 +1,4 @@
 open Tokenize
 
 let () =
-  tokenize stdin
+    tokenize stdin
