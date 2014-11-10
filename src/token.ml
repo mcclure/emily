@@ -28,10 +28,13 @@ and token = {
     contents : tokenContents;
 }
 
-let makeToken file line kind list = {
+let makeToken file line contents = {
     at = { fileName=file; lineNumber=line };
-    contents = Group { kind=kind; items=[[]]; };
+    contents = contents;
 }
+
+let makeGroup file line kind items = 
+    makeToken file line ( Group { kind=kind; items=items; } )
 
 let rec dumpTree token =
     match token.contents with
