@@ -50,6 +50,6 @@ let rec dumpTree token =
             | Closure -> "^{", "}"
             | ClosureWithBinding binding -> "^" ^ binding ^ "{", "}"
         in l ^ ( String.concat "; " (
-                let eachline x = String.concat ", " ( List.map dumpTree x )
+                let eachline x = String.concat " " ( List.map dumpTree x )
                 in List.map eachline items;
         ) ) ^ r
