@@ -2,12 +2,11 @@
 package/emily: _build/src/main.native
 	mkdir -p $(@D)
 	cp $< $@
-	rm main.native
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
 .PHONY: _build/src/main.native
 _build/src/main.native: _tags
-	ocamlbuild -use-ocamlfind src/main.native
+	ocamlbuild -no-links -use-ocamlfind src/main.native
 
 # Non-essential: This prevents ocamlbuild from emitting unhelpful "hints"
 _tags:

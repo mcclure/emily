@@ -23,6 +23,7 @@ let rec token_print buf =
 
 let rec tokenize buf : Token.token =
     let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
+    let identifier = [%sedlex.regexp? letter, Star ('A'..'Z' | 'a'..'z' | digit) ] in
     let cleanup = List.rev in
     let rec quotedString () = 
         let accum = Buffer.create 1 in
@@ -52,8 +53,9 @@ let rec tokenize buf : Token.token =
         match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
             | eof -> closeGroup ()
-            | '\"' -> addToLineProceed(token(Token.String(quotedString())))
+            | '"' -> addToLineProceed(token(Token.String(quotedString())))
             | number -> addToLineProceed(token(Token.Number(float_of_string(Sedlexing.Utf8.lexeme(buf)))))
+            | identifier -> addToLineProceed(token(Token.Word(Sedlexing.Utf8.lexeme(buf))))
             | white_space -> skip ()
             | _ -> failwith "Unexpected character"
     in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) [] []
