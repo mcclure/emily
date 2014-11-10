@@ -43,29 +43,46 @@ let rec tokenize buf : Token.token =
                 | _ -> failwith "This error is literally impossible"
         in proceed()
     in let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
-        let token = Token.makeToken (Some "<>") 0 in
+        let localToken = Token.makeToken (Some "<>") 0 in
+        let closePattern = [%sedlex.regexp? '}' | ')' | ']' | eof] in
         let proceedWithLines = proceed groupSeed in
         let proceedWithLine =  proceedWithLines lines in
         let skip () = proceedWithLine line in
+        let matchedLexeme () = Sedlexing.Utf8.lexeme(buf) in
         let linesPlusLine () = cleanup line :: lines in
         let addToLineProceed x = proceedWithLine (x :: line) in
         let newLineProceed x = proceedWithLines (linesPlusLine()) [] in
         let closeGroup () = groupSeed ( cleanup (linesPlusLine()) ) in
-        let addSingle constructor = addToLineProceed(token(constructor(Sedlexing.Utf8.lexeme(buf)))) in
+        let addSingle constructor = addToLineProceed(localToken(constructor(matchedLexeme()))) in
         let rec atom() =
             match%sedlex buf with
                 | wordPattern -> addSingle (fun x -> Token.Atom x)
                 | _ -> failwith "\".\" must be followed by an identifier"
+        in let rec openGroup kind =
+            let closeString = match kind with
+                | Token.Plain -> ')'
+                | Token.Scoped | Token.Box | Token.Closure | Token.ClosureWithBinding _ -> '}'
+                | Token.Box -> ']' (* TODO: Do something with this? *)
+            in proceed (Token.makeGroup (Some "<>") 0 kind) [] []
+        in let rec openClosure kind =
+            match%sedlex buf with
+                | white_space -> openClosure kind
+                | wordPattern -> openClosure (Token.ClosureWithBinding(matchedLexeme())) (* TODO: No dupes or handle dupes *)
+                | '{' -> openGroup kind
+                | _ -> failwith "Saw something unexpected after \"^\""
         in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
-            | eof -> closeGroup ()
-            | '"' -> addToLineProceed(token(Token.String(quotedString())))
+            | closePattern -> closeGroup ()
+            | '"' -> addToLineProceed(localToken(Token.String(quotedString())))
             | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
             | wordPattern -> addSingle (fun x -> Token.Word x)
-            | '.' -> atom()
+            | '.' -> atom() (* TODO: Make macro *)
+            | ';' | '\n' -> newLineProceed()
             | white_space -> skip ()
+            | '(' -> openGroup Token.Plain
+            | '^' -> openClosure Token.Closure (* TODO: Make macro *)
             | _ -> failwith "Unexpected character"
-    in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) [] []
+    in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) (* TODO: eof here *) [] []
 
 let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
