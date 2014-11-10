@@ -22,8 +22,9 @@ let rec token_print buf =
     | _ -> failwith "Unexpected character"
 
 let rec tokenize buf : Token.token =
-    let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
-    let identifier = [%sedlex.regexp? letter, Star ('A'..'Z' | 'a'..'z' | digit) ] in
+    let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
+    let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
+    let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number) ] in
     let cleanup = List.rev in
     let rec quotedString () = 
         let accum = Buffer.create 1 in
@@ -53,14 +54,14 @@ let rec tokenize buf : Token.token =
         let addSingle constructor = addToLineProceed(token(constructor(Sedlexing.Utf8.lexeme(buf)))) in
         let rec atom() =
             match%sedlex buf with
-                | identifier -> addSingle (fun x -> Token.Atom x)
+                | wordPattern -> addSingle (fun x -> Token.Atom x)
                 | _ -> failwith "\".\" must be followed by an identifier"
         in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
             | eof -> closeGroup ()
             | '"' -> addToLineProceed(token(Token.String(quotedString())))
-            | number -> addSingle (fun x -> Token.Number(float_of_string x))
-            | identifier -> addSingle (fun x -> Token.Word x)
+            | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
+            | wordPattern -> addSingle (fun x -> Token.Word x)
             | '.' -> atom()
             | white_space -> skip ()
             | _ -> failwith "Unexpected character"
