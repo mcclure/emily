@@ -35,7 +35,9 @@ let makeToken file line kind list = {
 
 let rec dumpTree token =
     match token.contents with
-    | Word x | Symbol x | String x | Atom x -> x
+    | Word x | Symbol x -> x
+    | String x -> "\"" ^ x ^ "\""
+    | Atom x -> "." ^ x
     | Number x -> string_of_float x
     | Group {kind=kind; items=items} ->
         let l, r = match kind with
@@ -44,4 +46,7 @@ let rec dumpTree token =
             | Box -> "[", "]"
             | Closure -> "^{", "}"
             | ClosureWithBinding binding -> "^" ^ binding ^ "{", "}"
-        in l ^ (String.concat ", " (List.map (String.concat "; ") (dumpTree items))) ^ r
+        in l ^ ( String.concat "; " (
+                let eachline x = String.concat ", " ( List.map dumpTree x )
+                in List.map eachline items;
+        ) ) ^ r
