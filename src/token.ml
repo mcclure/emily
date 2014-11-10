@@ -36,3 +36,4 @@ let dumpTree token =
     match token.contents with
     | Word x | Symbol x | String x | Atom x -> x
     | Number x -> string_of_float x
+    | Group {kind=kind; items=items} -> "GROUP"
