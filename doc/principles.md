@@ -28,6 +28,8 @@ Programming should be easy.
 
 ## It is my job to make it hard for you to do something wrong by accident. It is not my job to make it hard for you to do something wrong on purpose.
 
+## It should be hard to write yourself in a corner
+
 ## Don't pay for what you don't use
 
 C++ gets this backward

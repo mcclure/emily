@@ -24,12 +24,16 @@ let rec token_print buf =
     | _ -> failwith "Unexpected character"
 
 let rec tokenize buf (group:Token.token) : Token.token =
-    let proceed = tokenize buf in
     let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
-    match%sedlex buf with
-        | '#', Star (Compl '\n') -> proceed group
-        | eof -> group (* done *)
-        | _ -> failwith "Unexpected character"
+    let cleanup = List.rev in
+    let rec proceed groupSeed lines line =
+        let skip () = proceed groupSeed lines line in
+        match%sedlex buf with
+            | '#', Star (Compl '\n') -> skip ()
+            | eof -> groupSeed ( cleanup (cleanup line :: lines ) )
+            | white_space -> skip ()
+            | _ -> failwith "Unexpected character"
+    in proceed (makeToken (Some "<>") 0 Plain) [] []
 
 let tokenize_lexbuf buf =
     tokenize buf (makeToken (Some "<>") 0 Plain [])

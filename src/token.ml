@@ -12,8 +12,9 @@ type tokenGroupKind =
 
 type tokenGroup = {
     kind : tokenGroupKind; (* Group kind and closure binding, if any *)
-    items : tokenContents list list; (* Group is a list of lines, lines are a list of tokens *)
+    items : token list list; (* Group is a list of lines, lines are a list of tokens *)
 }
+
 and tokenContents = 
     | Word of string   (* Alphanum *)
     | Symbol of string (* Punctuation-- appears pre-macro only *)
@@ -22,7 +23,7 @@ and tokenContents =
     | Number of float
     | Group of tokenGroup
 
-type token = {
+and token = {
     at : codePosition;
     contents : tokenContents;
 }
@@ -32,8 +33,15 @@ let makeToken file line kind list = {
     contents = Group { kind=kind; items=[[]]; };
 }
 
-let dumpTree token =
+let rec dumpTree token =
     match token.contents with
     | Word x | Symbol x | String x | Atom x -> x
     | Number x -> string_of_float x
-    | Group {kind=kind; items=items} -> "GROUP"
+    | Group {kind=kind; items=items} ->
+        let l, r = match kind with
+            | Plain -> "(", ")"
+            | Scoped -> "{", "}"
+            | Box -> "[", "]"
+            | Closure -> "^{", "}"
+            | ClosureWithBinding binding -> "^" ^ binding ^ "{", "}"
+        in l ^ (String.concat ", " (List.map (String.concat "; ") (dumpTree items))) ^ r
