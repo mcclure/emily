@@ -24,18 +24,15 @@ and tokenContents =
 
 type token = {
     at : codePosition;
-    contents : tokenGroup;
+    contents : tokenContents;
 }
 
 let makeToken file line kind list = {
     at = { fileName=file; lineNumber=line };
-    contents = { kind=kind; items=[[]]; };
+    contents = Group { kind=kind; items=[[]]; };
 }
 
 let dumpTree token =
-    match token with
-    | Word x -> x
-    | Symbol x -> x
-    | String x -> x
-    | Atom x -> x
+    match token.contents with
+    | Word x | Symbol x | String x | Atom x -> x
     | Number x -> string_of_float x
