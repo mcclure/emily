@@ -79,8 +79,8 @@ let rec tokenize buf : Token.token =
             | '.' -> atom() (* TODO: Make macro *)
             | ';' | '\n' -> newLineProceed()
             | white_space -> skip ()
-            | '(' -> openGroup Token.Plain
-            | '^' -> openClosure Token.Closure (* TODO: Make macro *)
+            | '(' -> addToLineProceed( openGroup Token.Plain )
+            | '^' -> addToLineProceed( openClosure Token.Closure ) (* TODO: Make macro *)
             | _ -> failwith "Unexpected character"
     in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) (* TODO: eof here *) [] []
 
