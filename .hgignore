@@ -1,3 +1,4 @@
+^_tags
 ^_build/
 ^package/
 .DS_Store

@@ -8,11 +8,11 @@ package/emily: _build/src/main.native
 _build/src/main.native: _tags
 	ocamlbuild -use-ocamlfind src/main.native
 
-# This prevents ocamlbuild from emitting unhelpful "hints"
+# Non-essential: This prevents ocamlbuild from emitting unhelpful "hints"
 _tags:
 	touch $@
 
-# In case someone expects this.
+# Non-essential: Just in case someone expects this.
 .PHONY: all
 all: package/emily
 
