@@ -22,7 +22,7 @@ let rec token_print buf =
     | _ -> failwith "Unexpected character"
 
 let rec tokenize buf : Token.token =
-    let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
+    let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in (* TODO: should be "alphabetic" *)
     let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
     let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number) ] in
     let cleanup = List.rev in
