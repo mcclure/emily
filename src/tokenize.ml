@@ -24,7 +24,23 @@ let rec token_print buf =
 let rec tokenize buf : Token.token =
     let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
     let cleanup = List.rev in
-    let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
+    let rec quotedString () = 
+        let accum = Buffer.create 1 in
+        let add = Buffer.add_string accum in
+        let rec proceed () =
+            let escapedChar () = 
+                match%sedlex buf with
+                    | '\\' -> "\\"
+                    | '"' -> "\""
+                    | 'n'  -> "\n"
+                    | _ -> failwith "Unrecognized escape sequence" (* TODO: devour newlines *)
+            in match%sedlex buf with
+                | '\\' -> add (escapedChar()); proceed()
+                | '"'  -> Buffer.contents accum
+                | any  -> add (Sedlexing.Utf8.lexeme buf); proceed()
+                | _ -> failwith "This error is literally impossible"
+        in proceed()
+    in let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
         let token = Token.makeToken (Some "<>") 0 in
         let proceedWithLines = proceed groupSeed in
         let proceedWithLine =  proceedWithLines lines in
@@ -36,8 +52,9 @@ let rec tokenize buf : Token.token =
         match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
             | eof -> closeGroup ()
-            | white_space -> skip ()
+            | '\"' -> addToLineProceed(token(Token.String(quotedString())))
             | number -> addToLineProceed(token(Token.Number(float_of_string(Sedlexing.Utf8.lexeme(buf)))))
+            | white_space -> skip ()
             | _ -> failwith "Unexpected character"
     in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) [] []
 

@@ -2,6 +2,7 @@
 package/emily: _build/src/main.native
 	mkdir -p $(@D)
 	cp $< $@
+	rm main.native
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
 .PHONY: _build/src/main.native
