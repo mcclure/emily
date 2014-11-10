@@ -50,12 +50,17 @@ let rec tokenize buf : Token.token =
         let addToLineProceed x = proceedWithLine (x :: line) in
         let newLineProceed x = proceedWithLines (linesPlusLine()) [] in
         let closeGroup () = groupSeed ( cleanup (linesPlusLine()) ) in
-        match%sedlex buf with
+        let rec atom() =
+            match%sedlex buf with
+                | identifier -> addToLineProceed(token(Token.Atom(Sedlexing.Utf8.lexeme(buf))))
+                | _ -> failwith "\".\" must be followed by an identifier"
+        in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
             | eof -> closeGroup ()
             | '"' -> addToLineProceed(token(Token.String(quotedString())))
             | number -> addToLineProceed(token(Token.Number(float_of_string(Sedlexing.Utf8.lexeme(buf)))))
             | identifier -> addToLineProceed(token(Token.Word(Sedlexing.Utf8.lexeme(buf))))
+            | '.' -> atom()
             | white_space -> skip ()
             | _ -> failwith "Unexpected character"
     in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) [] []
