@@ -3,29 +3,39 @@ type codePosition = {
     lineNumber : int;
 }
 
-type tokenGroupKind = 
-    Plain | Scoped | Box
-
 type tokenGroupKind =
-    | Plain                        (*  *)
-    | Scoped                       (*  *)
-    | Box                          (*  *)
-    | Closure                      (* No-argument function *)
-    | ClosureWithBinding of string (* Function with argument *)
+    | Plain                        (* Parenthesis *)
+    | Scoped                       (* Create a new scope within this group *)
+    | Box                          (* Create a new object *)
+    | Closure                      (* No-argument function-- appears post-macro only *)
+    | ClosureWithBinding of string (* Function with argument-- appears post-macro only *)
 
 type tokenGroup = {
-    kind : tokenGroupKind; (* Group kind and closure data, if any *)
-    items : tokenContents array;
+    kind : tokenGroupKind; (* Group kind and closure binding, if any *)
+    items : tokenContents list list; (* Group is a list of lines, lines are a list of tokens *)
 }
 and tokenContents = 
     | Word of string   (* Alphanum *)
-    | Symbol of string (* Punctuation-- must be macro'd out by execution time *)
+    | Symbol of string (* Punctuation-- appears pre-macro only *)
     | String of string (* "Quoted" *)
-    | Atom   of string (* Potentially cannot be created except by macros *)
+    | Atom   of string (* Appears post-macro only *)
     | Number of float
     | Group of tokenGroup
 
 type token = {
     at : codePosition;
-    contents : tokenContents;
+    contents : tokenGroup;
 }
+
+let makeToken file line kind list = {
+    at = { fileName=file; lineNumber=line };
+    contents = { kind=kind; items=[[]]; };
+}
+
+let dumpTree token =
+    match token with
+    | Word x -> x
+    | Symbol x -> x
+    | String x -> x
+    | Atom x -> x
+    | Number x -> string_of_float x

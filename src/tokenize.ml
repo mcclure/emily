@@ -6,7 +6,9 @@ let number = [%sedlex.regexp? Plus digit]
 let dequote s =
     let len = String.length s in String.sub s 1 (len-2)
 
-let rec token buf =
+(* TODO: REMOVE *)
+let rec token_print buf =
+    let token = token_print in
     let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
     match%sedlex buf with
     | '#', Star (Compl '\n') -> token buf
@@ -21,10 +23,21 @@ let rec token buf =
     | eof -> print_endline "EOF"
     | _ -> failwith "Unexpected character"
 
-let tokenize channel =
+let rec tokenize buf (group:Token.token) : Token.token =
+    let proceed = tokenize buf in
+    let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
+    match%sedlex buf with
+        | '#', Star (Compl '\n') -> proceed group
+        | eof -> group (* done *)
+        | _ -> failwith "Unexpected character"
+
+let tokenize_lexbuf buf =
+    tokenize buf (makeToken (Some "<>") 0 Plain [])
+
+let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
-    token lexbuf
+    tokenize_lexbuf lexbuf
 
 let tokenize_string str =
     let lexbuf = Sedlexing.Utf8.from_string str in
-    token lexbuf
+    tokenize_lexbuf lexbuf

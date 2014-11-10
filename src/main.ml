@@ -1,4 +1,4 @@
 open Tokenize
 
 let () =
-    tokenize stdin
+    let a = tokenize_channel stdin in ()
