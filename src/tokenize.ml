@@ -27,11 +27,18 @@ let rec tokenize buf (group:Token.token) : Token.token =
     let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
     let cleanup = List.rev in
     let rec proceed groupSeed lines line =
-        let skip () = proceed groupSeed lines line in
+        let proceedWithLines = proceed groupSeed in
+        let proceedWithLine =  proceedWithLines lines in
+        let skip () = proceedWithLine line in
+        let linesPlusLine () = cleanup line :: lines in
+        let addToLineProceed x = proceedWithLine (x :: line) in
+        let newLineProceed x = proceedWithLines (linesPlusLine()) [] in
+        let closeGroup = groupSeed ( cleanup (linesPlusLine()) ) in
         match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
-            | eof -> groupSeed ( cleanup (cleanup line :: lines ) )
+            | eof -> closeGroup ()
             | white_space -> skip ()
+            | number -> addToLineProceed (Number (float_of_string(Sedlexing.Utf8.lexeme buf)) )
             | _ -> failwith "Unexpected character"
     in proceed (makeToken (Some "<>") 0 Plain) [] []
 
