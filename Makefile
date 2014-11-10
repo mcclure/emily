@@ -18,4 +18,4 @@ all: package/emily
 
 clean:
 	ocamlbuild -clean
-	rm package/emily
+	rm -f _tags package/emily
