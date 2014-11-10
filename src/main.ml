@@ -1,5 +1,3 @@
-open Tokenize
-
 let () =
-    let a = tokenize_channel stdin in
+    let a = Tokenize.tokenize_channel stdin in
     print_endline (Token.dumpTree a)

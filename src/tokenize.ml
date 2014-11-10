@@ -1,6 +1,3 @@
-open Token
-open Util
-
 let digit = [%sedlex.regexp? '0'..'9']
 let number = [%sedlex.regexp? Plus digit]
 
@@ -28,7 +25,7 @@ let rec tokenize buf : Token.token =
     let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
     let cleanup = List.rev in
     let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
-        let token = makeToken (Some "<>") 0 in
+        let token = Token.makeToken (Some "<>") 0 in
         let proceedWithLines = proceed groupSeed in
         let proceedWithLine =  proceedWithLines lines in
         let skip () = proceedWithLine line in
@@ -40,9 +37,9 @@ let rec tokenize buf : Token.token =
             | '#', Star (Compl '\n') -> skip ()
             | eof -> closeGroup ()
             | white_space -> skip ()
-            | number -> addToLineProceed(token(Number(float_of_string(Sedlexing.Utf8.lexeme(buf)))))
+            | number -> addToLineProceed(token(Token.Number(float_of_string(Sedlexing.Utf8.lexeme(buf)))))
             | _ -> failwith "Unexpected character"
-    in proceed (makeGroup (Some "<>") 0 Plain) [] []
+    in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) [] []
 
 let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
