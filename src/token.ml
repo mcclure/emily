@@ -1,6 +1,7 @@
 type codePosition = {
     fileName : string option;
     lineNumber : int;
+    lineOffset : int;
 }
 
 type tokenGroupKind =
@@ -32,13 +33,13 @@ and token = {
     contents : tokenContents;
 }
 
-let makeToken file line contents = {
-    at = { fileName=file; lineNumber=line };
+let makeToken file line lineOffset contents = {
+    at = { fileName=file; lineNumber=line; lineOffset = lineOffset };
     contents = contents;
 }
 
-let makeGroup file line closure kind items = 
-    makeToken file line ( Group { kind=kind; closure=closure; items=items; } )
+let makeGroup file line lineOffset closure kind items = 
+    makeToken file line lineOffset ( Group { kind=kind; closure=closure; items=items; } )
 
 let rec dumpTree token =
     match token.contents with

@@ -4,24 +4,19 @@ let number = [%sedlex.regexp? Plus digit]
 let dequote s =
     let len = String.length s in String.sub s 1 (len-2)
 
-(* TODO: REMOVE *)
-let rec token_print buf =
-    let token = token_print in
-    let letter = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in
-    match%sedlex buf with
-    | '#', Star (Compl '\n') -> token buf
-    | '\n'|';' -> print_endline "NEXT\n"; token buf
-    | white_space -> print_endline "WHITESPACE"; token buf
-    | number -> Printf.printf "Number %s\n" (Sedlexing.Latin1.lexeme buf); token buf
-    | letter, Star ('A'..'Z' | 'a'..'z' | digit) -> Printf.printf "Identifier %s\n" (Sedlexing.Latin1.lexeme buf); token buf
-    | '"', Star (('\\','"') | Compl '"'), '"' -> Printf.printf "String \"%s\"\n" (dequote (Sedlexing.Latin1.lexeme buf)); token buf (* TODO strip quotes*)
-    | Chars "(){}[]" -> Printf.printf "Grouper %s\n" (Sedlexing.Latin1.lexeme buf); token buf
-    | Plus (Chars "`~!@$%^&*-+=|':,<.>/?") -> Printf.printf "Op %s\n" (Sedlexing.Latin1.lexeme buf); token buf
-    | 128 .. 255 -> print_endline "Non ASCII"
-    | eof -> print_endline "EOF"
-    | _ -> failwith "Unexpected character"
+type tokenize_state = {
+    mutable lineStart: int;
+    mutable line: int
+}
 
-let rec tokenize buf : Token.token =
+let rec tokenize name buf : Token.token = 
+    let state = {lineStart=0; line=1} in
+    let stateNewline () = state.lineStart <- Sedlexing.lexeme_end buf; state.line <- state.line + 1 in 
+    let currentPosition () = Token.{fileName=name; lineNumber=state.line; lineOffset = Sedlexing.lexeme_end buf-state.lineStart} in
+    let fileNameString n = (match n with None -> "<Input>" | Some s -> s) in
+    let positionString (p : Token.codePosition) = Printf.sprintf " [%s line %d ch %d]"
+        (fileNameString p.Token.fileName) p.Token.lineNumber p.Token.lineOffset in
+    let currentPositionString () = positionString(currentPosition()) in
     let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in (* TODO: should be "alphabetic" *)
     let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
     let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number) ] in
@@ -29,21 +24,23 @@ let rec tokenize buf : Token.token =
     let rec quotedString () = 
         let accum = Buffer.create 1 in
         let add = Buffer.add_string accum in
+        let addBuf() = add (Sedlexing.Utf8.lexeme buf) in
         let rec proceed () =
             let escapedChar () = 
                 match%sedlex buf with
                     | '\\' -> "\\"
                     | '"' -> "\""
                     | 'n'  -> "\n"
-                    | _ -> failwith "Unrecognized escape sequence" (* TODO: devour newlines *)
+                    | _ -> failwith @@ "Unrecognized escape sequence" ^ currentPositionString() (* TODO: devour newlines *)
             in match%sedlex buf with
+                | '\n' -> stateNewline(); addBuf(); proceed()
                 | '\\' -> add (escapedChar()); proceed()
                 | '"'  -> Buffer.contents accum
                 | any  -> add (Sedlexing.Utf8.lexeme buf); proceed()
-                | _ -> failwith "This error is literally impossible"
+                | _ -> failwith @@ "Unrecognized escape sequence" ^ currentPositionString()
         in proceed()
     in let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
-        let localToken = Token.makeToken (Some "<>") 0 in
+        let localToken = Token.makeToken (Some "<>") 0 0 in
         let closePattern = [%sedlex.regexp? '}' | ')' | ']' | eof] in
         let proceedWithLines = proceed groupSeed in
         let proceedWithLine =  proceedWithLines lines in
@@ -57,17 +54,18 @@ let rec tokenize buf : Token.token =
         let rec atom() =
             match%sedlex buf with
                 | wordPattern -> addSingle (fun x -> Token.Atom x)
-                | _ -> failwith "\".\" must be followed by an identifier"
+                | _ -> failwith @@ "\".\" must be followed by an identifier" ^ currentPositionString()
         in let rec openGroup closure kind =
-            proceed (Token.makeGroup (Some "<>") 0 closure kind) [] []
+            proceed (Token.makeGroup (Some "<>") 0 0 closure kind) [] []
         in let rec openClosure closure =
             match%sedlex buf with
+                | '\n' -> stateNewline (); openClosure closure
                 | white_space -> openClosure closure
                 | wordPattern -> openClosure (Token.ClosureWithBinding(matchedLexeme())) (* TODO: No dupes or handle dupes *)
                 | '(' -> openGroup closure Token.Plain (* Sorta duplicates below *)
                 | '{' -> openGroup closure Token.Scoped
                 | '[' -> openGroup closure Token.Box
-                | _ -> failwith "Saw something unexpected after \"^\""
+                | _ -> failwith @@ "Saw something unexpected after \"^\"" ^ currentPositionString()
         in let openOrdinaryGroup = openGroup Token.NonClosure
         in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
@@ -76,19 +74,20 @@ let rec tokenize buf : Token.token =
             | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
             | wordPattern -> addSingle (fun x -> Token.Word x)
             | '.' -> atom() (* TODO: Make macro *)
-            | ';' | '\n' -> newLineProceed()
+            | ';' -> newLineProceed()
+            | '\n' -> stateNewline(); newLineProceed()
             | white_space -> skip ()
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
             | '^' -> addToLineProceed( openClosure Token.Closure ) (* TODO: Make macro *)
-            | _ -> failwith "Unexpected character"
-    in proceed (Token.makeGroup (Some "<>") 0 Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
+            | _ -> failwith @@ "Unexpected character" ^ currentPositionString()
+    in proceed (Token.makeGroup name 0 0 Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
 
 let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
-    tokenize lexbuf
+    tokenize None lexbuf
 
 let tokenize_string str =
     let lexbuf = Sedlexing.Utf8.from_string str in
-    tokenize lexbuf
+    tokenize None lexbuf
