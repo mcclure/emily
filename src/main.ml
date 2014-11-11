@@ -1,3 +1,4 @@
 let () =
     let a = Tokenize.tokenize_channel stdin in
-    print_endline (Token.dumpTreeDense a)
+    (* print_endline (Token.dumpTreeDense a) *)
+    Execute.execute a
