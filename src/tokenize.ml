@@ -41,7 +41,7 @@ let rec tokenize name buf : Token.token =
                 | _ -> parseFail "Unrecognized escape sequence"
         in proceed()
     in let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
-        let localToken = Token.makeToken (Some "<>") 0 0 in
+        let localToken = Token.makeToken (currentPosition()) in
         let closePattern = [%sedlex.regexp? '}' | ')' | ']' | eof] in
         let proceedWithLines = proceed groupSeed in
         let proceedWithLine =  proceedWithLines lines in
@@ -57,7 +57,7 @@ let rec tokenize name buf : Token.token =
                 | wordPattern -> addSingle (fun x -> Token.Atom x)
                 | _ -> parseFail "\".\" must be followed by an identifier"
         in let rec openGroup closure kind =
-            proceed (Token.makeGroup (Some "<>") 0 0 closure kind) [] []
+            proceed (Token.makeGroup (currentPosition()) closure kind) [] []
         in let rec openClosure closure =
             match%sedlex buf with
                 | '\n' -> stateNewline (); openClosure closure
@@ -83,7 +83,7 @@ let rec tokenize name buf : Token.token =
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
             | '^' -> addToLineProceed( openClosure Token.Closure ) (* TODO: Make macro *)
             | _ -> failwith @@ "Unexpected character" ^ currentPositionString()
-    in proceed (Token.makeGroup name 0 0 Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
+    in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
 
 let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in

@@ -33,13 +33,13 @@ and token = {
     contents : tokenContents;
 }
 
-let makeToken file line lineOffset contents = {
-    at = { fileName=file; lineNumber=line; lineOffset = lineOffset };
+let makeToken position contents = {
+    at = position;
     contents = contents;
 }
 
-let makeGroup file line lineOffset closure kind items = 
-    makeToken file line lineOffset ( Group { kind=kind; closure=closure; items=items; } )
+let makeGroup position closure kind items = 
+    makeToken position ( Group { kind=kind; closure=closure; items=items; } )
 
 let rec dumpTree token =
     match token.contents with
