@@ -46,7 +46,7 @@ let makeToken position contents = {
 let makeGroup position closure kind items = 
     makeToken position ( Group { kind=kind; closure=closure; items=items; } )
 
-let rec dumpTree token =
+let rec dumpTree groupPrinter token =
     match token.contents with
     | Word x | Symbol x -> x
     | String x -> "\"" ^ x ^ "\""
@@ -61,7 +61,21 @@ let rec dumpTree token =
             | NonClosure -> ""
             | Closure -> "^"
             | ClosureWithBinding binding -> "^" ^ binding) ^ l
-        in l ^ ( String.concat "; " (
-                let eachline x = String.concat " " ( List.map dumpTree x )
-                in List.map eachline items;
+        in groupPrinter token l r items
+
+let dumpTreeTerse token =
+    let rec groupPrinter token l r items =
+        l ^ ( String.concat "; " (
+                    let eachline x = String.concat " " ( List.map (dumpTree groupPrinter) x )
+                    in List.map eachline items;
         ) ) ^ r
+    in dumpTree groupPrinter token
+
+let dumpTreeDense token =
+    let rec oneToken x = Printf.sprintf "%s %s" (positionString x.at) (dumpTree groupPrinter x)
+    and groupPrinter token l r items =
+        l ^ "\n" ^ ( String.concat "\n" (
+                    let eachline x = String.concat "\n" ( List.map oneToken x )
+                    in List.map eachline items;
+        ) ) ^ "\n" ^ r
+    in dumpTree groupPrinter token
