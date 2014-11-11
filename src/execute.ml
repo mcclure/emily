@@ -9,4 +9,9 @@ type executeState = {
 }
 
 let execute ast =
-	()
+	let initialExecuteState initial = {stack = [initial]; last = Value.Null} in
+	let execute_step state =
+		()
+	in match ast.Token.contents with
+		| Token.Group contents -> execute_step (initialExecuteState contents.Token.items)
+		| _ -> () (* Execute a constant value-- no effect *)
