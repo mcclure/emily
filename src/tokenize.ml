@@ -58,31 +58,32 @@ let rec tokenize buf : Token.token =
             match%sedlex buf with
                 | wordPattern -> addSingle (fun x -> Token.Atom x)
                 | _ -> failwith "\".\" must be followed by an identifier"
-        in let rec openGroup kind =
-            let closeString = match kind with
-                | Token.Plain -> ')'
-                | Token.Scoped | Token.Box | Token.Closure | Token.ClosureWithBinding _ -> '}'
-                | Token.Box -> ']' (* TODO: Do something with this? *)
-            in proceed (Token.makeGroup (Some "<>") 0 kind) [] []
-        in let rec openClosure kind =
+        in let rec openGroup closure kind =
+            proceed (Token.makeGroup (Some "<>") 0 closure kind) [] []
+        in let rec openClosure closure =
             match%sedlex buf with
-                | white_space -> openClosure kind
+                | white_space -> openClosure closure
                 | wordPattern -> openClosure (Token.ClosureWithBinding(matchedLexeme())) (* TODO: No dupes or handle dupes *)
-                | '{' -> openGroup kind
+                | '(' -> openGroup closure Token.Plain (* Sorta duplicates below *)
+                | '{' -> openGroup closure Token.Scoped
+                | '[' -> openGroup closure Token.Box
                 | _ -> failwith "Saw something unexpected after \"^\""
+        in let openOrdinaryGroup = openGroup Token.NonClosure
         in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
-            | closePattern -> closeGroup ()
+            | closePattern -> closeGroup () (* TODO: Check correctness of closing indicator *)
             | '"' -> addToLineProceed(localToken(Token.String(quotedString())))
             | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
             | wordPattern -> addSingle (fun x -> Token.Word x)
             | '.' -> atom() (* TODO: Make macro *)
             | ';' | '\n' -> newLineProceed()
             | white_space -> skip ()
-            | '(' -> addToLineProceed( openGroup Token.Plain )
+            | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
+            | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
+            | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
             | '^' -> addToLineProceed( openClosure Token.Closure ) (* TODO: Make macro *)
             | _ -> failwith "Unexpected character"
-    in proceed (Token.makeGroup (Some "<>") 0 Token.Plain) (* TODO: eof here *) [] []
+    in proceed (Token.makeGroup (Some "<>") 0 Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
 
 let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in

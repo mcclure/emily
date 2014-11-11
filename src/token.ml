@@ -7,11 +7,15 @@ type tokenGroupKind =
     | Plain                        (* Parenthesis *)
     | Scoped                       (* Create a new scope within this group *)
     | Box                          (* Create a new object *)
-    | Closure                      (* No-argument function-- appears post-macro only *)
-    | ClosureWithBinding of string (* Function with argument-- appears post-macro only *)
+
+type tokenClosureKind =
+    | NonClosure                   (* Is not a function *) 
+    | Closure                      (* No-argument function-- should appear post-macro only *)
+    | ClosureWithBinding of string (* Function with argument-- should appear post-macro only *)
 
 type tokenGroup = {
-    kind : tokenGroupKind; (* Group kind and closure binding, if any *)
+    kind : tokenGroupKind;      (* Group kind *)
+    closure : tokenClosureKind;  (* Closure kind, if any *)
     items : token list list; (* Group is a list of lines, lines are a list of tokens *)
 }
 
@@ -33,8 +37,8 @@ let makeToken file line contents = {
     contents = contents;
 }
 
-let makeGroup file line kind items = 
-    makeToken file line ( Group { kind=kind; items=items; } )
+let makeGroup file line closure kind items = 
+    makeToken file line ( Group { kind=kind; closure=closure; items=items; } )
 
 let rec dumpTree token =
     match token.contents with
@@ -42,13 +46,15 @@ let rec dumpTree token =
     | String x -> "\"" ^ x ^ "\""
     | Atom x -> "." ^ x
     | Number x -> string_of_float x
-    | Group {kind=kind; items=items} ->
+    | Group {kind=kind; closure=closure; items=items} ->
         let l, r = match kind with
             | Plain -> "(", ")"
             | Scoped -> "{", "}"
             | Box -> "[", "]"
-            | Closure -> "^{", "}"
-            | ClosureWithBinding binding -> "^" ^ binding ^ "{", "}"
+        in let l = (match closure with 
+            | NonClosure -> ""
+            | Closure -> "^"
+            | ClosureWithBinding binding -> "^" ^ binding) ^ l
         in l ^ ( String.concat "; " (
                 let eachline x = String.concat " " ( List.map dumpTree x )
                 in List.map eachline items;
