@@ -13,14 +13,11 @@ let rec tokenize name buf : Token.token =
     let state = {lineStart=0; line=1} in
     let stateNewline () = state.lineStart <- Sedlexing.lexeme_end buf; state.line <- state.line + 1 in 
     let currentPosition () = Token.{fileName=name; lineNumber=state.line; lineOffset = Sedlexing.lexeme_end buf-state.lineStart} in
-    let fileNameString n = (match n with None -> "<Input>" | Some s -> s) in
-    let positionString (p : Token.codePosition) = Printf.sprintf " [%s line %d ch %d]"
-        (fileNameString p.Token.fileName) p.Token.lineNumber p.Token.lineOffset in
-    let currentPositionString () = positionString(currentPosition()) in
+    let currentPositionString () = Token.positionString(currentPosition()) in
     let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in (* TODO: should be "alphabetic" *)
     let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
     let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number) ] in
-    let parseFail mesg = failwith(mesg ^ currentPositionString()) in
+    let parseFail mesg = failwith(Printf.sprintf "%s %s" mesg (currentPositionString())) in
     let cleanup = List.rev in
     let rec quotedString () = 
         let accum = Buffer.create 1 in
@@ -66,7 +63,7 @@ let rec tokenize name buf : Token.token =
                 | '(' -> openGroup closure Token.Plain (* Sorta duplicates below *)
                 | '{' -> openGroup closure Token.Scoped
                 | '[' -> openGroup closure Token.Box
-                | _ -> failwith @@ "Saw something unexpected after \"^\"" ^ currentPositionString()
+                | _ -> parseFail "Saw something unexpected after \"^\""
         in let openOrdinaryGroup = openGroup Token.NonClosure
         in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
@@ -82,7 +79,7 @@ let rec tokenize name buf : Token.token =
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
             | '^' -> addToLineProceed( openClosure Token.Closure ) (* TODO: Make macro *)
-            | _ -> failwith @@ "Unexpected character" ^ currentPositionString()
+            | _ -> parseFail "Unexpected character"
     in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
 
 let tokenize_channel channel =

@@ -4,6 +4,11 @@ type codePosition = {
     lineOffset : int;
 }
 
+let fileNameString n = (match n with None -> "<Input>" | Some s -> s)
+
+let positionString p = Printf.sprintf "[%s line %d ch %d]"
+    (fileNameString p.fileName) p.lineNumber p.lineOffset
+
 type tokenGroupKind =
     | Plain                        (* Parenthesis *)
     | Scoped                       (* Create a new scope within this group *)
