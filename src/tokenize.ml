@@ -20,6 +20,7 @@ let rec tokenize name buf : Token.token =
     let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in (* TODO: should be "alphabetic" *)
     let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
     let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number) ] in
+    let parseFail mesg = failwith(mesg ^ currentPositionString()) in
     let cleanup = List.rev in
     let rec quotedString () = 
         let accum = Buffer.create 1 in
@@ -31,13 +32,13 @@ let rec tokenize name buf : Token.token =
                     | '\\' -> "\\"
                     | '"' -> "\""
                     | 'n'  -> "\n"
-                    | _ -> failwith @@ "Unrecognized escape sequence" ^ currentPositionString() (* TODO: devour newlines *)
+                    | _ -> parseFail "Unrecognized escape sequence" (* TODO: devour newlines *)
             in match%sedlex buf with
                 | '\n' -> stateNewline(); addBuf(); proceed()
                 | '\\' -> add (escapedChar()); proceed()
                 | '"'  -> Buffer.contents accum
                 | any  -> add (Sedlexing.Utf8.lexeme buf); proceed()
-                | _ -> failwith @@ "Unrecognized escape sequence" ^ currentPositionString()
+                | _ -> parseFail "Unrecognized escape sequence"
         in proceed()
     in let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
         let localToken = Token.makeToken (Some "<>") 0 0 in
@@ -54,7 +55,7 @@ let rec tokenize name buf : Token.token =
         let rec atom() =
             match%sedlex buf with
                 | wordPattern -> addSingle (fun x -> Token.Atom x)
-                | _ -> failwith @@ "\".\" must be followed by an identifier" ^ currentPositionString()
+                | _ -> parseFail "\".\" must be followed by an identifier"
         in let rec openGroup closure kind =
             proceed (Token.makeGroup (Some "<>") 0 0 closure kind) [] []
         in let rec openClosure closure =
