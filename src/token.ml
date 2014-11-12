@@ -19,10 +19,12 @@ type tokenClosureKind =
     | Closure                      (* No-argument function-- should appear post-macro only *)
     | ClosureWithBinding of string (* Function with argument-- should appear post-macro only *)
 
-type tokenGroup = {
+type codeSequence = token list list (* A codeSequence is a list of lines. A line is a list of tokens. *)
+
+and tokenGroup = {
     kind : tokenGroupKind;      (* Group kind *)
     closure : tokenClosureKind;  (* Closure kind, if any *)
-    items : token list list; (* Group is a list of lines, lines are a list of tokens *)
+    items : codeSequence; (* Group is a list of lines, lines are a list of tokens *)
 }
 
 and tokenContents = 
