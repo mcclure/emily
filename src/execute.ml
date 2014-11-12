@@ -26,6 +26,7 @@ and executeState = executeFrame list
 let execute code =
     let initialExecuteState initial = [{code = initial; register = LineStart(Value.Null)}] in
     let rec execute_step stack =
+        let return v = () in
         match stack with
             | [] -> () (* Nothing to do *)
             | frame :: moreframes ->
@@ -38,9 +39,19 @@ let execute code =
 
                     (* apply last to token *)
                     | token :: moretokens ->
-                        match token.Token.contents with
+                        let simpleValue v =
+                            let newState = match frame.register with
+                                | LineStart _ | NoValue -> FirstValue (v)
+                                | FirstValue fv -> PairValue (fv, v)
+                                | _ -> failwith "Internal consistency error: Reached impossible place"
+                            in execute_step @@ { register=newState; code=moretokens::morelines; } :: moreframes
+                        (* Evaluate token *)
+                        in match token.Token.contents with
+                            | Token.Word s -> failwith "Can't read from scope yet" (* TODO: Create a value from a token. *)
+                            | Token.String s -> simpleValue(Value.StringValue s)
+                            | Token.Atom s ->   simpleValue(Value.AtomValue s)
+                            | Token.Number f -> simpleValue(Value.FloatValue f)
                             | Token.Group descent -> () (* TODO: Push this onto the stack and move on *)
-                            | _ -> () (* TODO: Create a value from a token. *)
                         (* match mode with Start -> execute_step Continue { last=Value.Null; (* TODO: Eval *)
                                 stack = (moretokens :: morelines) :: moreframes }
                         | Continue -> (* TODO: Eval *)

@@ -29,7 +29,7 @@ and tokenGroup = {
 
 and tokenContents = 
     | Word of string   (* Alphanum *)
-    | Symbol of string (* Punctuation-- appears pre-macro only *)
+(*  | Symbol of string    Punctuation-- appears pre-macro only. Disabled until macros are back *)
     | String of string (* "Quoted" *)
     | Atom   of string (* Appears post-macro only *)
     | Number of float
@@ -50,7 +50,7 @@ let makeGroup position closure kind items =
 
 let rec dumpTree groupPrinter token =
     match token.contents with
-    | Word x | Symbol x -> x
+    | Word x (* | Symbol x *) -> x
     | String x -> "\"" ^ x ^ "\""
     | Atom x -> "." ^ x
     | Number x -> string_of_float x
