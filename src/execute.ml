@@ -1,6 +1,5 @@
 type registerState = 
     | LineStart of Value.value
-    | NoValue
     | FirstValue of Value.value
     | PairValue of (Value.value * Value.value)
 
@@ -27,13 +26,16 @@ let execute code =
     let initialExecuteState initial = [{code = initial; register = LineStart(Value.Null)}] in
     let rec execute_step stack =
         let return v = () in
+        let internalFail () = failwith "Internal consistency error: Reached impossible place" in
         match stack with
             | [] -> () (* Nothing to do *)
             | frame :: moreframes ->
             match frame.code with
-                | [] -> ()
-                | line :: morelines ->
-                match line with
+                | [] -> let value = match frame.register with
+                    | LineStart v | FirstValue v -> v
+                    | _ -> internalFail()
+                in return value (* End of reached. *)
+                | line :: morelines -> match line with
                     (* end of line, but more lines. just move on. *)
                     | [] -> execute_step stack
 
@@ -41,9 +43,9 @@ let execute code =
                     | token :: moretokens ->
                         let simpleValue v =
                             let newState = match frame.register with
-                                | LineStart _ | NoValue -> FirstValue (v)
+                                | LineStart _ -> FirstValue (v)
                                 | FirstValue fv -> PairValue (fv, v)
-                                | _ -> failwith "Internal consistency error: Reached impossible place"
+                                | _ -> internalFail()
                             in execute_step @@ { register=newState; code=moretokens::morelines; } :: moreframes
                         (* Evaluate token *)
                         in match token.Token.contents with
@@ -51,11 +53,8 @@ let execute code =
                             | Token.String s -> simpleValue(Value.StringValue s)
                             | Token.Atom s ->   simpleValue(Value.AtomValue s)
                             | Token.Number f -> simpleValue(Value.FloatValue f)
-                            | Token.Group descent -> () (* TODO: Push this onto the stack and move on *)
-                        (* match mode with Start -> execute_step Continue { last=Value.Null; (* TODO: Eval *)
-                                stack = (moretokens :: morelines) :: moreframes }
-                        | Continue -> (* TODO: Eval *)
-                        () *)
+                            | Token.Group descent -> 
+                                execute_step @@ initialExecuteState descent.Token.items
     in match code.Token.contents with
-        | Token.Group contents -> execute_step (initialExecuteState contents.Token.items)
+        | Token.Group contents -> execute_step @@ initialExecuteState contents.Token.items
         | _ -> () (* Execute a constant value-- no effect *)
