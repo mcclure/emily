@@ -67,29 +67,64 @@ let rec tokenize name buf : Token.token =
                 | _ -> parseFail "Unrecognized escape sequence"
         in proceed()
 
-    in let rec proceed (groupSeed : Token.token list list -> Token.token) lines line =
-        let localToken = Token.makeToken (currentPosition()) in
+    (* Main loop. *)
+    (* Takes a constructor that's prepped with all the properties for the enclosing group, and
+       needs only the final list of lines to produce a token. *)
+    in let rec proceed (groupSeed : Token.codeSequence -> Token.token) lines line =
+        (* Constructor for a token with the current preserved codeposition. *)
+        let makeTokenHere = Token.makeToken (currentPosition()) in
+
+        (* Right now all group closers are treated as equivalent. TODO: Don't do it like this. *)
         let closePattern = [%sedlex.regexp? '}' | ')' | ']' | eof] in
+
+        (* Recurse with the same groupSeed we started with. *)
         let proceedWithLines = proceed groupSeed in
+
+        (* Recurse with the same groupSeed and lines we started with. *)
         let proceedWithLine =  proceedWithLines lines in
+
+        (* Recurse with all the same arguments  we started with. *)
         let skip () = proceedWithLine line in
-        let matchedLexeme () = Sedlexing.Utf8.lexeme(buf) in
+
+        (* Helper function: Get current sedlex match *)
+        let matchedLexemes () = Sedlexing.Utf8.lexeme(buf) in
+
+        (* Complete current line & push onto current codeSequence *)
         let linesPlusLine () = cleanup line :: lines in
+
+        (* Recurse with the groupSeed and lines we started with, & the argument pushed onto the current line *)
         let addToLineProceed x = proceedWithLine (x :: line) in
+
+        (* Recurse with the groupSeed we started with, the current line pushed onto the codeSequence, & a new blank line *)
         let newLineProceed x = proceedWithLines (linesPlusLine()) [] in
+        
+        (* Complete processing the current group by completing the current codeSequence & feeding it to the groupSeed. *)
         let closeGroup () = groupSeed ( cleanup (linesPlusLine()) ) in
-        let addSingle constructor = addToLineProceed(localToken(constructor(matchedLexeme()))) in
+
+        (* Helper: Given a string->tokenContents mapping, make the token, add it to the line and recurse *)
+        let addSingle constructor = addToLineProceed(makeTokenHere(constructor(matchedLexemes()))) in
+
+        (* Sub-parser: Atoms. Call after seeing opening ".". TODO: allow whitespace prefix? *) 
         let rec atom() =
             match%sedlex buf with
+                (* Really we're just checking for one identifier and converting it *)
                 | wordPattern -> addSingle (fun x -> Token.Atom x)
                 | _ -> parseFail "\".\" must be followed by an identifier"
+
+        (* Recurse with blank code, and a new groupSeed described by the arguments *)
         in let rec openGroup closure kind =
             proceed (Token.makeGroup (currentPosition()) closure kind) [] []
+
+        (* Sub-parser: Closures. Call after seeing opening "^". *)
         in let rec openClosure closure =
             match%sedlex buf with
+                (* Again: sedlex means we must track lines manually *)
                 | '\n' -> stateNewline (); openClosure closure
+                (* Skip white space *)
                 | white_space -> openClosure closure
-                | wordPattern -> openClosure (Token.ClosureWithBinding(matchedLexeme())) (* TODO: No dupes or handle dupes *)
+                (* If we see an identifier, upgrade from nullary to unary and continue *)
+                | wordPattern -> openClosure (Token.ClosureWithBinding(matchedLexemes())) (* TODO: No dupes or handle dupes *)
+                (* If we see a group opener, complete and re-invoke to the main parser one group level deeper *)
                 | '(' -> openGroup closure Token.Plain (* Sorta duplicates below *)
                 | '{' -> openGroup closure Token.Scoped
                 | '[' -> openGroup closure Token.Box
@@ -98,7 +133,7 @@ let rec tokenize name buf : Token.token =
         in match%sedlex buf with
             | '#', Star (Compl '\n') -> skip ()
             | closePattern -> closeGroup () (* TODO: Check correctness of closing indicator *)
-            | '"' -> addToLineProceed(localToken(Token.String(quotedString())))
+            | '"' -> addToLineProceed(makeTokenHere(Token.String(quotedString())))
             | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
             | wordPattern -> addSingle (fun x -> Token.Word x)
             | '.' -> atom() (* TODO: Make macro *)
