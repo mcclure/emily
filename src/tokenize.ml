@@ -127,7 +127,11 @@ let rec tokenize name buf : Token.token =
                 (* Skip white space *)
                 | white_space -> openClosure closure
                 (* If we see an identifier, upgrade from nullary to unary and continue *)
-                | wordPattern -> openClosure (Token.ClosureWithBinding(matchedLexemes())) (* TODO: No dupes or handle dupes *)
+                | wordPattern -> (match closure with Token.Closure -> openClosure (Token.ClosureWithBinding(matchedLexemes()))
+                        (* Error cases *)
+                        | Token.ClosureWithBinding _ -> parseFail "Only one argument currently allowed per closure."
+                        | Token.NonClosure -> parseFail "Internal consistency error: Reached impossible place"
+                        )
                 (* If we see a group opener, complete and re-invoke to the main parser one group level deeper *)
                 | '(' -> openGroup closure Token.Plain (* Sorta duplicates below *)
                 | '{' -> openGroup closure Token.Scoped
