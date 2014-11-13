@@ -11,6 +11,7 @@ type tokenize_state = {
 }
 
 (* Entry point to tokenize, takes a filename and a lexbuf *)
+(* TODO: Somehow strip blank lines? *)
 let rec tokenize name buf : Token.token = 
     (* -- Helper regexps -- *)
     let digit = [%sedlex.regexp? '0'..'9'] in
@@ -69,7 +70,7 @@ let rec tokenize name buf : Token.token =
 
     (* Main loop. *)
     (* Takes a constructor that's prepped with all the properties for the enclosing group, and
-       needs only the final list of lines to produce a token. *)
+       needs only the final list of lines to produce a token. Returns a completed group. *)
     in let rec proceed (groupSeed : Token.codeSequence -> Token.token) lines line =
         (* Constructor for a token with the current preserved codeposition. *)
         let makeTokenHere = Token.makeToken (currentPosition()) in
@@ -115,6 +116,9 @@ let rec tokenize name buf : Token.token =
         in let rec openGroup closure kind =
             proceed (Token.makeGroup (currentPosition()) closure kind) [] []
 
+        (* Variant assuming non-closure *)
+        in let openOrdinaryGroup = openGroup Token.NonClosure
+
         (* Sub-parser: Closures. Call after seeing opening "^". *)
         in let rec openClosure closure =
             match%sedlex buf with
@@ -129,28 +133,52 @@ let rec tokenize name buf : Token.token =
                 | '{' -> openGroup closure Token.Scoped
                 | '[' -> openGroup closure Token.Box
                 | _ -> parseFail "Saw something unexpected after \"^\""
-        in let openOrdinaryGroup = openGroup Token.NonClosure
+
+        (* Now finally here's the actual grammar... *)
         in match%sedlex buf with
+            (* Ignore comments *)
             | '#', Star (Compl '\n') -> skip ()
+
+            (* Again: on ANY group-close symbol, we end the current group *)
             | closePattern -> closeGroup () (* TODO: Check correctness of closing indicator *)
+
+            (* Quoted string *)
             | '"' -> addToLineProceed(makeTokenHere(Token.String(quotedString())))
+
+            (* Floating point number *)
             | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
+
+            (* Local scope variable *)
             | wordPattern -> addSingle (fun x -> Token.Word x)
+
+            (* Atom *)
             | '.' -> atom() (* TODO: Make macro *)
+
+            (* Line demarcator *)
             | ';' -> newLineProceed()
+
+            (* Line demarcator (but remember, we have to track newlines) *)
             | '\n' -> stateNewline(); newLineProceed()
+
+            (* Ignore whitespace *)
             | white_space -> skip ()
+
+            (* On groups or closures, open a new parser (NO TCO) and add its result token to the current line *)
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
             | '^' -> addToLineProceed( openClosure Token.Closure ) (* TODO: Make macro *)
             | _ -> parseFail "Unexpected character"
-    in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) (* TODO: eof here *) [] []
 
+    (* When first entering the parser, treat the entire program as implicitly being surrounded by parenthesis *)
+    in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
+
+(* Tokenize entry point typed to channel *)
 let tokenize_channel channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
     tokenize None lexbuf
 
+(* Tokenize entry point typed to string *)
 let tokenize_string str =
     let lexbuf = Sedlexing.Utf8.from_string str in
     tokenize None lexbuf
