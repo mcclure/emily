@@ -19,7 +19,7 @@ type registerState =
 type executeFrame = {
     register : registerState;
     code : Token.codeSequence;
-    (* TODO: Scope *)
+    (* TODO scope: Value.value *)
 }
 
 (* The current state of an execution thread consists of just the stack. (Is there gonna be more here later?) *)
@@ -36,13 +36,12 @@ let execute code =
         let internalFail () = failwith "Internal consistency error: Reached impossible place" in
 
         (* Helper: Combine a value with an existing register var to make a new register var. *)
-        (* Only call if we know this is not a pair already. *)
+        (* Only call if we know this is not a pair already (unless we *want* to flatten) *)
         let newStateFor register v = match register with
-            (* Either throw out a LineStart and simply take the new value, *)
-            | LineStart _ -> FirstValue (v)
+            (* Either throw out a stale LineStart / PairValue and simply take the new value, *)
+            | LineStart _ | PairValue _ -> FirstValue (v)
             (* Or combine with an existing value to make a pair. *)
             | FirstValue fv -> PairValue (fv, v)
-            | _ -> internalFail() (* "Invariant" *)
 
         (* Look at stack *)
         in match stack with
@@ -52,63 +51,80 @@ let execute code =
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
 
-                (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
-                let return v = 
-                    (* Look at "frame rest" more closely. *)
-                    match moreFrames with
+                (* Enter a frame as if returning this value from a function. *)
+                let returnTo stackTop v = 
+                    (* Unpack the new stack. *)
+                    match stackTop with
                         (* It's empty. We're returning from the final frame and can just exit. *)
                         | [] -> ()
 
-                        (* Pull one more frame off the stack so we can replace the register var and re-add it. *)
-                        | {register=parentRegister; code=parentCode} :: yetMoreFrames ->
+                        (* Pull one frame off the stack so we can replace the register var and re-add it. *)
+                        | {register=parentRegister; code=parentCode} :: pastReturnFrames ->
                             let newState = newStateFor parentRegister v in
-                            execute_step @@ { register = newState; code = parentCode; } :: yetMoreFrames
+                            execute_step @@ { register = newState; code = parentCode; } :: pastReturnFrames
 
-                (* Look at code sequence in frame *)
-                in match frame.code with
-                    (* It's empty. We have reached the end of the group. *)
-                    | [] -> let value = match frame.register with (* Unpack Value 1 from register *)
-                            | LineStart v | FirstValue v -> v
-                            | _ -> internalFail() (* If PairValue, should have branched off above *)
-                        (* Return from frame *)
-                        in return value
+                (* apply item a to item b and  *)
+                in let apply a b = 
+                    match a with
+                        | _ -> () (* TODO: Everything *)
 
-                    (* Break lines in current frame's codeSequence into first and rest *)
-                    | line :: moreLines ->
+                (* Check the state of the top frame *)
+                in match frame.register with
+                    (* It has two values-- apply before we do anything else *)
+                    | PairValue (a, b) ->
+                        (* TODO: Should be a different branch, with a recurse, for closures *)
+                        apply a b
 
-                        (* Look at line in code sequence. *)
-                        match line with
-                            (* It's empty. We have reached the end of the line. *)
-                            | [] ->
-                                (* Convert Value 1 to a LineStart value to persist to next line *)
-                                let newState = match frame.register with
-                                    | LineStart v | FirstValue v -> LineStart v
-                                    | _ -> internalFail() (* Again: if PairValue, should have branched off above *)
+                    (* Either no values or just one values, so let's look at the tokens *)
+                    | FirstValue _ | LineStart _ ->
 
-                                (* Replace current frame, new code sequence is rest-of-lines, and recurse *)
-                                in execute_step @@ { register=newState; code=moreLines; } :: moreFrames
+                        (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
 
-                            (* Break tokens in current line into first and rest *)
-                            | token :: moreTokens ->
-                                (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
-                                let simpleValue v =
-                                    (* ...new register state... *)
-                                    let newState = newStateFor frame.register v
-                                    (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
-                                    in execute_step @@ { register=newState; code=moreTokens::moreLines; } :: moreFrames
+                        (* Look at code sequence in frame *)
+                        match frame.code with
+                            (* It's empty. We have reached the end of the group. *)
+                            | [] -> let value = match frame.register with (* Unpack Value 1 from register *)
+                                    | LineStart v | FirstValue v -> v
+                                    | _ -> internalFail() (* If PairValue, should have branched off above *)
+                                (* "Return from frame" and recurse *)
+                                in returnTo moreFrames value
 
-                                (* Evaluate token *)
-                                in match token.Token.contents with
-                                    (* Straightforward values that can be evaluated in place *)
-                                    | Token.Word s -> failwith "Can't read from scope yet" (* TODO: Create a value from a token. *)
-                                    | Token.String s -> simpleValue(Value.StringValue s)
-                                    | Token.Atom s ->   simpleValue(Value.AtomValue s)
-                                    | Token.Number f -> simpleValue(Value.FloatValue f)
+                            (* Break lines in current frame's codeSequence into first and rest *)
+                            | line :: moreLines ->
 
-                                    (* Token is nontrivial to evaluate, and will require a new stack frame. *)
-                                    (* TODO: Distinguish closure and non-closure groups *)
-                                    | Token.Group descent -> 
-                                        execute_step @@ initialExecuteState descent.Token.items
+                                (* Look at line in code sequence. *)
+                                match line with
+                                    (* It's empty. We have reached the end of the line. *)
+                                    | [] ->
+                                        (* Convert Value 1 to a LineStart value to persist to next line *)
+                                        let newState = match frame.register with
+                                            | LineStart v | FirstValue v -> LineStart v
+                                            | _ -> internalFail() (* Again: if PairValue, should have branched off above *)
+
+                                        (* Replace current frame, new code sequence is rest-of-lines, and recurse *)
+                                        in execute_step @@ { register=newState; code=moreLines; } :: moreFrames
+
+                                    (* Break tokens in current line into first and rest *)
+                                    | token :: moreTokens ->
+                                        (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
+                                        let simpleValue v =
+                                            (* ...new register state... *)
+                                            let newState = newStateFor frame.register v
+                                            (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
+                                            in execute_step @@ { register=newState; code=moreTokens::moreLines; } :: moreFrames
+
+                                        (* Evaluate token *)
+                                        in match token.Token.contents with
+                                            (* Straightforward values that can be evaluated in place *)
+                                            | Token.Word s -> () (* TODO: apply frame.scope (Atom s) *) (* TODO: Create a value from a token. *)
+                                            | Token.String s -> simpleValue(Value.StringValue s)
+                                            | Token.Atom s ->   simpleValue(Value.AtomValue s)
+                                            | Token.Number f -> simpleValue(Value.FloatValue f)
+
+                                            (* Token is nontrivial to evaluate, and will require a new stack frame. *)
+                                            (* TODO: Distinguish closure and non-closure groups *)
+                                            | Token.Group descent -> 
+                                                execute_step @@ initialExecuteState descent.Token.items
     in match code.Token.contents with
         | Token.Group contents -> execute_step @@ initialExecuteState contents.Token.items
         | _ -> () (* Execute a constant value-- no effect *)
