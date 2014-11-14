@@ -16,6 +16,8 @@
 
 ## DRY/SWYM
 
+Destroy all idiomatic code
+
 ## No parser
 
 ### Types determine what is possible

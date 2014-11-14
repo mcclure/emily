@@ -5,5 +5,5 @@ and value =
 	| FloatValue of float
 	| StringValue of string
 	| AtomValue   of string
-	| BuiltinFunctionValue of (value -> value)
+	| BuiltinFunctionValue of (value -> value -> value) (* function target argument = result *)
 	| TableValue of tableValue
