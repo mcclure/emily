@@ -65,8 +65,20 @@ let execute code =
 
                 (* apply item a to item b and  *)
                 in let apply a b = 
-                    match a with
-                        | _ -> () (* TODO: Everything *)
+                    let readTable t =
+                        match CCHashtbl.get t b with
+                            | None -> failwith "Argument couldn't be handled" (* TODO: Check .up *)
+                            | Some Value.BuiltinMethodValue f -> Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
+                            | Some r -> r
+                    in let result = match a with
+                        | Value.Null -> failwith "Function call on null"
+                        | Value.FloatValue v -> readTable BuiltinFloat.floatPrototypeTable
+                        | Value.StringValue v -> failwith "Function call on string"
+                        | Value.AtomValue v -> failwith "Function call on atom"
+                        | Value.BuiltinFunctionValue f -> f b
+                        | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
+                        | Value.TableValue t -> readTable t 
+                    in returnTo moreFrames result
 
                 (* Check the state of the top frame *)
                 in match frame.register with
