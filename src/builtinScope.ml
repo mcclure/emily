@@ -15,6 +15,13 @@ let () =
 
 	setAtomValue "nl" (Value.StringValue "\n");
 
+	setAtomFn "println" (
+		let rec printFunction v =
+			print_endline (Pretty.dumpValue v);
+			Value.BuiltinFunctionValue(printFunction)
+		in printFunction
+	);
+
 	setAtomMethod "set" (fun objectValue key ->
 		match objectValue with
 			| Value.TableValue obj -> 
