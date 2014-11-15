@@ -78,8 +78,17 @@ let execute code =
                             execute_step @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
                 (* apply item a to item b and return it to the current frame *)
-                in let apply onstack a b =
-                    match a with 
+                in let rec apply onstack a b =
+                    let r v = returnTo onstack v in
+                    let readTable t =
+                        match CCHashtbl.get t b with
+                            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
+                            | Some v -> r v
+                            | None -> 
+                                match CCHashtbl.get t BuiltinScope.parent with
+                                    | Some parent -> apply onstack parent b
+                                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized")
+                    in match a with 
                         | Value.ClosureValue c ->
                             (match c.Value.scope with
                                 | Value.TableValue t ->
@@ -90,22 +99,15 @@ let execute code =
                                     )
                                 | _ -> internalFail())
                             ; execute_step @@ (initialExecuteFrame c.Value.code)::onstack
-                        | _ ->
-                            let readTable t =
-                                match CCHashtbl.get t b with
-                                    | None -> failwith "Key not recognized" (* TODO: Check .up *)
-                                    | Some Value.BuiltinMethodValue f -> Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
-                                    | Some r -> r
-                            in let result = match a with
-                                | Value.Null -> failwith "Function call on null"
-                                | Value.FloatValue v -> readTable BuiltinFloat.floatPrototypeTable
-                                | Value.StringValue v -> failwith "Function call on string"
-                                | Value.AtomValue v -> failwith "Function call on atom"
-                                | Value.BuiltinFunctionValue f -> f b
-                                | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
-                                | Value.TableValue t -> readTable t
-                                | Value.ClosureValue c -> internalFail()
-                            in returnTo onstack result
+                        | Value.TableValue t -> readTable t
+                        (* Basic values *)
+                        | Value.FloatValue v -> readTable BuiltinFloat.floatPrototypeTable
+                        | Value.StringValue v -> failwith "Function call on string"
+                        | Value.AtomValue v -> failwith "Function call on atom"
+                        | Value.BuiltinFunctionValue f -> r ( f b )
+                        (* Unworkable *)
+                        | Value.Null -> failwith "Function call on null"
+                        | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
 
                 (* Check the state of the top frame *)
                 in match frame.register with
