@@ -24,7 +24,7 @@ let dumpRegisterState registerState = match registerState with
 type executeFrame = {
     register : registerState;
     code : Token.codeSequence;
-    (* TODO scope: Value.value *)
+    scope: Value.value;
 }
 
 (* The current state of an execution thread consists of just the stack. (Is there gonna be more here later?) *)
@@ -33,7 +33,7 @@ and executeState = executeFrame list
 (* Execute and return nothing. *)
 let execute code =
     (* Constructor for a new, stateless frame beginning with the given code-position reference *)
-    let initialExecuteState initial = [{code = initial; register = LineStart(Value.Null)}] in
+    let initialExecuteState initial = [{register=LineStart(Value.Null); code=initial; scope=BuiltinScope.scopePrototype}] in
 
     (* Main loop *)
     let rec execute_step stack =
@@ -66,11 +66,11 @@ let execute code =
                         | [] -> print_endline "BAIL 2"; ()
 
                         (* Pull one frame off the stack so we can replace the register var and re-add it. *)
-                        | {register=parentRegister; code=parentCode} :: pastReturnFrames ->
+                        | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
                             let newState = newStateFor parentRegister v in
-                            execute_step @@ { register = newState; code = parentCode; } :: pastReturnFrames
+                            execute_step @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
-                (* apply item a to item b and  *)
+                (* apply item a to item b and return it to the current frame *)
                 in let apply a b = 
                     let readTable t =
                         match CCHashtbl.get t b with
@@ -85,7 +85,7 @@ let execute code =
                         | Value.BuiltinFunctionValue f -> f b
                         | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
                         | Value.TableValue t -> readTable t 
-                    in returnTo moreFrames result
+                    in returnTo stack result
 
                 (* Check the state of the top frame *)
                 in match frame.register with
@@ -121,7 +121,7 @@ let execute code =
                                             | _ -> internalFail() (* Again: if PairValue, should have branched off above *)
 
                                         (* Replace current frame, new code sequence is rest-of-lines, and recurse *)
-                                        in execute_step @@ { register=newState; code=moreLines; } :: moreFrames
+                                        in execute_step @@ { register=newState; code=moreLines; scope=frame.scope } :: moreFrames
 
                                     (* Break tokens in current line into first and rest *)
                                     | token :: moreTokens ->
@@ -130,12 +130,12 @@ let execute code =
                                             (* ...new register state... *)
                                             let newState = newStateFor frame.register v
                                             (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
-                                            in execute_step @@ { register=newState; code=moreTokens::moreLines; } :: moreFrames
+                                            in execute_step @@ { register=newState; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
 
                                         (* Evaluate token *)
                                         in match token.Token.contents with
                                             (* Straightforward values that can be evaluated in place *)
-                                            | Token.Word s -> print_endline "BAIL 3"; () (* TODO: apply frame.scope (Atom s) *) (* TODO: Create a value from a token. *)
+                                            | Token.Word s ->   apply frame.scope (Value.AtomValue s)
                                             | Token.String s -> simpleValue(Value.StringValue s)
                                             | Token.Atom s ->   simpleValue(Value.AtomValue s)
                                             | Token.Number f -> simpleValue(Value.FloatValue f)
