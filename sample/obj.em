@@ -2,4 +2,4 @@
 
 set .a [ set .b 3 ]
 
-print ( a.b )
+println ( a.b )

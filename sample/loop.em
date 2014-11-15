@@ -3,8 +3,7 @@
 set .a 10
 
 loop ^(
-	print a
-	print "\n"
+	println a
 	set .a (a .minus 1)
 	a.gt 0
 )

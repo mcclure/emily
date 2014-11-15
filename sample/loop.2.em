@@ -3,8 +3,7 @@
 set .countup ^arg{
 	set .count (arg.from)
 	loop ^(
-		print count
-		print "\n"
+		println count
 		set .count ( count .plus (arg.step) )
 		count.lt (arg.to)
 	)

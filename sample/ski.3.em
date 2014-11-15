@@ -12,8 +12,7 @@ set .s ^x( ^y ( ^z ( x z (y z) ) ) )
 set .counter 0
 
 set .newline ^x(	# Mimic Unlambda "r"
-	print counter
-	print "\n"
+	println counter
 	set .counter 0
 	x				# Act as identity
 )
