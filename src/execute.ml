@@ -17,7 +17,7 @@ type registerState =
 let dumpRegisterState registerState = match registerState with
     | LineStart v -> "LineStart:" ^ (Pretty.dumpValue v)
     | FirstValue v -> "FirstValue:" ^ (Pretty.dumpValue v)
-    | PairValue (v1,v2) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "*" ^ (Pretty.dumpValue v2)
+    | PairValue (v1,v2) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "," ^ (Pretty.dumpValue v2)
 
 (* Each frame on the stack has the two value "registers" and a codeSequence reference which
    is effectively an instruction pointer. *)
@@ -40,7 +40,7 @@ let stackDepth stack =
 (* Execute and return nothing. *)
 let execute code =
     (* Constructor for a new, stateless frame beginning with the given code-position reference *)
-    let initialExecuteState initial = [{register=LineStart(Value.Null); code=initial; scope=BuiltinScope.scopePrototype}] in
+    let initialExecuteFrame initial = {register=LineStart(Value.Null); code=initial; scope=BuiltinScope.scopePrototype} in
 
     (* Main loop *)
     let rec execute_step stack =
@@ -58,19 +58,19 @@ let execute code =
         (* Look at stack *)
         in match stack with
             (* Asked to execute an empty file -- just return *)
-            | [] -> print_endline "BAIL 1"; () (* TODO: Remove bails *)
+            | [] -> print_endline "COMPLETE 1"; () (* TODO: Remove bails *)
 
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
                 (* COMMENT/UNCOMMENT FOR TRACING *)
-                print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code | " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+                print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v = 
                     (* Unpack the new stack. *)
                     match stackTop with
                         (* It's empty. We're returning from the final frame and can just exit. *)
-                        | [] -> print_endline "BAIL 2"; ()
+                        | [] -> print_endline "COMPLETE 2"; ()
 
                         (* Pull one frame off the stack so we can replace the register var and re-add it. *)
                         | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
@@ -153,8 +153,8 @@ let execute code =
                                             (* Token is nontrivial to evaluate, and will require a new stack frame. *)
                                             (* TODO: Distinguish closure and non-closure groups *)
                                             | Token.Group descent -> 
-                                                execute_step @@ initialExecuteState descent.Token.items
+                                                execute_step @@ (initialExecuteFrame descent.Token.items)::(stackWithRegister frame.register)
 
     in match code.Token.contents with
-        | Token.Group contents -> execute_step @@ initialExecuteState contents.Token.items
+        | Token.Group contents -> execute_step @@ [initialExecuteFrame contents.Token.items]
         | _ -> () (* Execute a constant value-- no effect *)
