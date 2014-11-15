@@ -47,4 +47,5 @@ let dumpValue v =
         | Value.AtomValue s -> s
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>" 
+        | Value.ClosureValue _ -> "<closure>"
         | Value.TableValue _ -> "<map>"

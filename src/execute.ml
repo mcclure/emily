@@ -78,27 +78,39 @@ let execute code =
                             execute_step @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
                 (* apply item a to item b and return it to the current frame *)
-                in let apply onstack a b = 
-                    let readTable t =
-                        match CCHashtbl.get t b with
-                            | None -> failwith "Argument couldn't be handled" (* TODO: Check .up *)
-                            | Some Value.BuiltinMethodValue f -> Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
-                            | Some r -> r
-                    in let result = match a with
-                        | Value.Null -> failwith "Function call on null"
-                        | Value.FloatValue v -> readTable BuiltinFloat.floatPrototypeTable
-                        | Value.StringValue v -> failwith "Function call on string"
-                        | Value.AtomValue v -> failwith "Function call on atom"
-                        | Value.BuiltinFunctionValue f -> f b
-                        | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
-                        | Value.TableValue t -> readTable t 
-                    in returnTo onstack result
+                in let apply onstack a b =
+                    match a with 
+                        | Value.ClosureValue c ->
+                            (match c.Value.scope with
+                                | Value.TableValue t ->
+                                    (match c.Value.key with
+                                        | Some key ->
+                                            Hashtbl.replace t (Value.AtomValue key) b
+                                        | None -> ()    
+                                    )
+                                | _ -> internalFail())
+                            ; execute_step @@ (initialExecuteFrame c.Value.code)::onstack
+                        | _ ->
+                            let readTable t =
+                                match CCHashtbl.get t b with
+                                    | None -> failwith "Key not recognized" (* TODO: Check .up *)
+                                    | Some Value.BuiltinMethodValue f -> Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
+                                    | Some r -> r
+                            in let result = match a with
+                                | Value.Null -> failwith "Function call on null"
+                                | Value.FloatValue v -> readTable BuiltinFloat.floatPrototypeTable
+                                | Value.StringValue v -> failwith "Function call on string"
+                                | Value.AtomValue v -> failwith "Function call on atom"
+                                | Value.BuiltinFunctionValue f -> f b
+                                | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
+                                | Value.TableValue t -> readTable t
+                                | Value.ClosureValue c -> internalFail()
+                            in returnTo onstack result
 
                 (* Check the state of the top frame *)
                 in match frame.register with
                     (* It has two values-- apply before we do anything else *)
                     | PairValue (a, b) ->
-                        (* TODO: Should be a different branch, with a recurse, for closures *)
                         apply stack a b
 
                     (* Either no values or just one values, so let's look at the tokens *)
@@ -142,6 +154,10 @@ let execute code =
                                             (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
                                             in execute_step @@ stackWithRegister newState
 
+                                        in let closureValue v =
+                                            let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None
+                                            in simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key })
+
                                         (* Evaluate token *)
                                         in match token.Token.contents with
                                             (* Straightforward values that can be evaluated in place *)
@@ -149,11 +165,12 @@ let execute code =
                                             | Token.String s -> simpleValue(Value.StringValue s)
                                             | Token.Atom s ->   simpleValue(Value.AtomValue s)
                                             | Token.Number f -> simpleValue(Value.FloatValue f)
-
-                                            (* Token is nontrivial to evaluate, and will require a new stack frame. *)
-                                            (* TODO: Distinguish closure and non-closure groups *)
-                                            | Token.Group descent -> 
-                                                execute_step @@ (initialExecuteFrame descent.Token.items)::(stackWithRegister frame.register)
+                                            | Token.Group group ->
+                                                match group.Token.closure with
+                                                    (* Token is nontrivial to evaluate, and will require a new stack frame. *)
+                                                    | Token.NonClosure ->
+                                                        execute_step @@ (initialExecuteFrame group.Token.items)::(stackWithRegister frame.register)
+                                                    | _ -> closureValue group
 
     in match code.Token.contents with
         | Token.Group contents -> execute_step @@ [initialExecuteFrame contents.Token.items]
