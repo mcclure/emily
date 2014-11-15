@@ -30,6 +30,13 @@ type executeFrame = {
 (* The current state of an execution thread consists of just the stack. (Is there gonna be more here later?) *)
 and executeState = executeFrame list
 
+let stackDepth stack = 
+    let rec stackDepthImpl accum stack =
+        match stack with
+            | [] -> accum
+            | _::more -> stackDepthImpl (accum+1) more
+    in stackDepthImpl 0 stack
+
 (* Execute and return nothing. *)
 let execute code =
     (* Constructor for a new, stateless frame beginning with the given code-position reference *)
@@ -56,7 +63,7 @@ let execute code =
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
                 (* COMMENT/UNCOMMENT FOR TRACING *)
-                print_endline @@ "Step | State " ^ (dumpRegisterState  frame.register) ^ " | Code | " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+                print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code | " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v = 
@@ -71,7 +78,7 @@ let execute code =
                             execute_step @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
                 (* apply item a to item b and return it to the current frame *)
-                in let apply newstack a b = 
+                in let apply onstack a b = 
                     let readTable t =
                         match CCHashtbl.get t b with
                             | None -> failwith "Argument couldn't be handled" (* TODO: Check .up *)
@@ -85,7 +92,7 @@ let execute code =
                         | Value.BuiltinFunctionValue f -> f b
                         | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
                         | Value.TableValue t -> readTable t 
-                    in returnTo newstack result
+                    in returnTo onstack result
 
                 (* Check the state of the top frame *)
                 in match frame.register with
