@@ -71,7 +71,7 @@ let execute code =
                             execute_step @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
                 (* apply item a to item b and return it to the current frame *)
-                in let apply a b = 
+                in let apply newstack a b = 
                     let readTable t =
                         match CCHashtbl.get t b with
                             | None -> failwith "Argument couldn't be handled" (* TODO: Check .up *)
@@ -85,14 +85,14 @@ let execute code =
                         | Value.BuiltinFunctionValue f -> f b
                         | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
                         | Value.TableValue t -> readTable t 
-                    in returnTo stack result
+                    in returnTo newstack result
 
                 (* Check the state of the top frame *)
                 in match frame.register with
                     (* It has two values-- apply before we do anything else *)
                     | PairValue (a, b) ->
                         (* TODO: Should be a different branch, with a recurse, for closures *)
-                        apply a b
+                        apply stack a b
 
                     (* Either no values or just one values, so let's look at the tokens *)
                     | FirstValue _ | LineStart _ ->
@@ -126,16 +126,19 @@ let execute code =
                                     (* Break tokens in current line into first and rest *)
                                     | token :: moreTokens ->
                                         (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
-                                        let simpleValue v =
+                                        let stackWithRegister register  =
+                                            { register=register; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
+
+                                        in let simpleValue v =
                                             (* ...new register state... *)
                                             let newState = newStateFor frame.register v
                                             (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
-                                            in execute_step @@ { register=newState; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
+                                            in execute_step @@ stackWithRegister newState
 
                                         (* Evaluate token *)
                                         in match token.Token.contents with
                                             (* Straightforward values that can be evaluated in place *)
-                                            | Token.Word s ->   apply frame.scope (Value.AtomValue s)
+                                            | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope (Value.AtomValue s)
                                             | Token.String s -> simpleValue(Value.StringValue s)
                                             | Token.Atom s ->   simpleValue(Value.AtomValue s)
                                             | Token.Number f -> simpleValue(Value.FloatValue f)
