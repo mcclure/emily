@@ -14,6 +14,11 @@ type registerState =
     | FirstValue of Value.value
     | PairValue of (Value.value * Value.value)
 
+let dumpRegisterState registerState = match registerState with
+    | LineStart v -> "LineStart:" ^ (Pretty.dumpValue v)
+    | FirstValue v -> "FirstValue:" ^ (Pretty.dumpValue v)
+    | PairValue (v1,v2) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "*" ^ (Pretty.dumpValue v2)
+
 (* Each frame on the stack has the two value "registers" and a codeSequence reference which
    is effectively an instruction pointer. *)
 type executeFrame = {
@@ -46,17 +51,19 @@ let execute code =
         (* Look at stack *)
         in match stack with
             (* Asked to execute an empty file -- just return *)
-            | [] -> ()
+            | [] -> print_endline "BAIL 1"; () (* TODO: Remove bails *)
 
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
+                (* COMMENT/UNCOMMENT FOR TRACING *)
+                print_endline @@ "Step | State " ^ (dumpRegisterState  frame.register) ^ " | Code | " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v = 
                     (* Unpack the new stack. *)
                     match stackTop with
                         (* It's empty. We're returning from the final frame and can just exit. *)
-                        | [] -> ()
+                        | [] -> print_endline "BAIL 2"; ()
 
                         (* Pull one frame off the stack so we can replace the register var and re-add it. *)
                         | {register=parentRegister; code=parentCode} :: pastReturnFrames ->
@@ -128,7 +135,7 @@ let execute code =
                                         (* Evaluate token *)
                                         in match token.Token.contents with
                                             (* Straightforward values that can be evaluated in place *)
-                                            | Token.Word s -> () (* TODO: apply frame.scope (Atom s) *) (* TODO: Create a value from a token. *)
+                                            | Token.Word s -> print_endline "BAIL 3"; () (* TODO: apply frame.scope (Atom s) *) (* TODO: Create a value from a token. *)
                                             | Token.String s -> simpleValue(Value.StringValue s)
                                             | Token.Atom s ->   simpleValue(Value.AtomValue s)
                                             | Token.Number f -> simpleValue(Value.FloatValue f)
@@ -137,6 +144,7 @@ let execute code =
                                             (* TODO: Distinguish closure and non-closure groups *)
                                             | Token.Group descent -> 
                                                 execute_step @@ initialExecuteState descent.Token.items
+
     in match code.Token.contents with
         | Token.Group contents -> execute_step @@ initialExecuteState contents.Token.items
         | _ -> () (* Execute a constant value-- no effect *)

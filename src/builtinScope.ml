@@ -7,14 +7,8 @@ let () =
 
 	setAtom "print" (
 		let rec printFunction _ v =
-			match v with 
-				| Null -> print "<null>"
-				| FloatValue v -> print v
-				| StringValue s -> print s
-				| AtomValue s -> print s
-				| BuiltinFunctionValue _ -> "<builtin>"
-				| TableValue of tableValue -> "<map>"
-			; BuiltinFunctionValue(printFunction)
+			print (dumpValue v);
+			BuiltinFunctionValue(printFunction)
 		in printFunction
 	);
 
