@@ -65,8 +65,8 @@ let execute code =
 
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
-                (* COMMENT/UNCOMMENT FOR TRACING *)
-                (* print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code )); *)
+                (* Trace here ONLY if command line option requests it *)
+                if Options.(run.trace) then print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v = 

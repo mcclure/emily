@@ -4,10 +4,16 @@ let machineVersion = [0,0,0]
 type executionTarget = Stdin | File of string | Literal of string
 
 type optionSpec = {
-    mutable targets : executionTarget list
+    mutable targets : executionTarget list;
+    mutable disassemble : bool;
+    mutable disassembleVerbose : bool;
+    mutable trace : bool;
 }
 
-let run = {targets=[]}
+let run = { 
+    targets=[];
+    disassemble=false; disassembleVerbose=false; trace=false;
+}
 
 let () = 
     let targets = ref [] in
@@ -22,6 +28,7 @@ Sample usage:
     emily filename.em    # Execute program
     emily -              # Execute from stdin
     emily -e "println 3" # Execute from command line
+
 Options:|})
 
     in let args = [
@@ -31,8 +38,12 @@ Options:|})
         ), ""); (* No summary, this shouldn't be listed with options. *)
 
         ("-e", Arg.String(fun f ->
-                targets := Literal f :: !targets
-        ), "Execute code inline") (* No summary, this shouldn't be listed with options. *)
+            targets := Literal f :: !targets
+        ), "Execute code inline");
+
+        ("--debug-disassemble",         Arg.Unit(fun () -> run.disassemble <- true),        "Print tokenized code and exit");
+        ("--debug-disassemble-verbose", Arg.Unit(fun () -> run.disassembleVerbose <- true), "Print tokenized code with position data and exit");
+        ("--debug-trace",               Arg.Unit(fun () -> run.trace <- true),              "When executing, print interpreter state");
     ]
 
     in Arg.parse args targetParse usage
