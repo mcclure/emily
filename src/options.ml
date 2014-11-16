@@ -15,17 +15,7 @@ let () =
     
     let targetParse t = targets := File t :: !targets in
 
-    Arg.parse [
-        ("-", Arg.Unit(fun () -> (* Arg's parser means the magic - argument must be passed in this way. *)
-            if !seenStdin then failwith "Attempted to parse stdin twice; that doesn't make sense?"
-                else seenStdin := true; targets := Stdin :: !targets
-        ), ""); (* No summary, this shouldn't be listed with options. *)
-
-        ("-e", Arg.String(fun f ->
-                targets := Literal f :: !targets
-        ), "Execute code inline") (* No summary, this shouldn't be listed with options. *)
-    ] targetParse
-
+    let usage =
 ("Emily language interpreter: version " ^ version ^ {|
 
 Sample usage:
@@ -34,5 +24,20 @@ Sample usage:
     emily -e "println 3" # Execute from command line
 Options:|})
 
-    ; run.targets <- List.rev !targets
+    in let args = [
+        ("-", Arg.Unit(fun () -> (* Arg's parser means the magic - argument must be passed in this way. *)
+            if !seenStdin then failwith "Attempted to parse stdin twice; that doesn't make sense?"
+                else seenStdin := true; targets := Stdin :: !targets
+        ), ""); (* No summary, this shouldn't be listed with options. *)
+
+        ("-e", Arg.String(fun f ->
+                targets := Literal f :: !targets
+        ), "Execute code inline") (* No summary, this shouldn't be listed with options. *)
+    ]
+
+    in Arg.parse args targetParse usage
+
+    ; match !targets with
+        | [] -> Arg.usage args usage; exit 1
+        | t  -> run.targets <- List.rev t
 
