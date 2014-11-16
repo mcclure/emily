@@ -37,13 +37,15 @@ Options:|})
                 else seenStdin := true; targets := Stdin :: !targets
         ), ""); (* No summary, this shouldn't be listed with options. *)
 
+        (* Args *)
         ("-e", Arg.String(fun f ->
             targets := Literal f :: !targets
         ), "Execute code inline");
 
-        ("--debug-disassemble",         Arg.Unit(fun () -> run.disassemble <- true),        "Print tokenized code and exit");
-        ("--debug-disassemble-verbose", Arg.Unit(fun () -> run.disassembleVerbose <- true), "Print tokenized code with position data and exit");
-        ("--debug-trace",               Arg.Unit(fun () -> run.trace <- true),              "When executing, print interpreter state");
+        (* For supporting Emily development itself *)
+        ("--debug-dis",   Arg.Unit(fun () -> run.disassemble <- true),        {|Print "disassembled" code and exit|});
+        ("--debug-disv",  Arg.Unit(fun () -> run.disassembleVerbose <- true), {|Print "disassembled" code with position data and exit|});
+        ("--debug-trace", Arg.Unit(fun () -> run.trace <- true),              "When executing, print interpreter state");
     ]
 
     in Arg.parse args targetParse usage
