@@ -61,19 +61,19 @@ let execute code =
         (* Look at stack *)
         in match stack with
             (* Asked to execute an empty file -- just return *)
-            | [] -> print_endline "COMPLETE 1"; () (* TODO: Remove bails *)
+            | [] -> () (* TODO: Remove bails *)
 
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
                 (* COMMENT/UNCOMMENT FOR TRACING *)
-                print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+                (* print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code )); *)
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v = 
                     (* Unpack the new stack. *)
                     match stackTop with
                         (* It's empty. We're returning from the final frame and can just exit. *)
-                        | [] -> print_endline "COMPLETE 2"; ()
+                        | [] -> ()
 
                         (* Pull one frame off the stack so we can replace the register var and re-add it. *)
                         | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
