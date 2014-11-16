@@ -1,3 +1,5 @@
+(* Functions to execute a codeSequence *)
+
 (* The general approach to evaluate a group is: For each line:
     1. If the line is empty, skip it.
     2. Take the first token, remove it from the line, evaluate it, call that Value 1.

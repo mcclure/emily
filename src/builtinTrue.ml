@@ -1,3 +1,4 @@
+(* Populates a prototype for trues *)
 let truePrototypeTable = Hashtbl.create(3)
 let truePrototype = Value.TableValue(truePrototypeTable)
 

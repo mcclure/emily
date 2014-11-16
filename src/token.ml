@@ -1,3 +1,5 @@
+(* Data representation for an AST. *)
+
 (* Records the original source position of a token *)
 type codePosition = {
     fileName : string option;

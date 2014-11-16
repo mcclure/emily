@@ -1,3 +1,4 @@
+(* Populates a prototype for floats *)
 let floatPrototypeTable = Value.tableInheriting BuiltinTrue.truePrototype
 
 let () =

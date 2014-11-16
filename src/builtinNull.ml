@@ -1,3 +1,4 @@
+(* Populates a prototype for nulls, also holds machinery used by other Builtin files *)
 let nullPrototypeTable = Hashtbl.create(3)
 
 (* Returns setAtomValue,setAtomFn,setAtomMethod *)

@@ -1,4 +1,5 @@
-(* TODO: Put these in their own file? *)
+(* Pretty-printers for types from various other files *)
+
 (* "Disassemble" a token tree into a human-readable string (specializable) *)
 let rec dumpTree groupPrinter token =
     match token.Token.contents with

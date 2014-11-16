@@ -1,3 +1,4 @@
+(* Populates a prototype for scopes *)
 let scopePrototypeTable = Hashtbl.create(3)
 let scopePrototype = Value.TableValue(scopePrototypeTable)
 

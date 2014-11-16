@@ -1,3 +1,5 @@
+(* Data representation for a runtime value. *)
+
 type tableValue = (value, value) Hashtbl.t
 
 and closureValue = {

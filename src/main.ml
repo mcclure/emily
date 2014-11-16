@@ -1,3 +1,5 @@
+(* Loads a program and runs it, based on contents of Options. *)
+
 let () =
 	let processOne target = 
 	    let buf = match target with

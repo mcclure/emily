@@ -1,10 +1,12 @@
-(* This is Emily's "parser", which I'm calling a tokenizer since it doesn't do much. 
+(* Functions to create ASTs from strings:
+    
+   This is Emily's "parser", which I'm calling a tokenizer since it doesn't do much. 
    It scans left to right, categorizing tokens, pushing on left parens and popping on right.
    The parts we'd think of a "parser" as usually doing will be handled in a second,
    currently unimplemented, macro-processing step. *)
 
 (* Tokenize uses sedlex which is inherently stateful, so tokenize for a single source string is stateful. 
-   Here's the basic state for the file parse-- basically just recording the position of the last seen newline. *)
+   This is the basic state for a file parse-- it basically just records the position of the last seen newline. *)
 type tokenize_state = {
     mutable lineStart: int;
     mutable line: int

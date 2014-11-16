@@ -1,3 +1,5 @@
+(* Parse and validate command line arguments. *)
+
 let version = "0.0 DEVELOPMENT"
 let machineVersion = [0,0,0]
 
