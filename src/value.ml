@@ -18,7 +18,7 @@ and value =
 	| TableValue of tableValue
 
 let parentKey = AtomValue "parent"
-let tableMake () = Hashtbl.create(1)
+let tableMake () : tableValue = Hashtbl.create(1)
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableSetString table key value = tableSet table (AtomValue key) value
@@ -26,4 +26,4 @@ let tableInheriting v =
 	let t = tableMake() in tableSet t parentKey v;
 		t
 
-let boolCast v = if v then FloatValue(1.0) else Null
+let boolCast v = if v then True else Null

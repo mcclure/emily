@@ -1,9 +1,7 @@
-let floatPrototypeTable = Hashtbl.create(3)
+let floatPrototypeTable = Value.tableInheriting BuiltinTrue.truePrototype
 
 let () =
-	let setAtomValue name v = Hashtbl.replace floatPrototypeTable (Value.AtomValue name) v in 
-	let setAtomFn name fn = setAtomValue name (Value.BuiltinFunctionValue fn) in
-	let setAtomMethod name fn = setAtomValue name (Value.BuiltinMethodValue fn) in
+	let (a, b, setAtomMethod) = BuiltinNull.atomFuncs floatPrototypeTable in
 
 	let setAtomMath name f = setAtomMethod name (fun a b ->
 		match (a,b) with

@@ -1,4 +1,5 @@
 let truePrototypeTable = Hashtbl.create(3)
+let truePrototype = Value.TableValue(truePrototypeTable)
 
 let () =
 	let (_, setAtomFn, _) = BuiltinNull.atomFuncs truePrototypeTable in

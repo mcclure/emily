@@ -3,7 +3,7 @@ let nullPrototypeTable = Hashtbl.create(3)
 (* Returns setAtomValue,setAtomFn,setAtomMethod *)
 let atomFuncs table = 
 	let setValue name v = Hashtbl.replace table (Value.AtomValue name) v in 
-	( setValue
+	( (setValue)
 	, (fun n fn -> setValue n (Value.BuiltinFunctionValue fn))
 	, (fun n fn -> setValue n (Value.BuiltinMethodValue fn))
 	)
