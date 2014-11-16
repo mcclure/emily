@@ -101,12 +101,13 @@ let execute code =
                             ; execute_step @@ (initialExecuteFrame c.Value.code)::onstack
                         | Value.TableValue t -> readTable t
                         (* Basic values *)
-                        | Value.FloatValue v -> readTable BuiltinFloat.floatPrototypeTable
-                        | Value.StringValue v -> failwith "Function call on string"
-                        | Value.AtomValue v -> failwith "Function call on atom"
+                        | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
+                        | Value.True ->          readTable BuiltinTrue.truePrototypeTable
+                        | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
+                        | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
+                        | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
                         | Value.BuiltinFunctionValue f -> r ( f b )
                         (* Unworkable *)
-                        | Value.Null -> failwith "Function call on null"
                         | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
 
                 (* Check the state of the top frame *)

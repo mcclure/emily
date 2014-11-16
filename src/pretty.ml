@@ -42,6 +42,7 @@ let dumpTreeDense token =
 let dumpValue v =
     match v with 
         | Value.Null -> "<null>"
+        | Value.True -> "<true>"
         | Value.FloatValue v -> string_of_float v
         | Value.StringValue s -> s
         | Value.AtomValue s -> s

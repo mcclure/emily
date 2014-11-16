@@ -8,6 +8,7 @@ and closureValue = {
 
 and value =
 	| Null
+	| True
 	| FloatValue of float
 	| StringValue of string
 	| AtomValue   of string
