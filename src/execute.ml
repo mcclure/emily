@@ -85,7 +85,7 @@ let execute code =
                             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
                             | Some v -> r v
                             | None -> 
-                                match CCHashtbl.get t BuiltinScope.parent with
+                                match CCHashtbl.get t Value.parentKey with
                                     | Some parent -> apply onstack parent b
                                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized")
                     in match a with 

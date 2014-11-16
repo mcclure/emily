@@ -1,6 +1,5 @@
 let scopePrototypeTable = Hashtbl.create(3)
 let scopePrototype = Value.TableValue(scopePrototypeTable)
-let parent = Value.AtomValue "parent"
 
 let () =
 	let setAtomValue name v = Hashtbl.replace scopePrototypeTable (Value.AtomValue name) v in 
