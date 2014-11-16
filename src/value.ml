@@ -25,5 +25,6 @@ let tableSetString table key value = tableSet table (AtomValue key) value
 let tableInheriting v =
 	let t = tableMake() in tableSet t parentKey v;
 		t
+let scopeInheriting v = TableValue(tableInheriting v)
 
 let boolCast v = if v then True else Null

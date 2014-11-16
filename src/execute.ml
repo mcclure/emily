@@ -38,9 +38,12 @@ let stackDepth stack =
     in stackDepthImpl 0 stack
 
 (* Execute and return nothing. *)
+(* TODO: This is too long, break up into more subfunctions... *)
 let execute code =
     (* Constructor for a new, stateless frame beginning with the given code-position reference *)
-    let initialExecuteFrame initial = {register=LineStart(Value.Null); code=initial; scope=BuiltinScope.scopePrototype} in
+    let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope} in
+    let inheritExecuteFrame scope code = {register=LineStart(Value.Null); code=code; scope=Value.scopeInheriting scope} in
+    let initialExecuteFrame = inheritExecuteFrame BuiltinScope.scopePrototype in
 
     (* Main loop *)
     let rec execute_step stack =
@@ -90,16 +93,17 @@ let execute code =
                                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized")
                     in match a with 
                         | Value.ClosureValue c ->
-                            (match c.Value.scope with
-                                | Value.TableValue t ->
-                                    (match c.Value.key with
-                                        | Some key ->
-                                            Hashtbl.replace t (Value.AtomValue key) b
-                                        | None -> ()    
-                                    )
-                                | _ -> internalFail())
-                            ; execute_step @@ (initialExecuteFrame c.Value.code)::onstack
-                        | Value.TableValue t -> readTable t
+                            let scope = Value.scopeInheriting c.Value.scope in
+                                (match scope with
+                                    | Value.TableValue t ->
+                                        (match c.Value.key with
+                                            | Some key ->
+                                                Hashtbl.replace t (Value.AtomValue key) b
+                                            | None -> ()    
+                                        )
+                                    | _ -> internalFail())
+                                ; execute_step @@ (executeFrame scope c.Value.code)::onstack
+                        | Value.TableValue t ->  readTable t
                         (* Basic values *)
                         | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
                         | Value.True ->          readTable BuiltinTrue.truePrototypeTable
@@ -172,7 +176,7 @@ let execute code =
                                                 match group.Token.closure with
                                                     (* Token is nontrivial to evaluate, and will require a new stack frame. *)
                                                     | Token.NonClosure ->
-                                                        execute_step @@ (initialExecuteFrame group.Token.items)::(stackWithRegister frame.register)
+                                                        execute_step @@ (inheritExecuteFrame frame.scope group.Token.items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 
     in match code.Token.contents with
