@@ -1,7 +1,7 @@
 let floatPrototypeTable = Value.tableInheriting BuiltinTrue.truePrototype
 
 let () =
-	let (a, b, setAtomMethod) = BuiltinNull.atomFuncs floatPrototypeTable in
+	let (_, _, setAtomMethod) = BuiltinNull.atomFuncs floatPrototypeTable in
 
 	let setAtomMath name f = setAtomMethod name (fun a b ->
 		match (a,b) with

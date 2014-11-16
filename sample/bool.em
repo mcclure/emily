@@ -11,3 +11,6 @@ println ( () .and 4 )
 
 # Expect output: true
 println ( 5 .and 4 )
+
+# Expect output: false
+println ( not(5 .and 4) )

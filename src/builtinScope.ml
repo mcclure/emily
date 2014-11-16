@@ -2,10 +2,8 @@ let scopePrototypeTable = Hashtbl.create(3)
 let scopePrototype = Value.TableValue(scopePrototypeTable)
 
 let () =
-	let setAtomValue name v = Hashtbl.replace scopePrototypeTable (Value.AtomValue name) v in 
-	let setAtomFn name fn = setAtomValue name (Value.BuiltinFunctionValue fn) in
-	let setAtomMethod name fn = setAtomValue name (Value.BuiltinMethodValue fn) in
-
+	let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
+	
 	setAtomFn "print" (
 		let rec printFunction v =
 			print_string (Pretty.dumpValue v);
@@ -14,6 +12,11 @@ let () =
 	);
 
 	setAtomValue "nl" (Value.StringValue "\n");
+
+	setAtomValue "null" (Value.Null);
+	setAtomValue "true" (Value.True);
+
+	setAtomFn "not" (fun v -> match v with Value.Null -> Value.True | _ -> Value.Null);
 
 	setAtomFn "println" (
 		let rec printFunction v =
