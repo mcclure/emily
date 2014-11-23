@@ -18,15 +18,30 @@ and value =
 	| BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
 	| ClosureValue of closureValue
 	| TableValue of tableValue
+	| TableSetValue of tableValue
+	| TableLetValue of tableValue
+
+type tableBlankKind = TrueBlank | NoLet | WithLet
 
 let parentKey = AtomValue "parent"
-let tableMake () : tableValue = Hashtbl.create(1)
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
+let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value
-let tableInheriting v =
-	let t = tableMake() in tableSet t parentKey v;
+let tableBlank kind : tableValue =
+	let t = Hashtbl.create(1) in (match kind with
+		| TrueBlank -> ()
+		| NoLet ->   tableSetString t "set" (TableSetValue t)
+		| WithLet -> tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t)
+	); t
+let tableInheriting kind v =
+	let t = tableBlank kind in tableSet t parentKey v;
 		t
-let scopeInheriting v = TableValue(tableInheriting v)
+
+(* FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
+let tableBoundSet t key =
+	let f value = 
+		tableSet t key value; Null
+	in BuiltinFunctionValue(f)
 
 let boolCast v = if v then True else Null

@@ -32,6 +32,16 @@ type executeFrame = {
 (* The current state of an execution thread consists of just the stack. (Is there gonna be more here later?) *)
 and executeState = executeFrame list
 
+let scopeInheriting kind v =
+    Value.TableValue(Value.tableInheriting kind v)
+let closureScopeInheriting closureKind tokenKind v =
+    let kind = match (closureKind,tokenKind) with
+            | (Token.ClosureWithBinding _, Token.Plain) -> Value.NoLet
+            | (_,Token.Plain) -> Value.TrueBlank
+            | _ -> Value.WithLet
+    in scopeInheriting kind v
+let groupScopeInheriting tokenKind v = closureScopeInheriting Token.NonClosure tokenKind v
+
 let stackDepth stack = 
     let rec stackDepthImpl accum stack =
         match stack with
@@ -44,7 +54,7 @@ let stackDepth stack =
 let execute code =
     (* Constructor for a new, stateless frame beginning with the given code-position reference *)
     let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope} in
-    let inheritExecuteFrame scope code = {register=LineStart(Value.Null); code=code; scope=Value.scopeInheriting scope} in
+    let inheritExecuteFrame scope code = {register=LineStart(Value.Null); code=code; scope=scopeInheriting Value.WithLet scope} in
     let initialExecuteFrame = inheritExecuteFrame BuiltinScope.scopePrototype in
 
     (* Main loop *)
@@ -85,22 +95,26 @@ let execute code =
                 (* apply item a to item b and return it to the current frame *)
                 in let rec apply onstack a b =
                     let r v = returnTo onstack v in
+                    (* Pull something out of a table, possibly recursing *)
                     let readTable t =
-                        match CCHashtbl.get t b with
-                            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work with .up *)
+                        match Value.tableGet t b with
+                            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
                             | Some v -> r v
                             | None -> 
-                                match CCHashtbl.get t Value.parentKey with
+                                match Value.tableGet t Value.parentKey with
                                     | Some parent -> apply onstack parent b
                                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized")
+                    in let setTable t =
+                        r (Value.tableBoundSet t b)
+                    (* Perform the application *)
                     in match a with 
                         | Value.ClosureValue c ->
-                            let scope = Value.scopeInheriting c.Value.scope in
+                            let scope = scopeInheriting Value.WithLet c.Value.scope in (* FIXME: WithLet is not always correct! *)
                                 (match scope with
                                     | Value.TableValue t ->
                                         (match c.Value.key with
                                             | Some key ->
-                                                Hashtbl.replace t (Value.AtomValue key) b
+                                                Value.tableSet t (Value.AtomValue key) b
                                             | None -> ()    
                                         )
                                     | _ -> internalFail())
@@ -113,6 +127,12 @@ let execute code =
                         | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
                         | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
                         | Value.BuiltinFunctionValue f -> r ( f b )
+                        | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
+                            else (match Value.tableGet t Value.parentKey with
+                                | Some parent -> failwith "Doesn't work yet" (* FIXME: should handle .parent elegantly *)
+                                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized for set"))
+                        | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
+                            setTable t
                         (* Unworkable *)
                         | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
 
@@ -177,7 +197,7 @@ let execute code =
                                             | Token.Group group ->
                                                 match group.Token.closure with
                                                     (* Token is nontrivial to evaluate, and will require a new stack frame. *)
-                                                    | Token.NonClosure ->
+                                                    | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
                                                         execute_step @@ (inheritExecuteFrame frame.scope group.Token.items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 

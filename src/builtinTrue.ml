@@ -1,5 +1,5 @@
 (* Populates a prototype for trues *)
-let truePrototypeTable = Hashtbl.create(3)
+let truePrototypeTable = Value.tableBlank Value.TrueBlank
 let truePrototype = Value.TableValue(truePrototypeTable)
 
 let () =

@@ -1,5 +1,5 @@
 (* Populates a prototype for floats *)
-let floatPrototypeTable = Value.tableInheriting BuiltinTrue.truePrototype
+let floatPrototypeTable = Value.tableInheriting Value.TrueBlank BuiltinTrue.truePrototype
 
 let () =
 	let (_, _, setAtomMethod) = BuiltinNull.atomFuncs floatPrototypeTable in

@@ -50,4 +50,6 @@ let dumpValue v =
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>" 
         | Value.ClosureValue _ -> "<closure>"
-        | Value.TableValue _ -> "<map>"
+        | Value.TableValue _ -> "<table>"
+        | Value.TableSetValue _ -> "<table-setter-let>"
+        | Value.TableLetValue _ -> "<table-setter-let>"
