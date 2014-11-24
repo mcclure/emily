@@ -14,7 +14,7 @@ type tokenize_state = {
 
 (* Entry point to tokenize, takes a filename and a lexbuf *)
 (* TODO: Somehow strip blank lines? *)
-let rec tokenize name buf : Token.token = 
+let tokenize name buf : Token.token = 
     (* -- Helper regexps -- *)
     let digit = [%sedlex.regexp? '0'..'9'] in
     let number = [%sedlex.regexp? Plus digit] in
@@ -188,3 +188,9 @@ let tokenize_channel channel =
 let tokenize_string str =
     let lexbuf = Sedlexing.Utf8.from_string str in
     tokenize None lexbuf
+
+let unwrap token = match token.Token.contents with
+    | Token.Group g -> g.Token.items
+    | _ -> failwith(Printf.sprintf "%s %s" "Internal error: Object in wrong place" (Token.positionString token.Token.at))
+        
+ let snippet str = unwrap @@ tokenize_string str
