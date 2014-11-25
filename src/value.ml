@@ -40,7 +40,7 @@ let tableInheriting kind v =
 
 (* FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
 let tableBoundSet t key =
-	let f value = 
+	let f value =
 		tableSet t key value; Null
 	in BuiltinFunctionValue(f)
 
@@ -48,5 +48,5 @@ let boolCast v = if v then True else Null
 
 let snippetScope bindings =
 	let scopeTable = tableBlank TrueBlank in
-	List.iter (fun x -> match x with (k,v) -> tableSet scopeTable (StringValue k) v) bindings;
+	List.iter (fun x -> match x with (k,v) -> tableSet scopeTable (AtomValue k) v) bindings;
 	TableValue(scopeTable)

@@ -1,23 +1,23 @@
 # Test turing completeness by way of combinators (3). Expected output: The fibbonachi sequence, as numbers.
 
 # Identity combinator
-set .i ^x( x )
+let .i ^x( x )
 
 # Kancel combinator
-set .k ^x( ^y( x ) )
+let .k ^x( ^y( x ) )
 
 # Substitution combinator
-set .s ^x( ^y ( ^z ( x z (y z) ) ) )
+let .s ^x( ^y ( ^z ( x z (y z) ) ) )
 
-set .counter 0
+let .counter 0
 
-set .newline ^x(	# Mimic Unlambda "r"
+let .newline ^x(	# Mimic Unlambda "r"
 	println counter
 	set .counter 0
 	x				# Act as identity
 )
 
-set .star ^x(		# Mimic Unlambda ".*"
+let .star ^x(		# Mimic Unlambda ".*"
 	set .counter (counter .plus 1)
 	x				# Act as identity
 )

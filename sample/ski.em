@@ -1,14 +1,14 @@
 # Test turing completeness by way of combinators (1). Expected output: ** [newline] *
 
-set .i ^x( x )
+let .i ^x( x )
 
-set .k ^x( ^y( x ) )
+let .k ^x( ^y( x ) )
 
-set .s ^x( ^y ( ^z ( x z (y z) ) ) )
+let .s ^x( ^y ( ^z ( x z (y z) ) ) )
 
-set .newline ^(print "\n")
+let .newline ^(print "\n")
 
-set .star ^(print "*")
+let .star ^(print "*")
 
 star i
 star i

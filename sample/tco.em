@@ -1,14 +1,14 @@
 # Test that tail call recursion works and does not infinitely grow the stack or anything.
 
-set .prints 0
+let .prints 0
 
-set .recurse ^ x {
+let .recurse ^ x {
 	# Waste some space
-	set .a (x .minus 1)
-	set .b (x .minus 2)
-	set .c (x .minus 3)
-	set .d (x .minus 4)
-	set .e (x .minus 5)
+	let .a (x .minus 1)
+	let .b (x .minus 2)
+	let .c (x .minus 3)
+	let .d (x .minus 4)
+	let .e (x .minus 5)
 
 	(x .gt 10000).if ^(
 		print "So far printed " x " times" nl

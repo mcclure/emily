@@ -1,7 +1,7 @@
 # Test loop construct plus argument blocks. Expected output: numbers 10 through 18, up by twos.
 
-set .countup ^arg{
-	set .count (arg.from)
+let .countup ^arg{
+	let .count (arg.from)
 	loop ^(
 		println count
 		set .count ( count .plus (arg.step) )
@@ -9,4 +9,4 @@ set .countup ^arg{
 	)
 }
 
-countup[ set .from 10; set .to 20; set .step 2 ]
+countup[ let .from 10; let .to 20; let .step 2 ]
