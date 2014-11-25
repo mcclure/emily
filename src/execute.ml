@@ -49,6 +49,8 @@ let stackDepth stack =
             | _::more -> stackDepthImpl (accum+1) more
     in stackDepthImpl 0 stack
 
+let parentSetSnippet = Tokenize.snippet "target.parent.set key"
+
 (* Execute and return nothing. *)
 (* TODO: This is too long, break up into more subfunctions... *)
 let execute code =
@@ -103,7 +105,7 @@ let execute code =
                             | None -> 
                                 match Value.tableGet t Value.parentKey with
                                     | Some parent -> apply onstack parent b
-                                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized")
+                                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
                     in let setTable t =
                         r (Value.tableBoundSet t b)
                     (* Perform the application *)
@@ -129,8 +131,10 @@ let execute code =
                         | Value.BuiltinFunctionValue f -> r ( f b )
                         | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
                             else (match Value.tableGet t Value.parentKey with
-                                | Some parent -> failwith "Doesn't work yet" (* FIXME: should handle .parent elegantly *)
-                                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ "not recognized for set"))
+                                (* Have to step one down. FIXME: Refactor with instance below? *)
+                                | Some parent -> 
+                                    execute_step @@ (executeFrame (Value.snippetScope ["target",a;"key",b]) parentSetSnippet)::stack
+                                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
                         | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
                             setTable t
                         (* Unworkable *)

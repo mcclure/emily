@@ -46,7 +46,7 @@ let tableBoundSet t key =
 
 let boolCast v = if v then True else Null
 
-let snippetClosure snippet bindings =
+let snippetScope bindings =
 	let scopeTable = tableBlank TrueBlank in
-	List.iter (fun x -> match x with (k,v) -> tableSet scopeTable k v) bindings;
-	ClosureValue({code=snippet; key=None; scope=TableValue(scopeTable)})
+	List.iter (fun x -> match x with (k,v) -> tableSet scopeTable (StringValue k) v) bindings;
+	TableValue(scopeTable)
