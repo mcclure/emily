@@ -3,7 +3,7 @@
 let .b 3
 
 {
-	let .b 4
+	set .b 4
 	println b
 }
 
