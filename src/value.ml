@@ -3,9 +3,10 @@
 type tableValue = (value, value) Hashtbl.t
 
 and closureValue = {
-	code  : Token.codeSequence;
-	scope : value;
-	key   : string option;
+	code   : Token.codeSequence;
+	scope  : value;
+	scoped : bool;
+	key    : string option;
 }
 
 and value =

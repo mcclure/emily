@@ -34,13 +34,14 @@ and executeState = executeFrame list
 
 let scopeInheriting kind v =
     Value.TableValue(Value.tableInheriting kind v)
-let closureScopeInheriting closureKind tokenKind v =
-    let kind = match (closureKind,tokenKind) with
-            | (Token.ClosureWithBinding _, Token.Plain) -> Value.NoLet
-            | (_,Token.Plain) -> Value.TrueBlank
-            | _ -> Value.WithLet
-    in scopeInheriting kind v
-let groupScopeInheriting tokenKind v = closureScopeInheriting Token.NonClosure tokenKind v
+let closureScope c =
+    let scope = c.Value.scope in
+    match (c.Value.scoped,c.Value.key) with
+        | (true,_) -> scopeInheriting Value.WithLet scope
+        | (false,Some _) -> scopeInheriting Value.NoLet scope
+        | _ -> scope
+let groupScope tokenKind scope =
+    match tokenKind with Token.Plain -> scope | _ -> scopeInheriting Value.WithLet scope
 
 let stackDepth stack = 
     let rec stackDepthImpl accum stack =
@@ -111,7 +112,7 @@ let execute code =
                     (* Perform the application *)
                     in match a with 
                         | Value.ClosureValue c ->
-                            let scope = scopeInheriting Value.WithLet c.Value.scope in (* FIXME: WithLet is not always correct! *)
+                            let scope = closureScope c in
                                 (match scope with
                                     | Value.TableValue t ->
                                         (match c.Value.key with
@@ -188,8 +189,9 @@ let execute code =
                                             in execute_step @@ stackWithRegister newState
 
                                         in let closureValue v =
-                                            let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None
-                                            in simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key })
+                                            let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None in
+                                            let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
+                                            simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; })
 
                                         (* Evaluate token *)
                                         in match token.Token.contents with
@@ -202,7 +204,7 @@ let execute code =
                                                 match group.Token.closure with
                                                     (* Token is nontrivial to evaluate, and will require a new stack frame. *)
                                                     | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
-                                                        execute_step @@ (inheritExecuteFrame frame.scope group.Token.items)::(stackWithRegister frame.register)
+                                                        execute_step @@ (inheritExecuteFrame (groupScope group.Token.kind frame.scope) group.Token.items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 
     in match code.Token.contents with
