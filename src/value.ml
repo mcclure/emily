@@ -24,7 +24,13 @@ and value =
 
 type tableBlankKind = TrueBlank | NoLet | WithLet
 
-let parentKey = AtomValue "parent"
+let idGenerator = ref 0.0
+
+let parentKeyString = "parent"
+let parentKey = AtomValue parentKeyString
+let idKeyString = "!id"
+let idKey = AtomValue idKeyString
+
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
@@ -34,7 +40,9 @@ let tableBlank kind : tableValue =
 		| TrueBlank -> ()
 		| NoLet ->   tableSetString t "set" (TableSetValue t)
 		| WithLet -> tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t)
-	); t
+	);
+	if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator);
+	t
 let tableInheriting kind v =
 	let t = tableBlank kind in tableSet t parentKey v;
 		t

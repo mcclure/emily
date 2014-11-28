@@ -10,11 +10,12 @@ type optionSpec = {
     mutable disassemble : bool;
     mutable disassembleVerbose : bool;
     mutable trace : bool;
+    mutable trackObjects : bool;
 }
 
 let run = { 
     targets=[];
-    disassemble=false; disassembleVerbose=false; trace=false;
+    disassemble=false; disassembleVerbose=false; trace=false; trackObjects=false;
 }
 
 let () = 
@@ -48,6 +49,7 @@ Options:|})
         ("--debug-dis",   Arg.Unit(fun () -> run.disassemble <- true),        {|Print "disassembled" code and exit|});
         ("--debug-disv",  Arg.Unit(fun () -> run.disassembleVerbose <- true), {|Print "disassembled" code with position data and exit|});
         ("--debug-trace", Arg.Unit(fun () -> run.trace <- true),              "When executing, print interpreter state");
+        ("--debug-track", Arg.Unit(fun () -> run.trackObjects <- true),       {|When executing, give all objects a unique "!id" member|});
     ]
 
     in Arg.parse args targetParse usage

@@ -40,16 +40,37 @@ let dumpTreeDense token =
         ) ) ^ "\n" ^ r
     in dumpTree groupPrinter token
 
-let dumpValue v =
+let angleWrap s = "<" ^ s ^ ">"
+let quoteWrap s = "\"" ^ s ^ "\""
+let idStringForTable t =
+    match Value.tableGet t Value.idKey with
+        | None -> "UNKNOWN"
+        | Some Value.FloatValue v -> string_of_int @@ int_of_float v
+        | _ -> "INVALID" (* Should be impossible *)
+let idStringForValue v = match v with
+    | Value.TableValue t -> idStringForTable t
+    | _ -> "UNTABLE"
+
+let dumpTreeImpl wrapper v =
     match v with 
         | Value.Null -> "<null>"
         | Value.True -> "<true>"
         | Value.FloatValue v -> string_of_float v
-        | Value.StringValue s -> s
-        | Value.AtomValue s -> s
+        | Value.StringValue s -> quoteWrap s
+        | Value.AtomValue s -> "." ^ s
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>" 
         | Value.ClosureValue _ -> "<closure>"
-        | Value.TableValue _ -> "<table>"
+        | Value.TableValue _ -> wrapper "table" v
         | Value.TableSetValue _ -> "<table-setter-let>"
         | Value.TableLetValue _ -> "<table-setter-let>"
+
+let dumpTree v =
+    let wrapper label obj = match obj with
+        | Value.TableValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
+        | _ -> angleWrap label
+    in dumpTreeImpl wrapper v
+
+let dumpValue v =
+    let wrapper label obj = angleWrap label
+    in dumpTreeImpl wrapper v
