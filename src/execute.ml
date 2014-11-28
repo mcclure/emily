@@ -89,7 +89,7 @@ let execute code =
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v =
                     (* Trace here ONLY if command line option requests it *)
-                    if Options.(run.trace) then print_endline @@ "--> " ^ (dumpPrinter v);
+                    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
 
                     (* Unpack the new stack. *)
                     match stackTop with
@@ -210,7 +210,11 @@ let execute code =
                                                 match group.Token.closure with
                                                     (* Token is nontrivial to evaluate, and will require a new stack frame. *)
                                                     | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
-                                                        execute_step @@ (inheritExecuteFrame (groupScope group.Token.kind frame.scope) group.Token.items)::(stackWithRegister frame.register)
+                                                        let newScope = (groupScope group.Token.kind frame.scope) in
+                                                        (* Trace here ONLY if command line option requests it *)
+                                                        if Options.(run.trace) then print_endline @@ "--> " ^ dumpPrinter newScope;
+
+                                                        execute_step @@ (inheritExecuteFrame newScope group.Token.items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 
     in match code.Token.contents with
