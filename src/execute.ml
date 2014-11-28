@@ -83,7 +83,7 @@ let execute code =
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
                 (* Trace here ONLY if command line option requests it *)
-                if Options.(run.trace) then print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+                if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v =
@@ -141,8 +141,8 @@ let execute code =
                         | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
                             else (match Value.tableGet t Value.parentKey with
                                 (* Have to step one down. FIXME: Refactor with instance below? *)
-                                | Some parent -> 
-                                    execute_step @@ (executeFrame (Value.snippetScope ["target",a;"key",b]) parentSetSnippet)::stack
+                                | Some parent ->
+                                    execute_step @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
                                 | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
                         | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
                             setTable t
