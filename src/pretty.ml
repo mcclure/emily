@@ -51,7 +51,7 @@ let idStringForValue v = match v with
     | Value.TableValue t -> idStringForTable t
     | _ -> "UNTABLE"
 
-let dumpTreeImpl wrapper v =
+let dumpValueTreeImpl wrapper v =
     match v with 
         | Value.Null -> "<null>"
         | Value.True -> "<true>"
@@ -65,12 +65,12 @@ let dumpTreeImpl wrapper v =
         | Value.TableSetValue _ -> "<table-setter-let>"
         | Value.TableLetValue _ -> "<table-setter-let>"
 
-let dumpTree v =
+let dumpValueTree v =
     let wrapper label obj = match obj with
         | Value.TableValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
         | _ -> angleWrap label
-    in dumpTreeImpl wrapper v
+    in dumpValueTreeImpl wrapper v
 
 let dumpValue v =
     let wrapper label obj = angleWrap label
-    in dumpTreeImpl wrapper v
+    in dumpValueTreeImpl wrapper v

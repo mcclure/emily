@@ -16,10 +16,12 @@ type registerState =
     | FirstValue of Value.value
     | PairValue of (Value.value * Value.value)
 
-let dumpRegisterState registerState = match registerState with
-    | LineStart v -> "LineStart:" ^ (Pretty.dumpValue v)
-    | FirstValue v -> "FirstValue:" ^ (Pretty.dumpValue v)
-    | PairValue (v1,v2) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "," ^ (Pretty.dumpValue v2)
+let dumpRegisterState registerState = 
+    let printer = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue in
+    match registerState with
+    | LineStart v -> "LineStart:" ^ (printer v)
+    | FirstValue v -> "FirstValue:" ^ (printer v)
+    | PairValue (v1,v2) -> "PairValue:" ^ (printer v1) ^ "," ^ (printer v2)
 
 (* Each frame on the stack has the two value "registers" and a codeSequence reference which
    is effectively an instruction pointer. *)
@@ -81,7 +83,7 @@ let execute code =
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
                 (* Trace here ONLY if command line option requests it *)
-                if Options.(run.trace) then print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState  frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+                if Options.(run.trace) then print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
                 let returnTo stackTop v = 
