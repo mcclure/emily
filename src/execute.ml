@@ -60,8 +60,7 @@ let parentSetSnippet = Tokenize.snippet "target.parent.set key"
 let execute code =
     (* Constructor for a new, stateless frame beginning with the given code-position reference *)
     let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope} in
-    let inheritExecuteFrame scope code = {register=LineStart(Value.Null); code=code; scope=scopeInheriting Value.WithLet scope} in
-    let initialExecuteFrame = inheritExecuteFrame BuiltinScope.scopePrototype in
+    let initialExecuteFrame = executeFrame (scopeInheriting Value.WithLet BuiltinScope.scopePrototype) in
 
     (* Main loop *)
     let rec execute_step stack =
@@ -119,6 +118,9 @@ let execute code =
                     in match a with 
                         | Value.ClosureValue c ->
                             let scope = closureScope c in
+                                (* Trace here ONLY if command line option requests it *)
+                                if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
+
                                 (match scope with
                                     | Value.TableValue t ->
                                         (match c.Value.key with
@@ -212,9 +214,9 @@ let execute code =
                                                     | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
                                                         let newScope = (groupScope group.Token.kind frame.scope) in
                                                         (* Trace here ONLY if command line option requests it *)
-                                                        if Options.(run.trace) then print_endline @@ "--> " ^ dumpPrinter newScope;
+                                                        if Options.(run.trace) then print_endline @@ "Group --> " ^ dumpPrinter newScope;
 
-                                                        execute_step @@ (inheritExecuteFrame newScope group.Token.items)::(stackWithRegister frame.register)
+                                                        execute_step @@ (executeFrame newScope group.Token.items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 
     in match code.Token.contents with
