@@ -16,12 +16,13 @@ type registerState =
     | FirstValue of Value.value
     | PairValue of (Value.value * Value.value)
 
+let dumpPrinter = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue
+
 let dumpRegisterState registerState = 
-    let printer = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue in
     match registerState with
-    | LineStart v -> "LineStart:" ^ (printer v)
-    | FirstValue v -> "FirstValue:" ^ (printer v)
-    | PairValue (v1,v2) -> "PairValue:" ^ (printer v1) ^ "," ^ (printer v2)
+    | LineStart v -> "LineStart:" ^ (dumpPrinter v)
+    | FirstValue v -> "FirstValue:" ^ (dumpPrinter v)
+    | PairValue (v1,v2) -> "PairValue:" ^ (dumpPrinter v1) ^ "," ^ (dumpPrinter v2)
 
 (* Each frame on the stack has the two value "registers" and a codeSequence reference which
    is effectively an instruction pointer. *)
@@ -86,7 +87,10 @@ let execute code =
                 if Options.(run.trace) then print_endline @@ "Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
                 (* Enter a frame as if returning this value from a function. *)
-                let returnTo stackTop v = 
+                let returnTo stackTop v =
+                    (* Trace here ONLY if command line option requests it *)
+                    if Options.(run.trace) then print_endline @@ "--> " ^ (dumpPrinter v);
+
                     (* Unpack the new stack. *)
                     match stackTop with
                         (* It's empty. We're returning from the final frame and can just exit. *)
