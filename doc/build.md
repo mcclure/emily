@@ -5,3 +5,9 @@ In order to build this, you will need to install:
 - sedlex -- I use 1.99.2, installed via opam
 - ppx_tools -- I use 0.99.2, installed via opam (Required by sedlex)
 - containers -- I use 0.4.1, installed via opam
+
+To build, this should be sufficient:
+
+make
+
+The build product will be left in the "package" directory.

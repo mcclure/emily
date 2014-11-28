@@ -1,0 +1,36 @@
+Repository contents
+
+Makefile
+	Project makefile
+
+contents.txt
+	This file
+
+develop/
+	Utility scripts for use in development. Scripts should be run from project root
+
+develop/regression.py
+	Unit testing script
+
+doc/
+	Language, build etc documentation. I recommend starting with "build.md"
+	Files are in Markdown, I recommend the Markdown Preview plugin for Chrome
+
+package/
+	After build, executable will go here
+
+sample/
+	Example Emily scripts
+
+src/
+	All source code
+
+src/_tags
+	Configuration file for "ocamlbuild"
+
+src/main.ml
+	Program entry point
+
+_tags
+_build/
+	Intermediate build products, automatically created by make
