@@ -62,12 +62,12 @@ let dumpValueTreeImpl wrapper v =
         | Value.BuiltinMethodValue _ -> "<object-builtin>" 
         | Value.ClosureValue _ -> "<closure>"
         | Value.TableValue _ -> wrapper "table" v
-        | Value.TableSetValue _ -> "<table-setter-let>"
-        | Value.TableLetValue _ -> "<table-setter-let>"
+        | Value.TableSetValue _ -> wrapper "table-setter" v
+        | Value.TableLetValue _ -> wrapper "table-setter-let" v
 
 let dumpValueTree v =
-    let wrapper label obj = match obj with
-        | Value.TableValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
+    let rec wrapper label obj = match obj with
+        | Value.TableValue t | Value.TableSetValue t | Value.TableLetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
         | _ -> angleWrap label
     in dumpValueTreeImpl wrapper v
 
