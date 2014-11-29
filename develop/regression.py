@@ -67,6 +67,11 @@ stdcall = ["./package/emily"]
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)
+startp = re.compile(r'^', re.MULTILINE)
+
+def pretag(tag, str):
+    tag = "\t%s:"%(tag)
+    return startp.sub(tag, str)
 
 failures = 0
 
@@ -92,12 +97,17 @@ for filename in files:
     result = proc.wait()
     outstr, errstr = proc.communicate()
 
-    if bool(result) ^ bool(expectfail):
+    result = bool(result)
+    expectfail = bool(expectfail)
+    outlines = outlines.rstrip()
+    outstr = outstr.rstrip()
+
+    if result ^ expectfail:
         print "\tFAIL: Process failure " + ("expected" if expectfail else "not expected") + " but " + ("seen" if result else "not seen")
         failures += 1
-    elif outstr.rstrip() != outlines.rstrip():
-        print "X '%s' '%s'"%(outstr.rstrip(), outlines.rstrip())
+    elif outstr != outlines:
         print "\tFAIL: Output differs"
+        print "\n%s\n\n%s" % ( pretag("EXPECT", outlines), pretag("STDOUT",outstr) )
         failures += 1
 
 print "\n%d tests failed of %d" % (failures, len(files))
