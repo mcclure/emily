@@ -16,10 +16,13 @@ _tags:
 .PHONY: all
 all: package/emily
 
-# Non-essential: Shortcut for regression test script
+# Non-essential: Shortcuts for regression test script
 .PHONY: test
 test:
 	./develop/regression.py -a
+.PHONY: test-all
+test-all:
+	./develop/regression.py -A
 
 clean:
 	ocamlbuild -clean

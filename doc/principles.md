@@ -12,7 +12,7 @@
 
 ### One language
 
-### Define by behavior, not nature
+### Define objects by their behavior, not their nature
 
 ## DRY/SWYM
 

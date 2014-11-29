@@ -1,0 +1,12 @@
+# Tests known to currently fail.
+
+# SERIOUS FAILURES -- FIX ASAP
+sample/escape.em
+
+# "Expected" failures due to not-yet-implemented features
+sample/obj.em
+sample/tern.em
+sample/tern.2.em
+sample/loop.em
+sample/loop.2.em
+sample/fibo.em

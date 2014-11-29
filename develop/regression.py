@@ -20,6 +20,7 @@ import optparse
 import re
 
 stdfile = "sample/regression.txt"
+badfile = "sample/regression-known-bad.txt"
 
 help  = "%prog -a\n"
 help += "\n"
@@ -27,10 +28,11 @@ help += "Accepted arguments:\n"
 help += "-f [filename.em]  # Check single file\n"
 help += "-t [filename.txt] # Check all paths listed in file\n"
 help += "-a # Check all paths listed in standard " + stdfile + "\n"
+help += "-A # Also check all paths listed in std " + badfile + "\n"
 help += "-v # Print all output"
 
 parser = optparse.OptionParser(usage=help)
-for a in ["a","v"]: # Single letter args, flags
+for a in ["a", "A", "v"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
 for a in ["f", "t"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
@@ -48,8 +50,11 @@ if cmds:
 indices = []
 files = []
 
-if flag("a"):
+if flag("a") or flag("A"):
     indices += [stdfile]
+
+if flag("A"):
+    indices += [badfile]
 
 indices += flag("t")
 
@@ -57,7 +62,7 @@ for filename in indices:
     with open(filename) as f:
         for line in f.readlines():
             line = line.rstrip()
-            if line:
+            if line and line[0] != "#":
                 files += [line]
 
 files += flag("f")

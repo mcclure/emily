@@ -1,10 +1,11 @@
+# Tests expected to pass.
+
 sample/trivial.em
 sample/parsetest.2.em
 sample/parsetest.fail.em
 sample/parsetest.fail.2.em
 
 sample/print.em
-sample/escape.em
 
 sample/statement.em
 sample/math.em
@@ -16,6 +17,5 @@ sample/scope.fallthrough.em
 sample/scope.unscoped.em
 sample/closure.em
 sample/scope.closure.em
-sample/obj.em
 
 sample/ski.2.em
