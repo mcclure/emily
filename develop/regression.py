@@ -100,7 +100,13 @@ for filename in files:
                     scanning = False
 
     print "Running %s..." % (filename)
-    proc = subprocess.Popen(stdcall+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        proc = subprocess.Popen(stdcall+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError as e:
+        print "\nCATASTROPHIC FAILURE: Couldn't find emily?:"
+        print e
+        print "Make sure you ran a plain `make` first."
+        sys.exit(1)
     result = proc.wait()
     outstr, errstr = proc.communicate()
 
