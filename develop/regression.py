@@ -65,21 +65,27 @@ if not files:
 
 stdcall = ["./package/emily"]
 
-failp = re.compile(r'#\? ?fail', re.I)
-stdoutp = re.compile(r'#> ?(.+)$', re.S)
+expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
+linep = re.compile(r'# ?(.+)$', re.S)
 
 failures = 0
 
 for filename in files:
     expectfail = False
+    scanning = False
     outlines = ''
     with open(filename) as f:
         for line in f.readlines():
-            if failp.match(line):
-                expectfail = True
-            outline = stdoutp.match(line)
-            if outline:
-                outlines += outline.group(1)
+            expect = expectp.match(line)
+            if expect:
+                expectfail = bool(expect.group(1))
+                scanning = bool(expect.group(2))
+            else:
+                outline = linep.match(line)
+                if scanning and outline:
+                    outlines += outline.group(1)
+                else:
+                    scanning = False
 
     print "Running %s..." % (filename)
     proc = subprocess.Popen(stdcall+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)

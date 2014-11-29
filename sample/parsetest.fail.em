@@ -1,6 +1,5 @@
 # Statements to test the parser -- Open right paren
-# Not expected to parse or run sucessfully
-#? Fail
+# Expect failure
 
 version 0.1.0
 
