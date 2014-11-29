@@ -1,4 +1,5 @@
 # Test loop construct. Expected output: numbers 10 through 1, descending.
+# NOT PART OF REGRESSION TESTS -- NOT YET WORKING
 
 let .a 10
 

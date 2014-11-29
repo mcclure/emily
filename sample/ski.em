@@ -1,4 +1,5 @@
 # Test turing completeness by way of combinators (1). Expected output: ** [newline] *
+# NOT PART OF REGRESSION TESTS
 
 let .i ^x( x )
 

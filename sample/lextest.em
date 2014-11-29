@@ -1,5 +1,6 @@
 # Here's a series of meaningless statements to test the lexer
 # Expected to parse successfully, not expected to run sucessfully
+# NOT PART OF REGRESSION TESTS
 
 version 0.1.0
 

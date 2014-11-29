@@ -1,3 +1,5 @@
-# Demonstrate a closure. Expected output: 4.0
+# Demonstrate a closure.
+# Expect:
+# 4.
 
 ^x( println x ) 4

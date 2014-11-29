@@ -1,4 +1,5 @@
 # Test loop construct plus argument blocks. Expected output: numbers 10 through 18, up by twos.
+# NOT PART OF REGRESSION TESTS -- NOT YET WORKING
 
 let .countup ^arg{
     let .count (arg.from)

@@ -1,4 +1,5 @@
 # Test turing completeness by way of combinators (3). Expected output: The fibbonachi sequence, as numbers.
+# NOT PART OF REGRESSION TESTS -- DOES NOT TERMINATE
 
 # Identity combinator
 let .i ^x( x )

@@ -1,4 +1,7 @@
-# Test variable shadowing for an unscoped closure. Expected output: 4.0 [newline] 3.0
+# Test variable shadowing for an unscoped closure.
+# Expect:
+# 4.
+# 3.
 
 let .b 3
 

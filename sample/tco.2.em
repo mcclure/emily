@@ -1,4 +1,6 @@
 # Test that tail call recursion works and does not infinitely grow the stack or anything.
+# (Version 2: Mutual recursion)
+# NOT PART OF REGRESSION TESTS
 
 let .prints 0
 

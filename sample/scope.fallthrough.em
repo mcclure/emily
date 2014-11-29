@@ -1,4 +1,7 @@
-# Test a scoped group. Expected output: 4.0 [newline] 4.0
+# Test a scoped group.
+# Expect:
+# 4.
+# 4.
 
 let .b 3
 

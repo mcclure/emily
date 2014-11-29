@@ -108,7 +108,7 @@ for filename in files:
     if result ^ expectfail:
         print "\tFAIL:   Process failure " + ("expected" if expectfail else "not expected") + " but " + ("seen" if result else "not seen")
         if errstr:
-            print pretag("STDERR",errstr)
+            print "\n"+pretag("STDERR",errstr)
         failures += 1
     elif outstr != outlines:
         print "\tFAIL:   Output differs"

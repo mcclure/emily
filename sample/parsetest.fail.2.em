@@ -1,5 +1,5 @@
 # Statements to test the parser -- Unpaired right bracket
-# Not expected to parse or run sucessfully
+# Expect failure
 
 version 0.1.0
 

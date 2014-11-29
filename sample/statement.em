@@ -1,3 +1,5 @@
-# Test basic arithmetic / statement execution. Expected output: 7.0
+# Test basic arithmetic / statement execution.
+# Expect:
+# 7.
 
 println (3 .plus 4)

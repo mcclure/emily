@@ -1,4 +1,10 @@
 # Test boolean/logic operators
+# Expect:
+# <true>
+# <true>
+# <null>
+# <true>
+# <null>
 
 # Expected output: true
 println (4 .lt 5)

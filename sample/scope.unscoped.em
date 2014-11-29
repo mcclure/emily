@@ -1,4 +1,7 @@
-# Test an unscoped group. Expected output: 4.0 [newline] 4.0
+# Test an unscoped group.
+# Expect:
+# 4.
+# 4.
 
 let .b 3
 
