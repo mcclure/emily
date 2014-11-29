@@ -13,8 +13,10 @@
 #
 # Usage: ./develop/regression.py -a
 
+import sys
 import subprocess
 import optparse
+import re
 
 stdfile = "sample/regression.txt"
 
@@ -63,6 +65,35 @@ if not files:
 
 stdcall = ["./package/emily"]
 
+failp = re.compile(r'#\? ?fail', re.I)
+stdoutp = re.compile(r'#> ?(.+)$', re.S)
+
+failures = 0
+
 for filename in files:
+    expectfail = False
+    outlines = ''
+    with open(filename) as f:
+        for line in f.readlines():
+            if failp.match(line):
+                expectfail = True
+            outline = stdoutp.match(line)
+            if outline:
+                outlines += outline.group(1)
+
     print "Running %s..." % (filename)
-    subprocess.call(stdcall+[filename])
+    proc = subprocess.Popen(stdcall+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = proc.wait()
+    outstr, errstr = proc.communicate()
+
+    if bool(result) ^ bool(expectfail):
+        print "\tFAIL: Process failure " + ("expected" if expectfail else "not expected") + " but " + ("seen" if result else "not seen")
+        failures += 1
+    elif outstr.rstrip() != outlines.rstrip():
+        print "X '%s' '%s'"%(outstr.rstrip(), outlines.rstrip())
+        print "\tFAIL: Output differs"
+        failures += 1
+
+print "\n%d tests failed of %d" % (failures, len(files))
+
+sys.exit(0 if failures == 0 else 1)
