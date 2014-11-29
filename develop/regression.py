@@ -3,13 +3,14 @@
 # This is a simple test harness script. It targets Emily files, extracts expected
 # results from codes in the comments, and verifies the script runs as expected.
 #
-# Recognized codes:
+# Recognized comment codes:
 #
-#   #? fail
+#   # Expect failure
 #       Emily interpreter should fail
 #
-#   #> SOMETHING
-#       Expect "SOMETHING" as an output line (Note: First space consumed)
+#   # Expect:
+#   # SOMETHING
+#       Expect "SOMETHING" as an output line (Note: First space always consumed)
 #
 # Usage: ./develop/regression.py -a
 
@@ -25,10 +26,11 @@ help += "\n"
 help += "Accepted arguments:\n"
 help += "-f [filename.em]  # Check single file\n"
 help += "-t [filename.txt] # Check all paths listed in file\n"
-help += "-a # Check all paths listed in standard " + stdfile
+help += "-a # Check all paths listed in standard " + stdfile + "\n"
+help += "-v # Print all output"
 
 parser = optparse.OptionParser(usage=help)
-for a in ["a"]: # Single letter args, flags
+for a in ["a","v"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
 for a in ["f", "t"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
@@ -70,7 +72,7 @@ linep = re.compile(r'# ?(.+)$', re.S)
 startp = re.compile(r'^', re.MULTILINE)
 
 def pretag(tag, str):
-    tag = "\t%s:"%(tag)
+    tag = "\t%s: " % (tag)
     return startp.sub(tag, str)
 
 failures = 0
@@ -101,14 +103,19 @@ for filename in files:
     expectfail = bool(expectfail)
     outlines = outlines.rstrip()
     outstr = outstr.rstrip()
+    errstr = errstr.rstrip()
 
     if result ^ expectfail:
-        print "\tFAIL: Process failure " + ("expected" if expectfail else "not expected") + " but " + ("seen" if result else "not seen")
+        print "\tFAIL:   Process failure " + ("expected" if expectfail else "not expected") + " but " + ("seen" if result else "not seen")
+        if errstr:
+            print pretag("STDERR",errstr)
         failures += 1
     elif outstr != outlines:
-        print "\tFAIL: Output differs"
+        print "\tFAIL:   Output differs"
         print "\n%s\n\n%s" % ( pretag("EXPECT", outlines), pretag("STDOUT",outstr) )
         failures += 1
+    elif flag("v"):
+        print "\n".join( ([pretag("STDOUT", outstr)] if outstr else []) + ([pretag("STDERR",errstr)] if errstr else []) )
 
 print "\n%d tests failed of %d" % (failures, len(files))
 
