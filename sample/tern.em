@@ -1,5 +1,8 @@
 # Test simple ternary expressions. Expected output: 2 [newline] 5
-# NOT PART OF REGRESSION TESTS -- NOT YET WORKING
+
+# Expect:
+# 2.
+# 5.
 
 println (tern ^( 1    ) ^( 2 ) ^( 3 ) )
 println (tern ^( null ) ^( 4 ) ^( 5 ) )

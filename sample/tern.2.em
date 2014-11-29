@@ -1,5 +1,15 @@
 # Test complex ternary expressions and a recursive function. Expected output: numbers 9 through 0, descending.
-# NOT PART OF REGRESSION TESTS -- NOT YET WORKING
+
+# Expect:
+# 9
+# 8
+# 7
+# 6
+# 5
+# 4
+# 3
+# 2
+# 1
 
 # Would be better if it short circuited!
 let .or ^a( ^b( tern ^(a) ^(a) ^(b) ) )

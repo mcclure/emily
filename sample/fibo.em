@@ -1,5 +1,18 @@
 # Test that a "real" program can run. Prints the finonachi numbers.
-# NOT PART OF REGRESSION TESTS -- NOT YET WORKING
+
+# Expect:
+# 0.
+# 1.
+# 1.
+# 2.
+# 3.
+# 5.
+# 8.
+# 13.
+# 21.
+# 34.
+# 55.
+# 89.
 
 let .a 0
 let .b 1
@@ -11,5 +24,5 @@ loop ^{
     set .a b
     set .b c
 
-    true
+    b .lt 100
 }
