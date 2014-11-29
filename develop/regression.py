@@ -13,6 +13,7 @@
 #       Expect "SOMETHING" as an output line (Note: First space always consumed)
 #
 # Usage: ./develop/regression.py -a
+# Tested with Python 2.6.1
 
 import sys
 import subprocess
