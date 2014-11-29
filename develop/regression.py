@@ -14,4 +14,50 @@
 # Usage: ./develop/regression.py -a
 
 import subprocess
+import optparse
 
+stdfile = "sample/regression.txt"
+
+help  = "%prog -a\n"
+help += "\n"
+help += "Accepted arguments:\n"
+help += "-f [filename.em]  # Check single file\n"
+help += "-t [filename.txt] # Check all paths listed in file\n"
+help += "-a # Check all paths listed in standard " + stdfile
+
+parser = optparse.OptionParser(usage=help)
+for a in ["a"]: # Single letter args, flags
+    parser.add_option("-"+a, action="store_true")
+for a in ["f", "t"]: # Long args with arguments
+    parser.add_option("-"+a, action="append")
+
+(options, cmds) = parser.parse_args()
+def flag(a):
+    x = getattr(options, a)
+    if x:
+        return x
+    return []
+
+if cmds:
+    parser.error("Stray commands: %s" % cmds)
+
+indices = []
+files = []
+
+if flag("a"):
+    indices += [stdfile]
+
+indices += flag("t")
+
+for filename in indices:
+    with open(filename) as f:
+        for line in f.readlines():
+            files += [line.rstrip()]
+
+files += flag("f")
+
+if not files:
+    parser.error("No files specified")
+
+print indices
+print files
