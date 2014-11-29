@@ -1,3 +1,5 @@
+sample/trivial.em
+sample/parsetest.2.em
 sample/parsetest.fail.em
 sample/parsetest.fail.2.em
 

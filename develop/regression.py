@@ -115,7 +115,12 @@ for filename in files:
         print "\n%s\n\n%s" % ( pretag("EXPECT", outlines), pretag("STDOUT",outstr) )
         failures += 1
     elif flag("v"):
-        print "\n".join( ([pretag("STDOUT", outstr)] if outstr else []) + ([pretag("STDERR",errstr)] if errstr else []) )
+        if outstr:
+            print pretag("STDOUT", outstr)
+        if outstr and errstr:
+            print
+        if errstr:
+            print pretag("STDERR",errstr)
 
 print "\n%d tests failed of %d" % (failures, len(files))
 
