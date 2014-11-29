@@ -3,7 +3,7 @@
 let .b 3
 
 ^b(
-	println b
+    println b
 ) 4
 
 println b

@@ -11,15 +11,15 @@ let .s ^x( ^y ( ^z ( x z (y z) ) ) )
 
 let .counter 0
 
-let .newline ^x(	# Mimic Unlambda "r"
-	println counter
-	set .counter 0
-	x				# Act as identity
+let .newline ^x(    # Mimic Unlambda "r"
+    println counter
+    set .counter 0
+    x                # Act as identity
 )
 
-let .star ^x(		# Mimic Unlambda ".*"
-	set .counter (counter .plus 1)
-	x				# Act as identity
+let .star ^x(        # Mimic Unlambda ".*"
+    set .counter (counter .plus 1)
+    x                # Act as identity
 )
 
 # "fibo.unl" sample from Comprehensive Unlambda Archive Network

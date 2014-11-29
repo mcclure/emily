@@ -4,11 +4,11 @@ let .a 0
 let .b 1
 
 loop ^{
-	println b
+    println b
 
-	let .c (a .plus b)
-	set .a b
-	set .b c
+    let .c (a .plus b)
+    set .a b
+    set .b c
 
-	true
+    true
 }

@@ -3,7 +3,7 @@
 let .a 10
 
 loop ^(
-	println a
-	set .a (a .minus 1)
-	a.gt 0
+    println a
+    set .a (a .minus 1)
+    a.gt 0
 )

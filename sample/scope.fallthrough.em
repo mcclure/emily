@@ -3,8 +3,8 @@
 let .b 3
 
 {
-	set .b 4
-	println b
+    set .b 4
+    println b
 }
 
 println b
