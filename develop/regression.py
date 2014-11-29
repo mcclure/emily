@@ -52,12 +52,17 @@ indices += flag("t")
 for filename in indices:
     with open(filename) as f:
         for line in f.readlines():
-            files += [line.rstrip()]
+            line = line.rstrip()
+            if line:
+                files += [line]
 
 files += flag("f")
 
 if not files:
     parser.error("No files specified")
 
-print indices
-print files
+stdcall = ["./package/emily"]
+
+for filename in files:
+    print "Running %s..." % (filename)
+    subprocess.call(stdcall+[filename])
