@@ -44,7 +44,7 @@ let rec tableBlank kind : tableValue =
         | NoLet ->   tableSetString t "set" (TableSetValue t)
         | WithLet -> tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t)
         | BoxFrom parent -> let box = match parent with None -> tableBlank WithLet | Some value -> tableInheriting WithLet value in
-             tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t); (* TODO: Fancier *)
+             tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue box); (* TODO: Fancier *)
              tableSet t currentKey (TableValue box)
     );
     tableSetString t "has" (TableHasValue t);
