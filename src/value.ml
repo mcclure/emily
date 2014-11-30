@@ -23,7 +23,7 @@ and value =
     | TableLetValue of tableValue
     | TableHasValue of tableValue
 
-type tableBlankKind = TrueBlank | NoLet | WithLet
+and tableBlankKind = TrueBlank | NoLet | WithLet | BoxFrom of value option
 
 let idGenerator = ref 0.0
 
@@ -31,21 +31,26 @@ let parentKeyString = "parent"
 let parentKey = AtomValue parentKeyString
 let idKeyString = "!id"
 let idKey = AtomValue idKeyString
+let currentKeyString = "current"
+let currentKey = AtomValue currentKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value
-let tableBlank kind : tableValue =
+let rec tableBlank kind : tableValue =
     let t = Hashtbl.create(1) in (match kind with
         | TrueBlank -> ()
         | NoLet ->   tableSetString t "set" (TableSetValue t)
         | WithLet -> tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t)
+        | BoxFrom parent -> let box = match parent with None -> tableBlank WithLet | Some value -> tableInheriting WithLet value in
+             tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t); (* TODO: Fancier *)
+             tableSet t currentKey (TableValue box)
     );
     tableSetString t "has" (TableHasValue t);
     if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator);
     t
-let tableInheriting kind v =
+and tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
 

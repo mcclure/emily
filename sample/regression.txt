@@ -20,4 +20,6 @@ sample/scope.unscoped.em
 sample/closure.em
 sample/scope.closure.em
 
+sample/obj.current.em
+
 sample/ski.2.em

@@ -76,8 +76,8 @@ let dumpValue v =
     let wrapper label obj = angleWrap label
     in dumpValueTreeImpl wrapper v
 
+(* Normal "print" uses this *)
 let dumpValueForUser v =
-    (* Normal "print" uses this *)
     match v with
         | Value.StringValue s -> s
         | Value.AtomValue s -> s

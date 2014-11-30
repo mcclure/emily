@@ -1,4 +1,5 @@
 (* Populates a prototype for scopes *)
+(* Note: Scope does not inherit true because it isn't user accessible yet. *)
 let scopePrototypeTable = Value.tableBlank Value.TrueBlank
 let scopePrototype = Value.TableValue(scopePrototypeTable)
 

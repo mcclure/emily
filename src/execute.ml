@@ -44,7 +44,10 @@ let closureScope c =
         | (false,Some _) -> scopeInheriting Value.NoLet scope
         | _ -> scope
 let groupScope tokenKind scope =
-    match tokenKind with Token.Plain -> scope | _ -> scopeInheriting Value.WithLet scope
+    match tokenKind with
+        | Token.Plain  -> scope
+        | Token.Scoped -> scopeInheriting Value.WithLet scope
+        | Token.Box    -> scopeInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
 
 let stackDepth stack =
     let rec stackDepthImpl accum stack =
@@ -220,10 +223,18 @@ let execute code =
                                                     (* Token is nontrivial to evaluate, and will require a new stack frame. *)
                                                     | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
                                                         let newScope = (groupScope group.Token.kind frame.scope) in
+                                                        let items = match group.Token.kind with
+                                                            | Token.Box ->
+                                                                let wrapperGroup = Token.(makePositionless @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
+                                                                let word = Token.(makePositionless @@ Word Value.currentKeyString) in
+                                                                [ [wrapperGroup]; [word] ]
+                                                            | _ -> group.Token.items
+                                                        in
+
                                                         (* Trace here ONLY if command line option requests it *)
                                                         if Options.(run.trace) then print_endline @@ "Group --> " ^ dumpPrinter newScope;
 
-                                                        execute_step @@ (executeFrame newScope group.Token.items)::(stackWithRegister frame.register)
+                                                        execute_step @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 
     in match code.Token.contents with

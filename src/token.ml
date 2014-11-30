@@ -22,7 +22,7 @@ type tokenGroupKind =
 
 (* Is this group a closure? What kind? *)
 type tokenClosureKind =
-    | NonClosure                   (* Is not a function *) 
+    | NonClosure                   (* Is not a function *)
     | Closure                      (* No-argument function-- should appear post-macro only *)
     | ClosureWithBinding of string (* Function with argument-- should appear post-macro only *)
 
@@ -39,7 +39,7 @@ and tokenGroup = {
 }
 
 (* Data content of a token *)
-and tokenContents = 
+and tokenContents =
     | Word of string   (* Alphanum *)
 (*  | Symbol of string    Punctuation-- appears pre-macro only. Disabled until macros are back *)
     | String of string (* "Quoted" *)
@@ -60,5 +60,7 @@ let makeToken position contents = {
 }
 
 (* Quick constructor for token, group type *)
-let makeGroup position closure kind items = 
+let makeGroup position closure kind items =
     makeToken position ( Group { kind=kind; closure=closure; items=items; } )
+
+let makePositionless contents = {at={fileName=None;lineNumber=0;lineOffset=0}; contents=contents}
