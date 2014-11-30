@@ -3,8 +3,6 @@
 # 4.
 # 4.
 
-let .b 3
-
 (
     let .b 4
     println b
