@@ -6,12 +6,14 @@ sample/parsetest.fail.em
 sample/parsetest.fail.2.em
 
 sample/print.em
+sample/escape.em
 
 sample/statement.em
 sample/math.em
 sample/bool.em
 
 sample/set.em
+sample/has.em
 sample/scope.em
 sample/scope.fallthrough.em
 sample/scope.unscoped.em

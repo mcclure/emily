@@ -11,14 +11,14 @@
  *)
 
 (* We imagine values 1 and 2 as "registers"... *)
-type registerState = 
+type registerState =
     | LineStart of Value.value
     | FirstValue of Value.value
     | PairValue of (Value.value * Value.value)
 
 let dumpPrinter = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue
 
-let dumpRegisterState registerState = 
+let dumpRegisterState registerState =
     match registerState with
     | LineStart v -> "LineStart:" ^ (dumpPrinter v)
     | FirstValue v -> "FirstValue:" ^ (dumpPrinter v)
@@ -46,7 +46,7 @@ let closureScope c =
 let groupScope tokenKind scope =
     match tokenKind with Token.Plain -> scope | _ -> scopeInheriting Value.WithLet scope
 
-let stackDepth stack = 
+let stackDepth stack =
     let rec stackDepthImpl accum stack =
         match stack with
             | [] -> accum
@@ -54,6 +54,7 @@ let stackDepth stack =
     in stackDepthImpl 0 stack
 
 let parentSetSnippet = Tokenize.snippet "target.parent.set key"
+let parentHasSnippet = Tokenize.snippet "target.parent.has key"
 
 (* Execute and return nothing. *)
 (* TODO: This is too long, break up into more subfunctions... *)
@@ -108,14 +109,14 @@ let execute code =
                         match Value.tableGet t b with
                             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
                             | Some v -> r v
-                            | None -> 
+                            | None ->
                                 match Value.tableGet t Value.parentKey with
                                     | Some parent -> apply onstack parent b
                                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
                     in let setTable t =
                         r (Value.tableBoundSet t b)
                     (* Perform the application *)
-                    in match a with 
+                    in match a with
                         | Value.ClosureValue c ->
                             let scope = closureScope c in
                                 (* Trace here ONLY if command line option requests it *)
@@ -126,7 +127,7 @@ let execute code =
                                         (match c.Value.key with
                                             | Some key ->
                                                 Value.tableSet t (Value.AtomValue key) b
-                                            | None -> ()    
+                                            | None -> ()
                                         )
                                     | _ -> internalFail())
                                 ; execute_step @@ (executeFrame scope c.Value.code)::onstack
@@ -138,6 +139,12 @@ let execute code =
                         | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
                         | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
                         | Value.BuiltinFunctionValue f -> r ( f b )
+                        | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
+                            else (match Value.tableGet t Value.parentKey with
+                                (* Have to step one down. FIXME: Unify this with Set implementation? *)
+                                | Some parent ->
+                                    execute_step @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentHasSnippet)::stack
+                                | None -> r Value.Null)
                         | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
                             else (match Value.tableGet t Value.parentKey with
                                 (* Have to step one down. FIXME: Refactor with instance below? *)

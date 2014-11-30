@@ -1,7 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FIX ASAP
-sample/escape.em
+sample/set.this.em
 
 # "Expected" failures due to not-yet-implemented features
 sample/obj.em

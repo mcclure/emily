@@ -21,6 +21,7 @@ and value =
     | TableValue of tableValue
     | TableSetValue of tableValue
     | TableLetValue of tableValue
+    | TableHasValue of tableValue
 
 type tableBlankKind = TrueBlank | NoLet | WithLet
 
@@ -41,6 +42,7 @@ let tableBlank kind : tableValue =
         | NoLet ->   tableSetString t "set" (TableSetValue t)
         | WithLet -> tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue t)
     );
+    tableSetString t "has" (TableHasValue t);
     if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator);
     t
 let tableInheriting kind v =
@@ -49,6 +51,10 @@ let tableInheriting kind v =
 
 (* FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
 let tableBoundSet t key =
+    let f value =
+        tableSet t key value; Null
+    in BuiltinFunctionValue(f)
+let tableBoundHas t key =
     let f value =
         tableSet t key value; Null
     in BuiltinFunctionValue(f)

@@ -13,7 +13,7 @@ let rec dumpTree groupPrinter token =
             | Token.Plain -> "(", ")"
             | Token.Scoped -> "{", "}"
             | Token.Box -> "[", "]"
-        in let l = (match closure with 
+        in let l = (match closure with
             | Token.NonClosure -> ""
             | Token.Closure -> "^"
             | Token.ClosureWithBinding binding -> "^" ^ binding) ^ l
@@ -52,16 +52,17 @@ let idStringForValue v = match v with
     | _ -> "UNTABLE"
 
 let dumpValueTreeImpl wrapper v =
-    match v with 
+    match v with
         | Value.Null -> "<null>"
         | Value.True -> "<true>"
         | Value.FloatValue v -> string_of_float v
         | Value.StringValue s -> quoteWrap s
         | Value.AtomValue s -> "." ^ s
         | Value.BuiltinFunctionValue _ -> "<builtin>"
-        | Value.BuiltinMethodValue _ -> "<object-builtin>" 
+        | Value.BuiltinMethodValue _ -> "<object-builtin>"
         | Value.ClosureValue _ -> "<closure>"
         | Value.TableValue _ -> wrapper "table" v
+        | Value.TableHasValue _ -> wrapper "table-checker-has" v
         | Value.TableSetValue _ -> wrapper "table-setter" v
         | Value.TableLetValue _ -> wrapper "table-setter-let" v
 
@@ -74,3 +75,10 @@ let dumpValueTree v =
 let dumpValue v =
     let wrapper label obj = angleWrap label
     in dumpValueTreeImpl wrapper v
+
+let dumpValueForUser v =
+    (* Normal "print" uses this *)
+    match v with
+        | Value.StringValue s -> s
+        | Value.AtomValue s -> s
+        | _ -> dumpValue v

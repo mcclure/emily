@@ -4,15 +4,15 @@ let scopePrototype = Value.TableValue(scopePrototypeTable)
 
 let () =
     let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
-    
+
     setAtomFn "print" (
         let rec printFunction v =
-            print_string (Pretty.dumpValue v);
+            print_string (Pretty.dumpValueForUser v);
             Value.BuiltinFunctionValue(printFunction)
         in printFunction
     );
 
-    setAtomValue "nl" (Value.StringValue "\n");
+    setAtomValue "ln" (Value.StringValue "\n");
 
     setAtomValue "null" (Value.Null);
     setAtomValue "true" (Value.True);
@@ -21,7 +21,7 @@ let () =
 
     setAtomFn "println" (
         let rec printFunction v =
-            print_endline (Pretty.dumpValue v);
+            print_endline (Pretty.dumpValueForUser v);
             Value.BuiltinFunctionValue(printFunction)
         in printFunction
     );
