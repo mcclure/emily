@@ -10,7 +10,9 @@
 #
 #   # Expect:
 #   # SOMETHING
-#       Expect "SOMETHING" as an output line (Note: First space always consumed)
+#   # SOMETHING
+#       Expect "SOMETHING\nSOMETHING" as program output. (Notes: First space of
+#       line always consumed; trailing whitespace of output always disregarded.)
 #
 # Usage: ./develop/regression.py -a
 # Tested with Python 2.6.1

@@ -2,9 +2,12 @@
 
 sample/trivial.em
 sample/parsetest.2.em
+sample/parsetest.unicode.em
+sample/parsetest.unicode.fail.em
 
 sample/print.em
 sample/escape.em
+sample/unicode.em
 
 sample/statement.em
 sample/math.em

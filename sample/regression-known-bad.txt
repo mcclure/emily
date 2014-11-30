@@ -8,6 +8,7 @@ sample/scope.closure.2.em
 # FAILURES -- FIX ASAP
 sample/parsetest.fail.em
 sample/parsetest.fail.2.em
+sample/parsetest.unicode.2.em
 
 # "Expected" failures due to not-yet-implemented features
 sample/tern.em

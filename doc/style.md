@@ -7,6 +7,7 @@ ML coding standards for Emily project
         pretxncommit.checkfiles=hg checkfiles
         [checkfiles]
         checked_exts = .ml .em .py .pl
+        ignored_files = sample/parsetest.unicode.em
 
 - There is a `make test`. It runs all the test cases listed in `sample/regression.txt`. `make && make test` should be run frequently (maybe eventually I'll make myself a precommit hook for that, too).
 
