@@ -111,7 +111,7 @@ let execute code =
                     let readTable t =
                         match Value.tableGet t b with
                             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-                            | Some Value.ClosureValue c -> r @@ rethis c a
+                            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c a )
                             | Some v -> r v
                             | None ->
                                 match Value.tableGet t Value.parentKey with
