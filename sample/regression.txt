@@ -24,5 +24,7 @@ sample/scope.closure.em
 sample/obj.em
 sample/obj.current.em
 sample/obj.this.em
+sample/obj.this.2.em
+sample/obj.this.3.em
 
 sample/ski.2.em
