@@ -111,6 +111,7 @@ let execute code =
                     let readTable t =
                         match Value.tableGet t b with
                             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
+                            | Some Value.ClosureValue c -> r @@ rethis c a
                             | Some v -> r v
                             | None ->
                                 match Value.tableGet t Value.parentKey with
@@ -131,7 +132,8 @@ let execute code =
                                             | Some key ->
                                                 Value.tableSet t (Value.AtomValue key) b
                                             | None -> ()
-                                        )
+                                        );
+                                        Value.tableSet t Value.thisKey c.Value.this
                                     | _ -> internalFail())
                                 ; execute_step @@ (executeFrame scope c.Value.code)::onstack
                         | Value.TableValue t ->  readTable t
@@ -209,7 +211,7 @@ let execute code =
                                         in let closureValue v =
                                             let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None in
                                             let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
-                                            simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; })
+                                            simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; this=Value.Null })
 
                                         (* Evaluate token *)
                                         in match token.Token.contents with

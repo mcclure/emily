@@ -4,9 +4,10 @@ type tableValue = (value, value) Hashtbl.t
 
 and closureValue = {
     code   : Token.codeSequence;
-    scope  : value;
     scoped : bool;
+    scope  : value;
     key    : string option;
+    this   : value;
 }
 
 and value =
@@ -33,6 +34,8 @@ let idKeyString = "!id"
 let idKey = AtomValue idKeyString
 let currentKeyString = "current"
 let currentKey = AtomValue currentKeyString
+let thisKeyString = "this"
+let thisKey = AtomValue thisKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
@@ -70,3 +73,5 @@ let snippetScope bindings =
     let scopeTable = tableBlank TrueBlank in
     List.iter (fun x -> match x with (k,v) -> tableSet scopeTable (AtomValue k) v) bindings;
     TableValue(scopeTable)
+
+let rethis r this = { r with this=this }
