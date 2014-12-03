@@ -10,19 +10,13 @@
     Steps 2, 4 and 5 could potentially require code invocation, necessitating the stack.
  *)
 
+(* -- TYPES -- *)
+
 (* We imagine values 1 and 2 as "registers"... *)
 type registerState =
     | LineStart of Value.value
     | FirstValue of Value.value
     | PairValue of (Value.value * Value.value)
-
-let dumpPrinter = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue
-
-let dumpRegisterState registerState =
-    match registerState with
-    | LineStart v -> "LineStart:" ^ (dumpPrinter v)
-    | FirstValue v -> "FirstValue:" ^ (dumpPrinter v)
-    | PairValue (v1,v2) -> "PairValue:" ^ (dumpPrinter v1) ^ "," ^ (dumpPrinter v2)
 
 (* Each frame on the stack has the two value "registers" and a codeSequence reference which
    is effectively an instruction pointer. *)
@@ -32,23 +26,22 @@ type executeFrame = {
     scope: Value.value;
 }
 
-(* The current state of an execution thread consists of just the stack. (Is there gonna be more here later?) *)
+(* The current state of an execution thread consists of just the stack of frames. (Is there gonna be more here later?) *)
 and executeState = executeFrame list
 
-let scopeInheriting kind v =
-    Value.TableValue(Value.tableInheriting kind v)
-let closureScope c =
-    let scope = c.Value.scope in
-    match (c.Value.scoped,c.Value.key) with
-        | (true,_) -> scopeInheriting Value.WithLet scope
-        | (false,Some _) -> scopeInheriting Value.NoLet scope
-        | _ -> scope
-let groupScope tokenKind scope =
-    match tokenKind with
-        | Token.Plain  -> scope
-        | Token.Scoped -> scopeInheriting Value.WithLet scope
-        | Token.Box    -> scopeInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
+(* -- DEBUG / PRETTYPRINT HELPERS -- *)
 
+(* TODO: This can, and should, go into Pretty.ml *)
+let dumpPrinter = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue
+
+(* Pretty print for registerState. Can't go in Pretty.ml because module recursion. *)
+let dumpRegisterState registerState =
+    match registerState with
+    | LineStart v -> "LineStart:" ^ (dumpPrinter v)
+    | FirstValue v -> "FirstValue:" ^ (dumpPrinter v)
+    | PairValue (v1,v2) -> "PairValue:" ^ (dumpPrinter v1) ^ "," ^ (dumpPrinter v2)
+
+(* FIXME: I wonder if there's a existing function for this in List or something. *)
 let stackDepth stack =
     let rec stackDepthImpl accum stack =
         match stack with
@@ -56,31 +49,61 @@ let stackDepth stack =
             | _::more -> stackDepthImpl (accum+1) more
     in stackDepthImpl 0 stack
 
+(* -- PRACTICAL HELPERS -- *)
+
+(* These three could technically move into value.ml but BuiltinObject depends on Value *)
+let scopeInheriting kind v =
+    Value.TableValue(Value.tableInheriting kind v)
+
+(* Converts the information in an existing closure into a scope *)
+let closureScope c =
+    let scope = c.Value.scope in
+    match (c.Value.scoped,c.Value.key) with
+        | (true,_) -> scopeInheriting Value.WithLet scope
+        | (false,Some _) -> scopeInheriting Value.NoLet scope
+        | _ -> scope
+
+(* Given a parent scope and a token creates an appropriate inner group scope *)
+let groupScope tokenKind scope =
+    match tokenKind with
+        | Token.Plain  -> scope
+        | Token.Scoped -> scopeInheriting Value.WithLet scope
+        | Token.Box    -> scopeInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
+
+
+(* Combine a value with an existing register var to make a new register var. *)
+(* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)
+(* so only call if we know this is not a pair already (unless we *want* to flatten) *)
+let newStateFor register v = match register with
+    (* Either throw out a stale LineStart / PairValue and simply take the new value, *)
+    | LineStart _ | PairValue _ -> FirstValue (v)
+    (* Or combine with an existing value to make a pair. *)
+    | FirstValue fv -> PairValue (fv, v)
+
+(* Constructor for a new frame *)
+let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope}
+
+(* Only call if it really is impossible, since this gives no debug feedback *)
+(* Mostly I call this if a nested match has to implement a case already excluded *)
+let internalFail () = failwith "Internal consistency error: Reached impossible place"
+
+(* -- SNIPPETS (inlined Emily code) -- *)
+
 let parentSetSnippet = Tokenize.snippet "target.parent.set key"
 let parentHasSnippet = Tokenize.snippet "target.parent.has key"
 
-(* Execute and return nothing. *)
-(* TODO: This is too long, break up into more subfunctions... *)
-let execute code =
-    (* Constructor for a new, stateless frame beginning with the given code-position reference *)
-    let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope} in
-    let initialExecuteFrame = executeFrame (scopeInheriting Value.WithLet BuiltinScope.scopePrototype) in
+(* -- INTERPRETER ENTRY POINT -- *)
 
-    (* Main loop *)
+(* Execute and return nothing. *)
+let execute code =
+
+    (* --- MAIN LOOP --- *)
+
     let rec execute_step stack =
         (* For nonsensical matches *)
-        let internalFail () = failwith "Internal consistency error: Reached impossible place" in
-
-        (* Helper: Combine a value with an existing register var to make a new register var. *)
-        (* Only call if we know this is not a pair already (unless we *want* to flatten) *)
-        let newStateFor register v = match register with
-            (* Either throw out a stale LineStart / PairValue and simply take the new value, *)
-            | LineStart _ | PairValue _ -> FirstValue (v)
-            (* Or combine with an existing value to make a pair. *)
-            | FirstValue fv -> PairValue (fv, v)
 
         (* Look at stack *)
-        in match stack with
+        match stack with
             (* Asked to execute an empty file -- just return *)
             | [] -> () (* TODO: Remove bails *)
 
@@ -239,6 +262,11 @@ let execute code =
                                                         execute_step @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                                                     | _ -> closureValue group
 
+    (* Enter main loop. *)
     in match code.Token.contents with
-        | Token.Group contents -> execute_step @@ [initialExecuteFrame contents.Token.items]
+        | Token.Group contents ->
+            (* Make a new blank frame with the given code sequence and an empty scope, *)
+            let initialScope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
+            let initialFrame = executeFrame initialScope contents.Token.items
+            in execute_step @@ [initialFrame] (* then place it as the start of the stack. *)
         | _ -> () (* Execute a constant value-- no effect *)
