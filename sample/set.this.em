@@ -1,4 +1,4 @@
-# Verify set statements don't bind "too early".
+# Verify set invocations don't bind "too early".
 # Expect:
 # 5.
 # 3.

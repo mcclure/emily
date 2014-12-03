@@ -1,4 +1,4 @@
-# Test "this" binding with method call
+# Test "this" binding with method call redo
 # Expect:
 # 3.
 
