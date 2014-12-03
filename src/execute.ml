@@ -99,168 +99,174 @@ let execute code =
 
     (* --- MAIN LOOP --- *)
 
-    let rec execute_step stack =
-        (* For nonsensical matches *)
-
-        (* Look at stack *)
+    let rec executeStep stack = (* Unpack stack *)
         match stack with
             (* Asked to execute an empty file -- just return *)
             | [] -> () (* TODO: Remove bails *)
 
             (* Break stack frames into first and rest *)
             | frame :: moreFrames ->
-                (* Trace here ONLY if command line option requests it *)
-                if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+                executeStepWithFrames stack frame moreFrames
 
-                (* Enter a frame as if returning this value from a function. *)
-                let returnTo stackTop v =
+    (* Enter a frame as if returning this value from a function. *)
+    and returnTo stackTop v =
+        (* Trace here ONLY if command line option requests it *)
+        if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
+
+        (* Unpack the new stack. *)
+        match stackTop with
+            (* It's empty. We're returning from the final frame and can just exit. *)
+            | [] -> ()
+
+            (* Pull one frame off the stack so we can replace the register var and re-add it. *)
+            | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
+                let newState = newStateFor parentRegister v in
+                executeStep @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
+
+    (* apply item a to item b and return it to the current frame *)
+    and apply stack a b =
+        let r v = returnTo stack v in
+        (* Pull something out of a table, possibly recursing *)
+        let readTable t =
+            match Value.tableGet t b with
+                | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
+                | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c a )
+                | Some v -> r v
+                | None ->
+                    match Value.tableGet t Value.parentKey with
+                        | Some parent -> apply stack parent b
+                        | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
+        in let setTable t =
+            r (Value.tableBoundSet t b)
+        (* Perform the application *)
+        in match a with
+            | Value.ClosureValue c ->
+                let scope = closureScope c in
                     (* Trace here ONLY if command line option requests it *)
-                    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
+                    if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
 
-                    (* Unpack the new stack. *)
-                    match stackTop with
-                        (* It's empty. We're returning from the final frame and can just exit. *)
-                        | [] -> ()
+                    (match scope with
+                        | Value.TableValue t ->
+                            (match c.Value.key with
+                                | Some key ->
+                                    Value.tableSet t (Value.AtomValue key) b
+                                | None -> ()
+                            );
+                            Value.tableSet t Value.thisKey c.Value.this
+                        | _ -> internalFail())
+                    ; executeStep @@ (executeFrame scope c.Value.code)::stack
+            | Value.TableValue t ->  readTable t
+            (* Basic values *)
+            | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
+            | Value.True ->          readTable BuiltinTrue.truePrototypeTable
+            | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
+            | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
+            | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
+            | Value.BuiltinFunctionValue f -> r ( f b )
+            | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
+                else (match Value.tableGet t Value.parentKey with
+                    (* Have to step one down. FIXME: Unify this with Set implementation? *)
+                    | Some parent ->
+                        executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentHasSnippet)::stack
+                    | None -> r Value.Null)
+            | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
+                else (match Value.tableGet t Value.parentKey with
+                    (* Have to step one down. FIXME: Refactor with instance below? *)
+                    | Some parent ->
+                        executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
+                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
+            | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
+                setTable t
+            (* Unworkable *)
+            | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
 
-                        (* Pull one frame off the stack so we can replace the register var and re-add it. *)
-                        | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
-                            let newState = newStateFor parentRegister v in
-                            execute_step @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
+    and executeStepWithFrames stack frame moreFrames =
+        (* Trace here ONLY if command line option requests it *)
+        if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
-                (* apply item a to item b and return it to the current frame *)
-                in let rec apply onstack a b =
-                    let r v = returnTo onstack v in
-                    (* Pull something out of a table, possibly recursing *)
-                    let readTable t =
-                        match Value.tableGet t b with
-                            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-                            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c a )
-                            | Some v -> r v
-                            | None ->
-                                match Value.tableGet t Value.parentKey with
-                                    | Some parent -> apply onstack parent b
-                                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
-                    in let setTable t =
-                        r (Value.tableBoundSet t b)
-                    (* Perform the application *)
-                    in match a with
-                        | Value.ClosureValue c ->
-                            let scope = closureScope c in
-                                (* Trace here ONLY if command line option requests it *)
-                                if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
+        (* Check the state of the top frame *)
+        match frame.register with
+            (* It has two values-- apply before we do anything else *)
+            | PairValue (a, b) ->
+                apply stack a b
 
-                                (match scope with
-                                    | Value.TableValue t ->
-                                        (match c.Value.key with
-                                            | Some key ->
-                                                Value.tableSet t (Value.AtomValue key) b
-                                            | None -> ()
-                                        );
-                                        Value.tableSet t Value.thisKey c.Value.this
-                                    | _ -> internalFail())
-                                ; execute_step @@ (executeFrame scope c.Value.code)::onstack
-                        | Value.TableValue t ->  readTable t
-                        (* Basic values *)
-                        | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
-                        | Value.True ->          readTable BuiltinTrue.truePrototypeTable
-                        | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
-                        | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
-                        | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
-                        | Value.BuiltinFunctionValue f -> r ( f b )
-                        | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
-                            else (match Value.tableGet t Value.parentKey with
-                                (* Have to step one down. FIXME: Unify this with Set implementation? *)
-                                | Some parent ->
-                                    execute_step @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentHasSnippet)::stack
-                                | None -> r Value.Null)
-                        | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
-                            else (match Value.tableGet t Value.parentKey with
-                                (* Have to step one down. FIXME: Refactor with instance below? *)
-                                | Some parent ->
-                                    execute_step @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
-                                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
-                        | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
-                            setTable t
-                        (* Unworkable *)
-                        | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
+            (* Either no values or just one values, so let's look at the tokens *)
+            | FirstValue _ | LineStart _ ->
+                pullTokens stack frame moreFrames
+                (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
 
-                (* Check the state of the top frame *)
-                in match frame.register with
-                    (* It has two values-- apply before we do anything else *)
-                    | PairValue (a, b) ->
-                        apply stack a b
+    and pullTokens stack frame moreFrames =
+        (* Look at code sequence in frame *)
+        match frame.code with
+            (* It's empty. We have reached the end of the group. *)
+            | [] -> let value = match frame.register with (* Unpack Value 1 from register *)
+                    | LineStart v | FirstValue v -> v
+                    | _ -> internalFail() (* If PairValue, should have branched off above *)
+                (* "Return from frame" and recurse *)
+                in returnTo moreFrames value
 
-                    (* Either no values or just one values, so let's look at the tokens *)
-                    | FirstValue _ | LineStart _ ->
+            (* Break lines in current frame's codeSequence into first and rest *)
+            | line :: moreLines ->
+                executeFrameWithLines stack frame moreFrames line moreLines
 
-                        (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
+    and executeFrameWithLines stack frame moreFrames line moreLines =
+        (* Look at line in code sequence. *)
+        match line with
+            (* It's empty. We have reached the end of the line. *)
+            | [] ->
+                (* Convert Value 1 to a LineStart value to persist to next line *)
+                let newState = match frame.register with
+                    | LineStart v | FirstValue v -> LineStart v
+                    | _ -> internalFail() (* Again: if PairValue, should have branched off above *)
 
-                        (* Look at code sequence in frame *)
-                        match frame.code with
-                            (* It's empty. We have reached the end of the group. *)
-                            | [] -> let value = match frame.register with (* Unpack Value 1 from register *)
-                                    | LineStart v | FirstValue v -> v
-                                    | _ -> internalFail() (* If PairValue, should have branched off above *)
-                                (* "Return from frame" and recurse *)
-                                in returnTo moreFrames value
+                (* Replace current frame, new code sequence is rest-of-lines, and recurse *)
+                in executeStep @@ { register=newState; code=moreLines; scope=frame.scope } :: moreFrames
 
-                            (* Break lines in current frame's codeSequence into first and rest *)
-                            | line :: moreLines ->
+            (* Break tokens in current line into first and rest *)
+            | token :: moreTokens ->
+                executeFrameWithTokens stack frame moreFrames line moreLines token moreTokens
 
-                                (* Look at line in code sequence. *)
-                                match line with
-                                    (* It's empty. We have reached the end of the line. *)
-                                    | [] ->
-                                        (* Convert Value 1 to a LineStart value to persist to next line *)
-                                        let newState = match frame.register with
-                                            | LineStart v | FirstValue v -> LineStart v
-                                            | _ -> internalFail() (* Again: if PairValue, should have branched off above *)
+    and executeFrameWithTokens stack frame moreFrames line moreLines token moreTokens =
+        (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
+        let stackWithRegister register  =
+            { register=register; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
 
-                                        (* Replace current frame, new code sequence is rest-of-lines, and recurse *)
-                                        in execute_step @@ { register=newState; code=moreLines; scope=frame.scope } :: moreFrames
+        in let simpleValue v =
+            (* ...new register state... *)
+            let newState = newStateFor frame.register v
+            (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
+            in executeStep @@ stackWithRegister newState
 
-                                    (* Break tokens in current line into first and rest *)
-                                    | token :: moreTokens ->
-                                        (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
-                                        let stackWithRegister register  =
-                                            { register=register; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
+        in let closureValue v =
+            let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None in
+            let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
+            simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; this=Value.Null })
 
-                                        in let simpleValue v =
-                                            (* ...new register state... *)
-                                            let newState = newStateFor frame.register v
-                                            (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
-                                            in execute_step @@ stackWithRegister newState
+        (* Evaluate token *)
+        in match token.Token.contents with
+            (* Straightforward values that can be evaluated in place *)
+            | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope (Value.AtomValue s)
+            | Token.String s -> simpleValue(Value.StringValue s)
+            | Token.Atom s ->   simpleValue(Value.AtomValue s)
+            | Token.Number f -> simpleValue(Value.FloatValue f)
+            | Token.Group group ->
+                match group.Token.closure with
+                    (* Token is nontrivial to evaluate, and will require a new stack frame. *)
+                    | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
+                        let newScope = (groupScope group.Token.kind frame.scope) in
+                        let items = match group.Token.kind with
+                            | Token.Box ->
+                                let wrapperGroup = Token.(makePositionless @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
+                                let word = Token.(makePositionless @@ Word Value.currentKeyString) in
+                                [ [wrapperGroup]; [word] ]
+                            | _ -> group.Token.items
+                        in
 
-                                        in let closureValue v =
-                                            let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None in
-                                            let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
-                                            simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; this=Value.Null })
+                        (* Trace here ONLY if command line option requests it *)
+                        if Options.(run.trace) then print_endline @@ "Group --> " ^ dumpPrinter newScope;
 
-                                        (* Evaluate token *)
-                                        in match token.Token.contents with
-                                            (* Straightforward values that can be evaluated in place *)
-                                            | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope (Value.AtomValue s)
-                                            | Token.String s -> simpleValue(Value.StringValue s)
-                                            | Token.Atom s ->   simpleValue(Value.AtomValue s)
-                                            | Token.Number f -> simpleValue(Value.FloatValue f)
-                                            | Token.Group group ->
-                                                match group.Token.closure with
-                                                    (* Token is nontrivial to evaluate, and will require a new stack frame. *)
-                                                    | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
-                                                        let newScope = (groupScope group.Token.kind frame.scope) in
-                                                        let items = match group.Token.kind with
-                                                            | Token.Box ->
-                                                                let wrapperGroup = Token.(makePositionless @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
-                                                                let word = Token.(makePositionless @@ Word Value.currentKeyString) in
-                                                                [ [wrapperGroup]; [word] ]
-                                                            | _ -> group.Token.items
-                                                        in
-
-                                                        (* Trace here ONLY if command line option requests it *)
-                                                        if Options.(run.trace) then print_endline @@ "Group --> " ^ dumpPrinter newScope;
-
-                                                        execute_step @@ (executeFrame newScope items)::(stackWithRegister frame.register)
-                                                    | _ -> closureValue group
+                        executeStep @@ (executeFrame newScope items)::(stackWithRegister frame.register)
+                    | _ -> closureValue group
 
     (* Enter main loop. *)
     in match code.Token.contents with
@@ -268,5 +274,5 @@ let execute code =
             (* Make a new blank frame with the given code sequence and an empty scope, *)
             let initialScope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
             let initialFrame = executeFrame initialScope contents.Token.items
-            in execute_step @@ [initialFrame] (* then place it as the start of the stack. *)
+            in executeStep @@ [initialFrame] (* then place it as the start of the stack. *)
         | _ -> () (* Execute a constant value-- no effect *)
