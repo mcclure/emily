@@ -97,7 +97,7 @@ let parentHasSnippet = Tokenize.snippet "target.parent.has key"
 (* Execute and return nothing. *)
 let execute code =
 
-    (* --- MAIN LOOP --- *)
+    (* --- MAIN LOOP DEFINITION --- *)
 
     let rec executeStep stack = (* Unpack stack *)
         match stack with
@@ -140,6 +140,7 @@ let execute code =
             r (Value.tableBoundSet t b)
         (* Perform the application *)
         in match a with
+            (* If applying a closure. *)
             | Value.ClosureValue c ->
                 let scope = closureScope c in
                     (* Trace here ONLY if command line option requests it *)
@@ -155,14 +156,8 @@ let execute code =
                             Value.tableSet t Value.thisKey c.Value.this
                         | _ -> internalFail())
                     ; executeStep @@ (executeFrame scope c.Value.code)::stack
+            (* If applying a table or table op. *)
             | Value.TableValue t ->  readTable t
-            (* Basic values *)
-            | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
-            | Value.True ->          readTable BuiltinTrue.truePrototypeTable
-            | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
-            | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
-            | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
-            | Value.BuiltinFunctionValue f -> r ( f b )
             | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
                 else (match Value.tableGet t Value.parentKey with
                     (* Have to step one down. FIXME: Unify this with Set implementation? *)
@@ -177,8 +172,16 @@ let execute code =
                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
             | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
                 setTable t
-            (* Unworkable *)
-            | Value.BuiltinMethodValue _ -> internalFail() (* Builtin method values should be erased by readTable *)
+            (* If applying a primitive value. *)
+            | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
+            | Value.True ->          readTable BuiltinTrue.truePrototypeTable
+            | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
+            | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
+            | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
+            (* If applying a builtin special. *)
+            | Value.BuiltinFunctionValue f -> r ( f b )
+            (* Unworkable -- all builtin method values should be erased by readTable *)
+            | Value.BuiltinMethodValue _ -> internalFail()
 
     and executeStepWithFrames stack frame moreFrames =
         (* Trace here ONLY if command line option requests it *)
@@ -192,10 +195,10 @@ let execute code =
 
             (* Either no values or just one values, so let's look at the tokens *)
             | FirstValue _ | LineStart _ ->
-                pullTokens stack frame moreFrames
+                evaluateToken stack frame moreFrames
                 (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
 
-    and pullTokens stack frame moreFrames =
+    and evaluateToken stack frame moreFrames =
         (* Look at code sequence in frame *)
         match frame.code with
             (* It's empty. We have reached the end of the group. *)
@@ -207,9 +210,9 @@ let execute code =
 
             (* Break lines in current frame's codeSequence into first and rest *)
             | line :: moreLines ->
-                executeFrameWithLines stack frame moreFrames line moreLines
+                evaluateTokenFromLines stack frame moreFrames line moreLines
 
-    and executeFrameWithLines stack frame moreFrames line moreLines =
+    and evaluateTokenFromLines stack frame moreFrames line moreLines =
         (* Look at line in code sequence. *)
         match line with
             (* It's empty. We have reached the end of the line. *)
@@ -224,9 +227,9 @@ let execute code =
 
             (* Break tokens in current line into first and rest *)
             | token :: moreTokens ->
-                executeFrameWithTokens stack frame moreFrames line moreLines token moreTokens
+                evaluateTokenFromTokens stack frame moreFrames line moreLines token moreTokens
 
-    and executeFrameWithTokens stack frame moreFrames line moreLines token moreTokens =
+    and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreTokens =
         (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
         let stackWithRegister register  =
             { register=register; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
@@ -242,7 +245,7 @@ let execute code =
             let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
             simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; this=Value.Null })
 
-        (* Evaluate token *)
+        (* Identify token *)
         in match token.Token.contents with
             (* Straightforward values that can be evaluated in place *)
             | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope (Value.AtomValue s)
@@ -268,7 +271,8 @@ let execute code =
                         executeStep @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                     | _ -> closureValue group
 
-    (* Enter main loop. *)
+    (* --- NOW THAT IT IS DEFINED, ENTER MAIN LOOP --- *)
+
     in match code.Token.contents with
         | Token.Group contents ->
             (* Make a new blank frame with the given code sequence and an empty scope, *)
