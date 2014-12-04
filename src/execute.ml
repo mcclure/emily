@@ -118,6 +118,7 @@ apply: (A pair of values has been identified; evaluate their application.)
 
 *)
 
+(* These first five functions are mostly routing: *)
 let rec executeStep stack = (* Unpack stack *)
     match stack with
         (* Asked to execute an empty file -- just return *)
@@ -173,6 +174,24 @@ and evaluateTokenFromLines stack frame moreFrames line moreLines =
         | token :: moreTokens ->
             evaluateTokenFromTokens stack frame moreFrames line moreLines token moreTokens
 
+(* Enter a frame as if returning this value from a function. *)
+and returnTo stackTop v =
+    (* Trace here ONLY if command line option requests it *)
+    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
+
+    (* Unpack the new stack. *)
+    match stackTop with
+        (* It's empty. We're returning from the final frame and can just exit. *)
+        | [] -> ()
+
+        (* Pull one frame off the stack so we can replace the register var and re-add it. *)
+        | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
+            let newState = newStateFor parentRegister v in
+            executeStep @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
+
+(* evaluateTokenFromTokens and apply are the functions that "do things"-- they
+   define, ultimately, the meanings of the different kinds of tokens and values. *)
+
 and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreTokens =
     (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
     let stackWithRegister register  =
@@ -214,21 +233,6 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
 
                     executeStep @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                 | _ -> closureValue group
-
-(* Enter a frame as if returning this value from a function. *)
-and returnTo stackTop v =
-    (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
-
-    (* Unpack the new stack. *)
-    match stackTop with
-        (* It's empty. We're returning from the final frame and can just exit. *)
-        | [] -> ()
-
-        (* Pull one frame off the stack so we can replace the register var and re-add it. *)
-        | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
-            let newState = newStateFor parentRegister v in
-            executeStep @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
 (* apply item a to item b and return it to the current frame *)
 and apply stack a b =
