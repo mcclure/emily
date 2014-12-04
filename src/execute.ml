@@ -94,89 +94,38 @@ let parentHasSnippet = Tokenize.snippet "target.parent.has key"
 
 (* -- INTERPRETER MAIN LOOP -- *)
 
+(* A tree of mutually recursive functions:
+
+executeStep: ("Proceed")
+    | EXIT (Rare-- when entire program is empty)
+    \ executeStepWithFrames: ("Evaluate first frame in stack")
+        | apply (When register contains pair)
+        \ evaluateToken: (When no pair, and we should check next token)
+            | returnTo (When no token lines)
+            \ evaluateTokenFromLines: ("Check first line of code after instruction pointer")
+                | executeStep (When first line is empty)
+                \ evaluateTokenFromTokens: ("Check first token in first line")
+                    | apply (when evaluating word)
+                    \ executeStep (when token evaluated and stack frame is adjusted with new register and/or new additional frame.)
+
+returnTo: (A value has been calculated and a new stack top decided on; fit that value into the stack top's register.)
+    | EXIT (when return from final frame)
+    \ executeStep (to proceed with new register)
+
+apply: (A pair of values has been identified; evaluate their application.)
+    | returnTo (when application result can be calculated immediately)
+    \ executeStep (when a closure or snippet requires a new frame)
+
+*)
+
 let rec executeStep stack = (* Unpack stack *)
     match stack with
         (* Asked to execute an empty file -- just return *)
-        | [] -> () (* TODO: Remove bails *)
+        | [] -> ()
 
         (* Break stack frames into first and rest *)
         | frame :: moreFrames ->
             executeStepWithFrames stack frame moreFrames
-
-(* Enter a frame as if returning this value from a function. *)
-and returnTo stackTop v =
-    (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
-
-    (* Unpack the new stack. *)
-    match stackTop with
-        (* It's empty. We're returning from the final frame and can just exit. *)
-        | [] -> ()
-
-        (* Pull one frame off the stack so we can replace the register var and re-add it. *)
-        | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
-            let newState = newStateFor parentRegister v in
-            executeStep @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
-
-(* apply item a to item b and return it to the current frame *)
-and apply stack a b =
-    let r v = returnTo stack v in
-    (* Pull something out of a table, possibly recursing *)
-    let readTable t =
-        match Value.tableGet t b with
-            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c a )
-            | Some v -> r v
-            | None ->
-                match Value.tableGet t Value.parentKey with
-                    | Some parent -> apply stack parent b
-                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
-    in let setTable t =
-        r (Value.tableBoundSet t b)
-    (* Perform the application *)
-    in match a with
-        (* If applying a closure. *)
-        | Value.ClosureValue c ->
-            let scope = closureScope c in
-                (* Trace here ONLY if command line option requests it *)
-                if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
-
-                (match scope with
-                    | Value.TableValue t ->
-                        (match c.Value.key with
-                            | Some key ->
-                                Value.tableSet t (Value.AtomValue key) b
-                            | None -> ()
-                        );
-                        Value.tableSet t Value.thisKey c.Value.this
-                    | _ -> internalFail())
-                ; executeStep @@ (executeFrame scope c.Value.code)::stack
-        (* If applying a table or table op. *)
-        | Value.TableValue t ->  readTable t
-        | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
-            else (match Value.tableGet t Value.parentKey with
-                (* Have to step one down. FIXME: Unify this with Set implementation? *)
-                | Some parent ->
-                    executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentHasSnippet)::stack
-                | None -> r Value.Null)
-        | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
-            else (match Value.tableGet t Value.parentKey with
-                (* Have to step one down. FIXME: Refactor with instance below? *)
-                | Some parent ->
-                    executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
-                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
-        | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
-            setTable t
-        (* If applying a primitive value. *)
-        | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
-        | Value.True ->          readTable BuiltinTrue.truePrototypeTable
-        | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
-        | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
-        | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
-        (* If applying a builtin special. *)
-        | Value.BuiltinFunctionValue f -> r ( f b )
-        (* Unworkable -- all builtin method values should be erased by readTable *)
-        | Value.BuiltinMethodValue _ -> internalFail()
 
 and executeStepWithFrames stack frame moreFrames =
     (* Trace here ONLY if command line option requests it *)
@@ -265,6 +214,81 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
 
                     executeStep @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                 | _ -> closureValue group
+
+(* Enter a frame as if returning this value from a function. *)
+and returnTo stackTop v =
+    (* Trace here ONLY if command line option requests it *)
+    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
+
+    (* Unpack the new stack. *)
+    match stackTop with
+        (* It's empty. We're returning from the final frame and can just exit. *)
+        | [] -> ()
+
+        (* Pull one frame off the stack so we can replace the register var and re-add it. *)
+        | {register=parentRegister; code=parentCode; scope=parentScope} :: pastReturnFrames ->
+            let newState = newStateFor parentRegister v in
+            executeStep @@ { register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
+
+(* apply item a to item b and return it to the current frame *)
+and apply stack a b =
+    let r v = returnTo stack v in
+    (* Pull something out of a table, possibly recursing *)
+    let readTable t =
+        match Value.tableGet t b with
+            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
+            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c a )
+            | Some v -> r v
+            | None ->
+                match Value.tableGet t Value.parentKey with
+                    | Some parent -> apply stack parent b
+                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
+    in let setTable t =
+        r (Value.tableBoundSet t b)
+    (* Perform the application *)
+    in match a with
+        (* If applying a closure. *)
+        | Value.ClosureValue c ->
+            let scope = closureScope c in
+                (* Trace here ONLY if command line option requests it *)
+                if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
+
+                (match scope with
+                    | Value.TableValue t ->
+                        (match c.Value.key with
+                            | Some key ->
+                                Value.tableSet t (Value.AtomValue key) b
+                            | None -> ()
+                        );
+                        Value.tableSet t Value.thisKey c.Value.this
+                    | _ -> internalFail())
+                ; executeStep @@ (executeFrame scope c.Value.code)::stack
+        (* If applying a table or table op. *)
+        | Value.TableValue t ->  readTable t
+        | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
+            else (match Value.tableGet t Value.parentKey with
+                (* Have to step one down. FIXME: Unify this with Set implementation? *)
+                | Some parent ->
+                    executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentHasSnippet)::stack
+                | None -> r Value.Null)
+        | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
+            else (match Value.tableGet t Value.parentKey with
+                (* Have to step one down. FIXME: Refactor with instance below? *)
+                | Some parent ->
+                    executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
+                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
+        | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
+            setTable t
+        (* If applying a primitive value. *)
+        | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
+        | Value.True ->          readTable BuiltinTrue.truePrototypeTable
+        | Value.FloatValue v ->  readTable BuiltinFloat.floatPrototypeTable
+        | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
+        | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
+        (* If applying a builtin special. *)
+        | Value.BuiltinFunctionValue f -> r ( f b )
+        (* Unworkable -- all builtin method values should be erased by readTable *)
+        | Value.BuiltinMethodValue _ -> internalFail()
 
 (* --- MAIN LOOP ENTRY POINT --- *)
 
