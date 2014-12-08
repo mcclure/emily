@@ -1,7 +1,6 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-sample/obj.this.4.em
 sample/obj.this.super.em
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
