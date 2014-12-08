@@ -136,7 +136,7 @@ and executeStepWithFrames stack frame moreFrames =
     match frame.register with
         (* It has two values-- apply before we do anything else *)
         | PairValue (a, b) ->
-            apply stack a b
+            apply stack a a b
 
         (* Either no values or just one values, so let's look at the tokens *)
         | FirstValue _ | LineStart _ ->
@@ -211,7 +211,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     (* Identify token *)
     in match token.Token.contents with
         (* Straightforward values that can be evaluated in place *)
-        | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope (Value.AtomValue s)
+        | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope frame.scope (Value.AtomValue s)
         | Token.String s -> simpleValue(Value.StringValue s)
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
@@ -235,19 +235,19 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                 | _ -> closureValue group
 
 (* apply item a to item b and return it to the current frame *)
-and apply stack a b =
+and apply stack this a b =
     let r v = returnTo stack v in
     (* Pull something out of a table, possibly recursing *)
     let readTable t =
         match Value.tableGet t b with
             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c a )
+            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c this )
             | Some v -> r v
             | None ->
                 match Value.tableGet t Value.parentKey with
-                    | Some parent -> apply stack parent b
+                    | Some parent -> apply stack this parent b
                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
-    in let setTable t =
+    in let setTable t = (* THIS-FIXME *)
         r (Value.tableBoundSet t b)
     (* Perform the application *)
     in match a with
@@ -269,6 +269,7 @@ and apply stack a b =
                 ; executeStep @@ (executeFrame scope c.Value.code)::stack
         (* If applying a table or table op. *)
         | Value.TableValue t ->  readTable t
+        (* THIS-FIXME *)
         | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
             else (match Value.tableGet t Value.parentKey with
                 (* Have to step one down. FIXME: Unify this with Set implementation? *)
