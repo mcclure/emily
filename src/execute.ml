@@ -261,9 +261,12 @@ and apply stack this a b =
                 executeStep @@ (executeFrame scope c.Value.code)::stack
             in (match c.Value.key with
                 | [] -> descend c (* Apply discarding argument *)
-                | key :: [] -> descend c (* Apply, applying argument FIXME: NOT RIGHT *)
-                | key :: rest -> (* Simply curry and return. Don't descend stack. *)
-                    r Value.(ClosureValue { c with key=rest; bound=(key, b)::c.bound }))
+                | key :: rest ->
+                    let amendedClosure = Value.{ c with key=rest; bound=(key, b)::c.bound } in
+                        match rest with
+                            [] -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
+                            | key :: rest -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
+                    )
 
         (* If applying a table or table op. *)
         | Value.TableValue t ->  readTable t
