@@ -2,12 +2,14 @@
 
 type tableValue = (value, value) Hashtbl.t
 
+(* Is this getting kind of complicated? Should curry be wrapped closures? *)
 and closureValue = {
     code   : Token.codeSequence;
-    scoped : bool;
-    scope  : value;
-    key    : string option;
-    this   : value;
+    scoped : bool; (* Should the closure execution get its own let scope? *)
+    scope  : value; (* Context scope *)
+    key    : string list; (* Not-yet-curried keys, or [] as special for "this is nullary" -- should be applied BACKWARD, outermost application is first *)
+    bound  : (string * value) list; (* Already-curried values -- BACKWARD, first application first *)
+    this   : value option; (* This is special. It is the specialest variable. *)
 }
 
 and value =
@@ -36,6 +38,8 @@ let currentKeyString = "current"
 let currentKey = AtomValue currentKeyString
 let thisKeyString = "this"
 let thisKey = AtomValue thisKeyString
+let superKeyString = "super"
+let superKey = AtomValue superKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value

@@ -55,14 +55,6 @@ let stackDepth stack =
 let scopeInheriting kind v =
     Value.TableValue(Value.tableInheriting kind v)
 
-(* Converts the information in an existing closure into a scope *)
-let closureScope c =
-    let scope = c.Value.scope in
-    match (c.Value.scoped,c.Value.key) with
-        | (true,_) -> scopeInheriting Value.WithLet scope
-        | (false,Some _) -> scopeInheriting Value.NoLet scope
-        | _ -> scope
-
 (* Given a parent scope and a token creates an appropriate inner group scope *)
 let groupScope tokenKind scope =
     match tokenKind with
@@ -204,9 +196,9 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         in executeStep @@ stackWithRegister newState
 
     in let closureValue v =
-        let key = match v.Token.closure with Token.ClosureWithBinding b -> Some b | _ -> None in
+        let key = match v.Token.closure with Token.ClosureWithBinding b -> [b] | _ -> [] in
         let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
-        simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; this=Value.Null })
+        simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; bound=[]; this=None })
 
     (* Identify token *)
     in match token.Token.contents with
@@ -241,7 +233,7 @@ and apply stack this a b =
     let readTable t =
         match Value.tableGet t b with
             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c this )
+            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c (Some this) )
             | Some v -> r v
             | None ->
                 match Value.tableGet t Value.parentKey with
@@ -253,20 +245,26 @@ and apply stack this a b =
     in match a with
         (* If applying a closure. *)
         | Value.ClosureValue c ->
-            let scope = closureScope c in
-                (* Trace here ONLY if command line option requests it *)
-                if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
-
+            let descend c =
+                let bound = List.rev c.Value.bound in (* To insure "inner applied first" *)
+                (* FIXME: should be a noscope operation for bound=[], this=None *)
+                let scopeKind = if c.Value.scoped then Value.WithLet else Value.NoLet in
+                let scope = scopeInheriting scopeKind c.Value.scope in
                 (match scope with
                     | Value.TableValue t ->
-                        (match c.Value.key with
-                            | Some key ->
-                                Value.tableSet t (Value.AtomValue key) b
-                            | None -> ()
-                        );
-                        Value.tableSet t Value.thisKey c.Value.this
-                    | _ -> internalFail())
-                ; executeStep @@ (executeFrame scope c.Value.code)::stack
+                        let addBound (key,value) = Value.tableSet t (Value.AtomValue key) value in
+                        List.iter addBound bound;
+                        (match c.Value.this with
+                            Some this -> Value.tableSet t Value.thisKey this
+                            | _ -> ())
+                    | _ -> internalFail());
+                executeStep @@ (executeFrame scope c.Value.code)::stack
+            in (match c.Value.key with
+                | [] -> descend c (* Apply discarding argument *)
+                | key :: [] -> descend c (* Apply, applying argument FIXME: NOT RIGHT *)
+                | key :: rest -> (* Simply curry and return. Don't descend stack. *)
+                    r Value.(ClosureValue { c with key=rest; bound=(key, b)::c.bound }))
+
         (* If applying a table or table op. *)
         | Value.TableValue t ->  readTable t
         (* THIS-FIXME *)
