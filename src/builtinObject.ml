@@ -3,6 +3,6 @@ let objectPrototypeTable = Value.tableInheriting Value.TrueBlank BuiltinTrue.tru
 let objectPrototype = Value.TableValue(objectPrototypeTable)
 
 let () =
-    let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs objectPrototypeTable in
+    let (_, _, _) = BuiltinNull.atomFuncs objectPrototypeTable in
 
     ()
