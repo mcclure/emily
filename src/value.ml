@@ -2,22 +2,26 @@
 
 type tableValue = (value, value) Hashtbl.t
 
-(* Is this getting kind of complicated? Should curry be wrapped closures? *)
-and closureValue = {
+(* Closure types: *)
+and closureExecUser = {
     code   : Token.codeSequence;
     scoped : bool; (* Should the closure execution get its own let scope? *)
     scope  : value; (* Context scope *)
-    key    : string list; (* Not-yet-curried keys, or [] as special for "this is nullary" -- should be applied BACKWARD, outermost application is first *)
-    bound  : (string * value) list; (* Already-curried values -- BACKWARD, first application first *)
-    this   : value option; (* This is special. It is the specialest variable. *)
+    (* Another option would be to make the "new" scope early & excise 'key': *)
+    key    : string list; (* Not-yet-curried keys, or [] as special for "this is nullary" -- BACKWARD, first-applied key is last *)
 }
 
-and builtinClosureValue = {
-    code : value list -> value;
-    args : value list;
-    this : value option;
-    useArgs : int;
-    useThis : bool;
+and closureExec =
+    | ClosureExecUser of closureExecUser
+    | ClosureExecBuiltin of (value list -> value)
+
+(* Is this getting kind of complicated? Should curry be wrapped closures? *)
+and closureValue = {
+    exec   : closureExec;
+    needArgs : int;  (* Count this down as more values are added to bound *)
+    needThis : bool; (* This will always be true if closureExecUser is present. *)
+    bound  : value list;   (* Already-curried values -- BACKWARD, first application last *)
+    this   : value option; (* This is special. It is the specialest variable. *)
 }
 
 and value =
@@ -28,7 +32,6 @@ and value =
     | AtomValue   of string
     | BuiltinFunctionValue of (value -> value)          (* function argument = result *)
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
-    | BuiltinClosureValue  of builtinClosureValue
     | ClosureValue of closureValue
     | TableValue of tableValue
     | TableSetValue of tableValue

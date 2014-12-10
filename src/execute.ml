@@ -198,7 +198,8 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     in let closureValue v =
         let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
-        simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; bound=[]; this=None })
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key=key; scoped=scoped;}; bound=[]; this=None; needArgs=(List.length key); needThis=true;
+         })
 
     (* Identify token *)
     in match token.Token.contents with
@@ -245,28 +246,41 @@ and apply stack this a b =
     in match a with
         (* If applying a closure. *)
         | Value.ClosureValue c ->
-            let descend c =
-                let bound = List.rev c.Value.bound in (* To insure "inner applied first" *)
-                (* FIXME: should be a noscope operation for bound=[], this=None *)
-                let scopeKind = if c.Value.scoped then Value.WithLet else Value.NoLet in
-                let scope = scopeInheriting scopeKind c.Value.scope in
-                (match scope with
-                    | Value.TableValue t ->
-                        let addBound (key,value) = Value.tableSet t (Value.AtomValue key) value in
-                        List.iter addBound bound;
-                        (match c.Value.this with
-                            Some this -> Value.tableSet t Value.thisKey this
-                            | _ -> ())
-                    | _ -> internalFail());
-                executeStep @@ (executeFrame scope c.Value.code)::stack
-            in (match c.Value.key with
-                | [] -> descend c (* Apply discarding argument *)
-                | key :: rest ->
-                    let amendedClosure = Value.{ c with key=rest; bound=(key, b)::c.bound } in
-                        match rest with
-                            [] -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
-                            | key :: rest -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
+            let bound = List.rev c.Value.bound in
+            (match c.Value.exec with
+                | Value.ClosureExecUser exec ->
+                    let descend c =
+                        let bound = List.rev c.Value.bound in (* To insure "inner applied first" *)
+                        (* FIXME: should be a noscope operation for bound=[], this=None *)
+                        let scopeKind = if exec.Value.scoped then Value.WithLet else Value.NoLet in
+                        let scope = scopeInheriting scopeKind exec.Value.scope in
+                        let key = List.rev exec.Value.key in
+                        (match scope with
+                            | Value.TableValue t ->
+                                let rec addBound keys values = match (keys, values) with
+                                    | ([], []) -> ()
+                                    | (key::restKey, value::restValue) -> (
+                                        Value.tableSet t (Value.AtomValue key) value;
+                                        addBound restKey restValue)
+                                    | _ -> internalFail()
+                                in addBound key bound;
+                                (match c.Value.this with
+                                    Some this -> Value.tableSet t Value.thisKey this
+                                    | _ -> ())
+                            | _ -> internalFail());
+                        executeStep @@ (executeFrame scope exec.Value.code)::stack
+                    (* FIXME: Do this *outside* ClosureExecUser's match *)
+                    in (match c.Value.needArgs with
+                        | 0 -> descend c (* Apply discarding argument *)
+                        | count ->
+                            let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
+                                match c.Value.needArgs with
+                                    | 0 -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
+                                    | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
                     )
+                | Value.ClosureExecBuiltin f ->
+                    r (f bound)
+            )
 
         (* If applying a table or table op. *)
         | Value.TableValue t ->  readTable t
