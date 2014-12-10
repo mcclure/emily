@@ -12,6 +12,14 @@ and closureValue = {
     this   : value option; (* This is special. It is the specialest variable. *)
 }
 
+and builtinClosureValue = {
+    code : value list -> value;
+    args : value list;
+    this : value option;
+    useArgs : int;
+    useThis : bool;
+}
+
 and value =
     | Null
     | True
@@ -20,6 +28,7 @@ and value =
     | AtomValue   of string
     | BuiltinFunctionValue of (value -> value)          (* function argument = result *)
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
+    | BuiltinClosureValue  of builtinClosureValue
     | ClosureValue of closureValue
     | TableValue of tableValue
     | TableSetValue of tableValue
