@@ -196,7 +196,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         in executeStep @@ stackWithRegister newState
 
     in let closureValue v =
-        let key = match v.Token.closure with Token.ClosureWithBinding b -> [b] | _ -> [] in
+        let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
         simpleValue (Value.ClosureValue { Value.code=v.Token.items; scope=frame.scope; key=key; scoped=scoped; bound=[]; this=None })
 

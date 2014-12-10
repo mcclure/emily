@@ -22,9 +22,8 @@ type tokenGroupKind =
 
 (* Is this group a closure? What kind? *)
 type tokenClosureKind =
-    | NonClosure                   (* Is not a function *)
-    | Closure                      (* No-argument function-- should appear post-macro only *)
-    | ClosureWithBinding of string (* Function with argument-- should appear post-macro only *)
+    | NonClosure                        (* Is not a function *)
+    | ClosureWithBinding of string list (* Function with argument-- ideally should appear post-macro only *)
 
 (* Representation of a tokenized code blob. *)
 (* A codeSequence is a list of lines. A line is a list of tokens. *)
@@ -43,7 +42,7 @@ and tokenContents =
     | Word of string   (* Alphanum *)
 (*  | Symbol of string    Punctuation-- appears pre-macro only. Disabled until macros are back *)
     | String of string (* "Quoted" *)
-    | Atom   of string (* Appears post-macro only *)
+    | Atom   of string (* Ideally appears post-macro only *)
     | Number of float
     | Group of tokenGroup
 

@@ -3,7 +3,8 @@
 # 7.
 # 11.
 
-set .a ^x y( println (x .plus y) )
-print (a 3 4)
-set .b (a 5)
-print(b 6)
+let .a ^x y ( x .plus y )
+let .b  (a 5)
+
+println (a 3 4)
+println (b 6)

@@ -15,8 +15,8 @@ let rec dumpTree groupPrinter token =
             | Token.Box -> "[", "]"
         in let l = (match closure with
             | Token.NonClosure -> ""
-            | Token.Closure -> "^"
-            | Token.ClosureWithBinding binding -> "^" ^ binding) ^ l
+            | Token.ClosureWithBinding [] -> "^"
+            | Token.ClosureWithBinding binding -> "^" ^ (String.concat " " binding)) ^ l
         (* GroupPrinter is an argument function which takes the left group symbol, right group
            symbol, and group contents, and decides how to format them all. *)
         in groupPrinter token l r items
