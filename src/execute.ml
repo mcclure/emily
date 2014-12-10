@@ -247,9 +247,9 @@ and apply stack this a b =
         (* If applying a closure. *)
         | Value.ClosureValue c ->
             let bound = List.rev c.Value.bound in
-            (match c.Value.exec with
-                | Value.ClosureExecUser exec ->
-                    let descend c =
+            let descend c =
+                match c.Value.exec with
+                    | Value.ClosureExecUser exec ->
                         let bound = List.rev c.Value.bound in (* To insure "inner applied first" *)
                         (* FIXME: should be a noscope operation for bound=[], this=None *)
                         let scopeKind = if exec.Value.scoped then Value.WithLet else Value.NoLet in
@@ -269,17 +269,15 @@ and apply stack this a b =
                                     | _ -> ())
                             | _ -> internalFail());
                         executeStep @@ (executeFrame scope exec.Value.code)::stack
-                    (* FIXME: Do this *outside* ClosureExecUser's match *)
-                    in (match c.Value.needArgs with
-                        | 0 -> descend c (* Apply discarding argument *)
-                        | count ->
-                            let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
-                                match c.Value.needArgs with
-                                    | 0 -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
-                                    | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
-                    )
                 | Value.ClosureExecBuiltin f ->
                     r (f bound)
+            in (match c.Value.needArgs with
+                | 0 -> descend c (* Apply discarding argument *)
+                | count ->
+                    let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
+                        match c.Value.needArgs with
+                            | 0 -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
+                            | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
 
         (* If applying a table or table op. *)
