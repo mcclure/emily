@@ -254,20 +254,24 @@ and apply stack this a b =
                         (* FIXME: should be a noscope operation for bound=[], this=None *)
                         let scopeKind = if exec.Value.scoped then Value.WithLet else Value.NoLet in
                         let scope = scopeInheriting scopeKind exec.Value.scope in
-                        let key = List.rev exec.Value.key in
-                        (match scope with
-                            | Value.TableValue t ->
-                                let rec addBound keys values = match (keys, values) with
-                                    | ([], []) -> ()
-                                    | (key::restKey, value::restValue) -> (
-                                        Value.tableSet t (Value.AtomValue key) value;
-                                        addBound restKey restValue)
-                                    | _ -> internalFail()
-                                in addBound key bound;
-                                (match c.Value.this with
-                                    Some this -> Value.tableSet t Value.thisKey this
-                                    | _ -> ())
-                            | _ -> internalFail());
+                        let key = List.rev exec.Value.key in (
+                            (* Trace here ONLY if command line option requests it *)
+                            if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
+
+                            match scope with
+                                | Value.TableValue t ->
+                                    let rec addBound keys values = match (keys, values) with
+                                        | ([], []) -> ()
+                                        | (key::restKey, value::restValue) -> (
+                                            Value.tableSet t (Value.AtomValue key) value;
+                                            addBound restKey restValue)
+                                        | _ -> internalFail()
+                                    in addBound key bound;
+                                    (match c.Value.this with
+                                        Some this -> Value.tableSet t Value.thisKey this
+                                        | _ -> ())
+                                | _ -> internalFail()
+                        );
                         executeStep @@ (executeFrame scope exec.Value.code)::stack
                 | Value.ClosureExecBuiltin f ->
                     r (f bound)

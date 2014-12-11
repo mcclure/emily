@@ -60,7 +60,9 @@ let dumpValueTreeImpl wrapper v =
         | Value.AtomValue s -> "." ^ s
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>"
-        | Value.ClosureValue _ -> "<closure>"
+        | Value.ClosureValue {Value.exec=e; Value.needArgs=n} ->
+            let tag = match e with Value.ClosureExecUser _ -> "closure" | Value.ClosureExecBuiltin _ -> "closure-builtin" in
+             "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
         | Value.TableValue _ -> wrapper "table" v
         | Value.TableHasValue _ -> wrapper "table-checker-has" v
         | Value.TableSetValue _ -> wrapper "table-setter" v
