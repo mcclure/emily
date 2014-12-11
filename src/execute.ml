@@ -280,7 +280,7 @@ and apply stack this a b =
                 | count ->
                     let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
                         match c.Value.needArgs with
-                            | 0 -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
+                            | 1 -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
                             | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
 
