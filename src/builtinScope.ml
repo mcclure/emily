@@ -3,17 +3,17 @@
 let scopePrototypeTable = Value.tableBlank Value.TrueBlank
 let scopePrototype = Value.TableValue(scopePrototypeTable)
 
-let rethis = Value.snippetClosure 2 (fun l -> match l with
-    [Value.ClosureValue(a);b] -> Value.ClosureValue( Value.rethis a b )
-| _ -> failwith "Bad arguments to rethis")
+let rethis = Value.snippetClosure 2 (function
+    | [Value.ClosureValue(a);b] -> Value.ClosureValue( Value.rethis a b )
+    | _ -> failwith "Bad arguments to rethis")
 
-let dethis = Value.snippetClosure 1 (fun l -> match l with
+let dethis = Value.snippetClosure 1 (function
     [Value.ClosureValue(a)] -> Value.ClosureValue( Value.dethis a )
-| _ -> failwith "Bad arguments to dethis")
+    | _ -> failwith "Bad arguments to dethis")
 
-let decontext = Value.snippetClosure 1 (fun l -> match l with
+let decontext = Value.snippetClosure 1 (function
     [Value.ClosureValue(a)] -> Value.ClosureValue( Value.decontext a )
-| _ -> failwith "Bad arguments to dethis")
+    | _ -> failwith "Bad arguments to dethis")
 
 let makeSuper current this = Value.snippetTextClosure 1
     ["rethis",rethis;"current",current;"obj",this]
