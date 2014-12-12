@@ -198,7 +198,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     in let closureValue v =
         let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
-        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key=key; scoped=scoped;}; bound=[]; this=None; needArgs=(List.length key); needThis=true;
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key=key; scoped=scoped;}; bound=[]; this=Value.Blank; needArgs=(List.length key); needThis=true;
          })
 
     (* Identify token *)
@@ -234,7 +234,7 @@ and apply stack this a b =
     let readTable t =
         match Value.tableGet t b with
             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c (Some this) )
+            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c this )
             | Some v -> r v
             | None ->
                 match Value.tableGet t Value.parentKey with
@@ -265,11 +265,16 @@ and apply stack this a b =
                                         | (key::restKey, value::restValue) -> (
                                             Value.tableSet t (Value.AtomValue key) value;
                                             addBound restKey restValue)
-                                        | _ -> internalFail()
-                                    in addBound key bound;
-                                    (match c.Value.this with
-                                        Some this -> Value.tableSet t Value.thisKey this
-                                        | _ -> ())
+                                        | _ -> internalFail() in
+                                    (let setThis current this =
+                                        Value.tableSet t Value.currentKey current;
+                                        Value.tableSet t Value.thisKey this;
+                                        Value.tableSet t Value.superKey (BuiltinScope.makeSuper current this) in
+                                    match c.Value.this with
+                                        | Value.Current c -> setThis c c
+                                        | Value.CurrentThis(c,t) -> setThis c t
+                                        | _ -> ());
+                                    addBound key bound
                                 | _ -> internalFail()
                         );
                         executeStep @@ (executeFrame scope exec.Value.code)::stack
@@ -280,7 +285,7 @@ and apply stack this a b =
                 | count ->
                     let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
                         match c.Value.needArgs with
-                            | 1 -> descend amendedClosure (* Apply, applying argument FIXME: NOT RIGHT *)
+                            | 1 -> descend amendedClosure (* Apply, using argument *)
                             | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
 

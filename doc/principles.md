@@ -16,7 +16,11 @@
 
 ## DRY/SWYM
 
+Destroy all boilerplate
+
 Destroy all idiomatic code
+
+You should not have to be continously trying to remember "how to do it" (, ; space)
 
 ## No parser
 
@@ -24,7 +28,7 @@ Destroy all idiomatic code
 
 ## Privilege ease over correctness
 
-Programming should be easy.
+Programming should be easy. Programming should be egaltarian.
 
 ### Correctness should be *possible*
 

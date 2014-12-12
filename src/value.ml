@@ -15,13 +15,18 @@ and closureExec =
     | ClosureExecUser of closureExecUser
     | ClosureExecBuiltin of (value list -> value)
 
+and closureThis =
+    | Blank
+    | Current of value
+    | CurrentThis of value*value
+
 (* Is this getting kind of complicated? Should curry be wrapped closures? *)
 and closureValue = {
     exec   : closureExec;
     needArgs : int;  (* Count this down as more values are added to bound *)
     needThis : bool; (* This will always be true if closureExecUser is present. *)
     bound  : value list;   (* Already-curried values -- BACKWARD, first application last *)
-    this   : value option; (* This is special. It is the specialest variable. *)
+    this   : closureThis; (* Tracks the "current" and "this" bindings *)
 }
 
 and value =
@@ -90,4 +95,29 @@ let snippetScope bindings =
     List.iter (fun x -> match x with (k,v) -> tableSet scopeTable (AtomValue k) v) bindings;
     TableValue(scopeTable)
 
-let rethis r this = { r with this=this }
+(* Okay this is complicated *)
+
+let recontext r current this = { r with this=CurrentThis(current, this) }
+
+let decontext r = { r with this=Blank }
+
+let dethis r = { r with this=match r.this with
+    | CurrentThis (current,_) -> Current current
+    | okay -> okay
+}
+
+let rethis r this = { r with this=match r.this with
+    | Blank -> CurrentThis(this,this)
+    | Current current -> CurrentThis(current, this)
+    | okay -> okay
+}
+
+let snippetClosure argCount exec =
+    ClosureValue({ exec = ClosureExecBuiltin(exec); needArgs = argCount;
+        needThis = false; bound = []; this = Blank; })
+
+let snippetTextClosure argCount context keys text =
+    ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet text; scope=snippetScope context;
+        scoped = false; key = [];
+    }); needArgs = argCount;
+        needThis = false; bound = []; this = Blank; })
