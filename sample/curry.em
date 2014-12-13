@@ -1,10 +1,11 @@
 # Demonstrate a curried closure.
 # Expect:
-# 7.
-# 11.
+# 4.
+# 5.
 
-let .a ^x y ( x .plus y )
-let .b  (a 5)
+# Note: Significant argument order
+let .a ^x y ( x .minus y )
+let .b  (a 9)
 
-println (a 3 4)
-println (b 6)
+println (a 7 3)
+println (b 4)

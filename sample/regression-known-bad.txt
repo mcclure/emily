@@ -4,6 +4,8 @@
 sample/obj.this.super.em
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
+sample/curry.em
+sample/obj.this.5.em
 sample/set.this.em
 sample/obj.2.em
 sample/scope.closure.2.em

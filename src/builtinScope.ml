@@ -17,9 +17,9 @@ let decontext = Value.snippetClosure 1 (function
     | _ -> failwith "Bad arguments to dethis")
 
 let makeSuper current this = Value.snippetTextClosure
-    ["rethis",rethis;"current",current;"obj",this]
+    ["rethis",rethis;"callCurrent",current;"obj",this]
     ["arg"]
-    "(rethis obj (current.parent arg))"
+    "(rethis obj (callCurrent.parent arg))"
 
 let () =
     let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
