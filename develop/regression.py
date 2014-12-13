@@ -61,11 +61,13 @@ if flag("A"):
 
 indices += flag("t")
 
+indexcommentp = re.compile(r'#.+$', re.S) # Allow comments in .txt file
 for filename in indices:
     with open(filename) as f:
         for line in f.readlines():
+            line = indexcommentp.sub("", line)
             line = line.rstrip()
-            if line and line[0] != "#":
+            if line:
                 files += [line]
 
 files += flag("f")

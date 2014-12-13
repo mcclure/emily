@@ -20,7 +20,6 @@ sample/scope.fallthrough.em
 sample/scope.unscoped.em
 sample/closure.em
 sample/scope.closure.em
-sample/curry.em
 sample/curry.2.em
 
 sample/obj.em
