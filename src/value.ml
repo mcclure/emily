@@ -78,16 +78,6 @@ and tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
 
-(* FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
-let tableBoundSet t key =
-    let f value =
-        tableSet t key value; Null
-    in BuiltinFunctionValue(f)
-let tableBoundHas t key =
-    let f value =
-        tableSet t key value; Null
-    in BuiltinFunctionValue(f)
-
 let boolCast v = if v then True else Null
 
 let snippetScope bindings =

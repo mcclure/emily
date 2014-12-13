@@ -31,15 +31,12 @@ and executeState = executeFrame list
 
 (* -- DEBUG / PRETTYPRINT HELPERS -- *)
 
-(* TODO: This can, and should, go into Pretty.ml *)
-let dumpPrinter = if Options.(run.trackObjects) then Pretty.dumpValueTree else Pretty.dumpValue
-
 (* Pretty print for registerState. Can't go in Pretty.ml because module recursion. *)
 let dumpRegisterState registerState =
     match registerState with
-    | LineStart v -> "LineStart:" ^ (dumpPrinter v)
-    | FirstValue v -> "FirstValue:" ^ (dumpPrinter v)
-    | PairValue (v1,v2) -> "PairValue:" ^ (dumpPrinter v1) ^ "," ^ (dumpPrinter v2)
+    | LineStart v -> "LineStart:" ^ (Pretty.dumpValue v)
+    | FirstValue v -> "FirstValue:" ^ (Pretty.dumpValue v)
+    | PairValue (v1,v2) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "," ^ (Pretty.dumpValue v2)
 
 (* FIXME: I wonder if there's a existing function for this in List or something. *)
 let stackDepth stack =
@@ -62,7 +59,6 @@ let groupScope tokenKind scope =
         | Token.Scoped -> scopeInheriting Value.WithLet scope
         | Token.Box    -> scopeInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
 
-
 (* Combine a value with an existing register var to make a new register var. *)
 (* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)
 (* so only call if we know this is not a pair already (unless we *want* to flatten) *)
@@ -71,6 +67,17 @@ let newStateFor register v = match register with
     | LineStart _ | PairValue _ -> FirstValue (v)
     (* Or combine with an existing value to make a pair. *)
     | FirstValue fv -> PairValue (fv, v)
+
+(* THIS-FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
+let tableBoundSet t key =
+    let f value =
+        if Options.(run.traceSet) then print_endline @@ "        SET: " ^ (Pretty.dumpValue key) ^ " = " ^ (Pretty.dumpValue value);
+        Value.tableSet t key value; Value.Null
+    in Value.BuiltinFunctionValue(f)
+let tableBoundHas t key =
+    let f value =
+        Value.boolCast( Value.tableHas t key )
+    in Value.BuiltinFunctionValue(f)
 
 (* Constructor for a new frame *)
 let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope}
@@ -122,7 +129,7 @@ let rec executeStep stack = (* Unpack stack *)
 
 and executeStepWithFrames stack frame moreFrames =
     (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+    if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpCodeTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
     (* Check the state of the top frame *)
     match frame.register with
@@ -169,7 +176,7 @@ and evaluateTokenFromLines stack frame moreFrames line moreLines =
 (* Enter a frame as if returning this value from a function. *)
 and returnTo stackTop v =
     (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "<-- " ^ (dumpPrinter v);
+    if Options.(run.trace) then print_endline @@ "<-- " ^ (Pretty.dumpValue v);
 
     (* Unpack the new stack. *)
     match stackTop with
@@ -222,7 +229,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                     in
 
                     (* Trace here ONLY if command line option requests it *)
-                    if Options.(run.trace) then print_endline @@ "Group --> " ^ dumpPrinter newScope;
+                    if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValue newScope;
 
                     executeStep @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                 | _ -> closureValue group
@@ -241,7 +248,7 @@ and apply stack this a b =
                     | Some parent -> apply stack this parent b
                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
     in let setTable t = (* THIS-FIXME *)
-        r (Value.tableBoundSet t b)
+        r (tableBoundSet t b)
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
@@ -255,7 +262,7 @@ and apply stack this a b =
                         let scope = scopeInheriting scopeKind exec.Value.scope in
                         let key = List.rev exec.Value.key in (
                             (* Trace here ONLY if command line option requests it *)
-                            if Options.(run.trace) then print_endline @@ "Closure --> " ^ dumpPrinter scope;
+                            if Options.(run.trace) then print_endline @@ "Closure --> " ^ Pretty.dumpValue scope;
 
                             match scope with
                                 | Value.TableValue t ->

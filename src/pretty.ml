@@ -1,7 +1,9 @@
 (* Pretty-printers for types from various other files *)
 
+(* --- Code printers --- *)
+
 (* "Disassemble" a token tree into a human-readable string (specializable) *)
-let rec dumpTree groupPrinter token =
+let rec dumpCodeTreeGeneral groupPrinter token =
     match token.Token.contents with
     (* For a simple (nongrouping) token, return a string for just the item *)
     | Token.Word x (* | Symbol x *) -> x
@@ -22,23 +24,25 @@ let rec dumpTree groupPrinter token =
         in groupPrinter token l r items
 
 (* "Disassemble" a token tree into a human-readable string (specialized for looking like code) *)
-let dumpTreeTerse token =
+let dumpCodeTreeTerse token =
     let rec groupPrinter token l r items =
         l ^ ( String.concat "; " (
-                    let eachline x = String.concat " " ( List.map (dumpTree groupPrinter) x )
+                    let eachline x = String.concat " " ( List.map (dumpCodeTreeGeneral groupPrinter) x )
                     in List.map eachline items;
         ) ) ^ r
-    in dumpTree groupPrinter token
+    in dumpCodeTreeGeneral groupPrinter token
 
 (* "Disassemble" a token tree into a human-readable string (specialized to show token positions) *)
-let dumpTreeDense token =
-    let rec oneToken x = Printf.sprintf "%s %s" (Token.positionString x.Token.at) (dumpTree groupPrinter x)
+let dumpCodeTreeDense token =
+    let rec oneToken x = Printf.sprintf "%s %s" (Token.positionString x.Token.at) (dumpCodeTreeGeneral groupPrinter x)
     and groupPrinter token l r items =
         l ^ "\n" ^ ( String.concat "\n" (
                     let eachline x = String.concat "\n" ( List.map oneToken x )
                     in List.map eachline items;
         ) ) ^ "\n" ^ r
-    in dumpTree groupPrinter token
+    in dumpCodeTreeGeneral groupPrinter token
+
+(* --- Value printers --- *)
 
 let angleWrap s = "<" ^ s ^ ">"
 let quoteWrap s = "\"" ^ s ^ "\""
@@ -51,7 +55,7 @@ let idStringForValue v = match v with
     | Value.TableValue t -> idStringForTable t
     | _ -> "UNTABLE"
 
-let dumpValueTreeImpl wrapper v =
+let dumpValueTreeGeneral wrapper v =
     match v with
         | Value.Null -> "<null>"
         | Value.True -> "<true>"
@@ -72,11 +76,16 @@ let dumpValueTree v =
     let rec wrapper label obj = match obj with
         | Value.TableValue t | Value.TableSetValue t | Value.TableLetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
         | _ -> angleWrap label
-    in dumpValueTreeImpl wrapper v
+    in dumpValueTreeGeneral wrapper v
 
 let dumpValue v =
-    let wrapper label obj = angleWrap label
-    in dumpValueTreeImpl wrapper v
+    let simpleWrapper label obj = angleWrap label
+    in let labelWrapper label obj = match obj with
+        | Value.TableValue t | Value.TableSetValue t | Value.TableLetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
+        | _ -> angleWrap label
+    in let wrapper = if Options.(run.trackObjects) then simpleWrapper else labelWrapper
+
+    in dumpValueTreeGeneral wrapper v
 
 (* Normal "print" uses this *)
 let dumpValueForUser v =
