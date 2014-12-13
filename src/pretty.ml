@@ -81,13 +81,17 @@ let dumpValue v =
 
     in dumpValueTreeGeneral wrapper v
 
+(* FIXME: The formatting here is not even a little bit generalized. *)
 let dumpValueTable v =
     dumpValue (v) ^ match v with
-        | Value.TableValue t -> " = [" ^
-            (String.concat "; " (List.map (function
+        | Value.TableValue t -> " = [\n            " ^
+            (String.concat "\n            " (List.map (function
                 (v1, v2) -> dumpValue(v1) ^ " = " ^ dumpValue(v2)
-            ) (CCHashtbl.to_list t) ) ) ^ "]"
+            ) (CCHashtbl.to_list t) ) ) ^ "\n        ]"
         | _ -> ""
+
+let dumpValueNewTable v =
+    (if Options.(run.traceSet) then dumpValueTable else dumpValue) v
 
 (* Normal "print" uses this *)
 let dumpValueForUser v =

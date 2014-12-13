@@ -231,7 +231,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                     in
 
                     (* Trace here ONLY if command line option requests it *)
-                    if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValue newScope;
+                    if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValueNewTable newScope;
 
                     executeStep @@ (executeFrame newScope items)::(stackWithRegister frame.register)
                 | _ -> closureValue group
@@ -264,7 +264,7 @@ and apply stack this a b =
                         let scope = scopeInheriting scopeKind exec.Value.scope in
                         let key = List.rev exec.Value.key in (
                             (* Trace here ONLY if command line option requests it *)
-                            if Options.(run.trace) then print_endline @@ "Closure --> " ^ Pretty.dumpValue scope;
+                            if Options.(run.trace) then print_endline @@ "Closure --> " ^ Pretty.dumpValueNewTable scope;
 
                             match scope with
                                 | Value.TableValue t ->
