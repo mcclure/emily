@@ -4,8 +4,6 @@
 sample/obj.this.super.em
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-sample/curry.em           # Curry arguments are being applied backward!
-sample/obj.this.5.em      #     [ibid]
 sample/set.this.em        # table-to-apply binding for set solidifies too early
 sample/obj.2.em           # () is not correctly letting .let fall through
 sample/scope.closure.2.em #     [ibid]

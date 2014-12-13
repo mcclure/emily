@@ -262,7 +262,7 @@ and apply stack this a b =
                         (* FIXME: should be a noscope operation for bound=[], this=None *)
                         let scopeKind = if exec.Value.scoped then Value.WithLet else Value.NoLet in
                         let scope = scopeInheriting scopeKind exec.Value.scope in
-                        let key = List.rev exec.Value.key in (
+                        let key = exec.Value.key in (
                             (* Trace here ONLY if command line option requests it *)
                             if Options.(run.trace) then print_endline @@ "Closure --> " ^ Pretty.dumpValueNewTable scope;
 

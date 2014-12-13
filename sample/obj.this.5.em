@@ -1,12 +1,15 @@
-# Test "this" binding with method call
+# Test "this" and "current" bindings shadow environment, but not arguments
 # Expect:
 # <table>
 # <table>
-# 5
-# 6
+# 5.
+# 6.
+
+let .current "X"
+let .this    "Y"
 
 let .a [
-    let .b ^ curren thi { println current this }
+    let .b ^ curren  thi  { println current this }
     let .c ^ current this { println current this }
 ]
 

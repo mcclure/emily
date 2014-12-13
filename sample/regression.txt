@@ -20,6 +20,7 @@ sample/scope.fallthrough.em
 sample/scope.unscoped.em
 sample/closure.em
 sample/scope.closure.em
+sample/curry.em
 sample/curry.2.em
 
 sample/obj.em
@@ -28,5 +29,6 @@ sample/obj.this.em
 sample/obj.this.2.em
 sample/obj.this.3.em
 sample/obj.this.4.em
+sample/obj.this.5.em
 
 sample/ski.2.em
