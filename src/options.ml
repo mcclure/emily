@@ -52,6 +52,11 @@ Options:|})
         ("--debug-trace", Arg.Unit(fun () -> run.trace <- true),              "When executing, print interpreter state");
         ("--debug-track", Arg.Unit(fun () -> run.trackObjects <- true),       {|When executing, give all objects a unique "!id" member|});
         ("--debug-set",   Arg.Unit(fun () -> run.traceSet <- true),           {|When executing, print object contents on each set|});
+        ("--debug-all",   Arg.Unit(fun () ->
+            run.trace <- true;
+            run.trackObjects <- true;
+            run.traceSet <- true
+        ),  {|When executing, set all runtime trace type options|});
     ]
 
     in Arg.parse args targetParse usage
