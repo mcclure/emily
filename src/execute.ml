@@ -71,7 +71,9 @@ let newStateFor register v = match register with
 (* THIS-FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
 let tableBoundSet t key =
     let f value =
-        if Options.(run.traceSet) then print_endline @@ "        SET: " ^ (Pretty.dumpValue key) ^ " = " ^ (Pretty.dumpValue value);
+        if Options.(run.traceSet) then (
+            print_endline @@ "        SET: " ^ (Pretty.dumpValue key) ^ " = " ^ (Pretty.dumpValue value);
+            print_endline @@ "        ON:  " ^ (Pretty.dumpValueTable (Value.TableValue t)));
         Value.tableSet t key value; Value.Null
     in Value.BuiltinFunctionValue(f)
 let tableBoundHas t key =

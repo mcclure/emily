@@ -67,25 +67,27 @@ let dumpValueTreeGeneral wrapper v =
         | Value.ClosureValue {Value.exec=e; Value.needArgs=n} ->
             let tag = match e with Value.ClosureExecUser _ -> "closure" | Value.ClosureExecBuiltin _ -> "closure-builtin" in
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
-        | Value.TableValue _ -> wrapper "table" v
+        | Value.TableValue    _ -> wrapper "table" v
         | Value.TableHasValue _ -> wrapper "table-checker-has" v
         | Value.TableSetValue _ -> wrapper "table-setter" v
         | Value.TableLetValue _ -> wrapper "table-setter-let" v
-
-let dumpValueTree v =
-    let rec wrapper label obj = match obj with
-        | Value.TableValue t | Value.TableSetValue t | Value.TableLetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
-        | _ -> angleWrap label
-    in dumpValueTreeGeneral wrapper v
 
 let dumpValue v =
     let simpleWrapper label obj = angleWrap label
     in let labelWrapper label obj = match obj with
         | Value.TableValue t | Value.TableSetValue t | Value.TableLetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
         | _ -> angleWrap label
-    in let wrapper = if Options.(run.trackObjects) then simpleWrapper else labelWrapper
+    in let wrapper = if Options.(run.trackObjects) then labelWrapper else simpleWrapper
 
     in dumpValueTreeGeneral wrapper v
+
+let dumpValueTable v =
+    dumpValue (v) ^ match v with
+        | Value.TableValue t -> " = [" ^
+            (String.concat "; " (List.map (function
+                (v1, v2) -> dumpValue(v1) ^ " = " ^ dumpValue(v2)
+            ) (CCHashtbl.to_list t) ) ) ^ "]"
+        | _ -> ""
 
 (* Normal "print" uses this *)
 let dumpValueForUser v =
