@@ -234,7 +234,7 @@ and apply stack this a b =
     let readTable t =
         match Value.tableGet t b with
             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis c this )
+            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis this c )
             | Some v -> r v
             | None ->
                 match Value.tableGet t Value.parentKey with
@@ -246,11 +246,10 @@ and apply stack this a b =
     in match a with
         (* If applying a closure. *)
         | Value.ClosureValue c ->
-            let bound = List.rev c.Value.bound in
             let descend c =
+                let bound = List.rev c.Value.bound in
                 match c.Value.exec with
                     | Value.ClosureExecUser exec ->
-                        let bound = List.rev c.Value.bound in (* To insure "inner applied first" *)
                         (* FIXME: should be a noscope operation for bound=[], this=None *)
                         let scopeKind = if exec.Value.scoped then Value.WithLet else Value.NoLet in
                         let scope = scopeInheriting scopeKind exec.Value.scope in
@@ -284,7 +283,7 @@ and apply stack this a b =
                 | 0 -> descend c (* Apply discarding argument *)
                 | count ->
                     let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
-                        match c.Value.needArgs with
+                        match count with
                             | 1 -> descend amendedClosure (* Apply, using argument *)
                             | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )

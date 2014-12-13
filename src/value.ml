@@ -106,7 +106,7 @@ let dethis r = { r with this=match r.this with
     | okay -> okay
 }
 
-let rethis r this = { r with this=match r.this with
+let rethis this r = { r with this=match r.this with
     | Blank -> CurrentThis(this,this)
     | Current current -> CurrentThis(current, this)
     | okay -> okay
@@ -116,8 +116,8 @@ let snippetClosure argCount exec =
     ClosureValue({ exec = ClosureExecBuiltin(exec); needArgs = argCount;
         needThis = false; bound = []; this = Blank; })
 
-let snippetTextClosure argCount context keys text =
+let snippetTextClosure context keys text =
     ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet text; scope=snippetScope context;
-        scoped = false; key = [];
-    }); needArgs = argCount;
+        scoped = false; key = keys;
+    }); needArgs = List.length keys;
         needThis = false; bound = []; this = Blank; })
