@@ -3,7 +3,7 @@
 # 3.
 # 2.
 # 3.
-# 7.
+# 4.
 
 let .obj1 [
     let .var1 1
@@ -18,7 +18,7 @@ let .obj1 [
 
 let .obj2 [
     let .parent obj1
-    let .var2 5 # Shadow
+    let .var2 5  # Shadow
     let .meth ^{ # Overrides obj1.meth
         this.set.var1 6 # This sets obj1.var1
         this.set.var2 7 # This sets obj2.var2
@@ -26,11 +26,10 @@ let .obj2 [
     }
 ]
 
-# Expected result: Resolves to e.c, which invokes a.c, which sets a.b to 2
+# Expected result: Resolves to obj2.meth, which invokes obj1.meth
 obj2.meth null
 
 println( obj1.var1 )
 println( obj1.var2 )
 println( obj2.var1 )
 println( obj2.var2 )
-

@@ -1,7 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-sample/obj.this.super.em
+# None!
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 sample/set.this.em        # table-to-apply binding for set solidifies too early

@@ -99,7 +99,7 @@ let dethis r = { r with this=match r.this with
 let rethis this r = { r with this=match r.this with
     | Blank -> CurrentThis(this,this)
     | Current current -> CurrentThis(current, this)
-    | okay -> okay
+    | CurrentThis (current,_) -> CurrentThis(current, this)
 }
 
 let snippetClosure argCount exec =

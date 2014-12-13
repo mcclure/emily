@@ -36,6 +36,8 @@ let () =
     setAtomValue "null" (Value.Null);
     setAtomValue "true" (Value.True);
 
+    setAtomValue "rethis" rethis;
+
     setAtomFn "not" (fun v -> match v with Value.Null -> Value.True | _ -> Value.Null);
 
     setAtomFn "println" (
