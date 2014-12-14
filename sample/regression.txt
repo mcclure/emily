@@ -33,4 +33,7 @@ sample/obj.this.5.em
 sample/obj.this.super.em
 sample/obj.rethis.em
 
+sample/tern.em
+sample/tern.2.em
+
 sample/ski.2.em

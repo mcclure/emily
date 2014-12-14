@@ -4,5 +4,5 @@
 # 2.
 # 5.
 
-println (tern ^( 1    ) ^( 2 ) ^( 3 ) )
-println (tern ^( null ) ^( 4 ) ^( 5 ) )
+println (tern ( 1    ) ^( 2 ) ^( 3 ) )
+println (tern ( null ) ^( 4 ) ^( 5 ) )

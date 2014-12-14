@@ -14,8 +14,6 @@ sample/parsetest.fail.2.em    # Mismatched right-paren fallaciously allowed
 sample/parsetest.unicode.2.em # Unicode identifiers not in yet
 
 # "Expected" failures due to not-yet-implemented features
-sample/tern.em   # Depends on tern
-sample/tern.2.em #     [ibid]
 sample/loop.em   # Depends on loop
 sample/loop.2.em #     [ibid]
 sample/fibo.em   #     [ibid]
