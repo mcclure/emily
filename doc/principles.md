@@ -30,6 +30,8 @@ You should not have to be continously trying to remember "how to do it" (, ; spa
 
 Programming should be easy. Programming should be egaltarian.
 
+Words are better than symbols, better than dvwlld grbg.
+
 ### Correctness should be *possible*
 
 ## It is my job to make it hard for you to do something wrong by accident. It is not my job to make it hard for you to do something wrong on purpose.

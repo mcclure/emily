@@ -1,7 +1,8 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-sample/builtin.em  # "do" does not work, neither does "decontext"
+sample/obj.dethis.em   # "decontext" does not work
+sample/builtin.obj.em  # no obj builtins yet
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 sample/set.this.em        # table-to-apply binding for set solidifies too early

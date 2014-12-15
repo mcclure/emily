@@ -51,6 +51,20 @@ let loop = Value.snippetTextClosure
     ["f"]
     "{let .loop ^f ( tern (f null) ^(loop f) ^(null) ); loop} f" (* FIXME: This is garbage *)
 
+let ifConstruct = Value.snippetTextClosure
+    ["tern", tern; "null", Value.Null]
+    ["predicate"; "body"]
+    "{let .if ^condition body (
+        tern condition ^(body null) ^(null) );
+    if} predicate body" (* Garbage construct again *)
+
+let whileConstruct = Value.snippetTextClosure
+    ["tern", tern; "null", Value.Null]
+    ["predicate"; "body"]
+    "{let .while ^predicate body (
+        tern (predicate null) ^(body null; while predicate body) ^(null)
+    ); while} predicate body" (* Garbage construct again *)
+
 let () =
     let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
 
@@ -73,6 +87,8 @@ let () =
     setAtomValue "nullfn" nullfn;
     setAtomValue "do" doConstruct;
     setAtomValue "loop" loop;
+    setAtomValue "if" ifConstruct;
+    setAtomValue "while" whileConstruct;
 
     setAtomFn "not" (fun v -> match v with Value.Null -> Value.True | _ -> Value.Null);
 
