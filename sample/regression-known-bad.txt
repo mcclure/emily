@@ -3,10 +3,10 @@
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
 sample/obj.dethis.em   # "decontext" does not work
 sample/builtin.obj.em  # no obj builtins yet
-sample/obj.this.7.em   # something really messed up with this.let in inherited methods
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-sample/set.this.em        # table-to-apply binding for set solidifies too early
+sample/obj.this.7.em      # something really messed up with this.let in inherited methods
+sample/set.curry.em       # table-to-apply binding for set solidifies too early
 sample/obj.2.em           # () is not correctly letting .let fall through
 sample/scope.closure.2.em #     [ibid]
 sample/obj.this.6.em      # [ this ] doesn't exist
