@@ -16,7 +16,7 @@ let .or ^a( ^b( tern ^(a) ^(a) ^(b) ) )
 
 let .countdown ^x{
     set .x (x .plus (0 .minus 1))
-    tern ( or (x .gt 0) (x .eq 0) )  ^( println x; countdown x )  ^( null )
+    tern ( or (x .gt 0) (x .eq 0) )  ^( println x; countdown x ) ^( null )
 }
 
 countdown 10

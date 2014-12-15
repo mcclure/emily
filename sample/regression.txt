@@ -35,5 +35,8 @@ sample/obj.rethis.em
 
 sample/tern.em
 sample/tern.2.em
+sample/loop.em
+sample/loop.2.em
+sample/fibo.em
 
 sample/ski.2.em

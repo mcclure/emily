@@ -1,7 +1,6 @@
 # Test that a "real" program can run. Prints the finonachi numbers.
 
 # Expect:
-# 0.
 # 1.
 # 1.
 # 2.

@@ -36,6 +36,21 @@ let tern = Value.snippetTextClosure
     ["pred"; "a"; "b"]
     "(rawTern pred a b) null"
 
+let doConstruct = Value.snippetTextClosure
+    ["null", Value.Null]
+    ["f"]
+    "f null"
+
+let nullfn = Value.snippetTextClosure
+    ["null", Value.Null]
+    []
+    "^(null)"
+
+let loop = Value.snippetTextClosure
+    ["tern", tern; "null", Value.Null]
+    ["f"]
+    "{let .loop ^f ( tern (f null) ^(loop f) ^(null) ); loop} f" (* FIXME: This is garbage *)
+
 let () =
     let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
 
@@ -55,6 +70,9 @@ let () =
     setAtomValue "dethis" dethis;
     setAtomValue "decontext" rethis;
     setAtomValue "tern" tern;
+    setAtomValue "nullfn" nullfn;
+    setAtomValue "do" doConstruct;
+    setAtomValue "loop" loop;
 
     setAtomFn "not" (fun v -> match v with Value.Null -> Value.True | _ -> Value.Null);
 
