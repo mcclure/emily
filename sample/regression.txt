@@ -24,12 +24,15 @@ sample/curry.em
 sample/curry.2.em
 
 sample/obj.em
+sample/obj.3.em
 sample/obj.current.em
+sample/obj.current.2.em
 sample/obj.this.em
 sample/obj.this.2.em
 sample/obj.this.3.em
 sample/obj.this.4.em
 sample/obj.this.5.em
+sample/obj.this.8.em
 sample/obj.this.super.em
 sample/obj.rethis.em
 

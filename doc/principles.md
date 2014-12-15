@@ -22,6 +22,8 @@ Destroy all idiomatic code
 
 You should not have to be continously trying to remember "how to do it" (, ; space)
 
+Computers are good at repetitive, non-executive tasks and bad at decisionmaking. Humans are good at decisionmaking and bad at repetitive tasks. If there is something such that "you have to do it every time", it is something the computer could and should be doing.
+
 ## No parser
 
 ### Types determine what is possible
