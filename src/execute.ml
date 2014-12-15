@@ -146,6 +146,16 @@ let rec executeStep stack =
         | {register=r; scope=s; code=line::[]::rest}::moreFrames ->
             executeStep @@ {register=r; scope=s; code=line::rest}::moreFrames
 
+        (* Case #2: A normal group descent, but into an unnecessary pair of parenthesis.
+           IOW, the next-to-top frame does no work; its code only ever contained a group token. *)
+        | frame :: {register=LineStart _; code=[[]]} :: moreFrames ->
+            executeStep @@ frame::moreFrames
+
+        (* Case #3: Canonical tail call: A function application, at the end of a group.
+           We can thus excise the frame that's just waiting for the application to return. *)
+        | frame :: {register=PairValue _; code=[[]]} :: moreFrames ->
+            executeStep @@ frame::moreFrames
+
         (* Break stack frames into first and rest *)
         | frame :: moreFrames ->
             executeStepWithFrames stack frame moreFrames
