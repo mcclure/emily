@@ -119,11 +119,32 @@ apply: (A pair of values has been identified; evaluate their application.)
 
 *)
 
+(* TCO notes:
+    These are the recursion points for executeStep:
+        evaluateTokenFromLines -> Line is present, but empty -> move to next
+        returnTo -> top frame exists, a value was calculated by an outer frame, combine down onto it
+        evaluateTokenFromTokens.simpleValue -> new value for this current frame known, just set it
+        evaluateTokenFromTokens -> DESCENT: next token is a group; evaluate it.
+        apply -> DESCENT: application is closure to value; make stack frame.
+        apply -> DESCENT: application is hasValue or setValue; do in lower stack frame.
+    In future, it might be useful to do the TCO stack rewriting at the descent points and
+    blank-line removal at tokenize time, instead of wasting time on it each loop start.
+*)
+
 (* These first five functions are mostly routing: *)
-let rec executeStep stack = (* Unpack stack *)
+(* executeStep is the "start of the loop"-- the entry point we return to after each action.
+   it currently just unpacks the stack, cleans it up, and passes components on to process. *)
+let rec executeStep stack =
     match stack with
-        (* Asked to execute an empty file -- just return *)
+        (* Unusual edge case: Asked to execute an empty file -- just return *)
         | [] -> ()
+
+        (* Here some tail call optimization passes occur. We check for special stack patterns
+           implying unnecessary space on the stack, then rewrite the stack to avoid them. *)
+
+        (* Case #1: Remove blank lines so they don't mess up other TCO checks later *)
+        | {register=r; scope=s; code=line::[]::rest}::moreFrames ->
+            executeStep @@ {register=r; scope=s; code=line::rest}::moreFrames
 
         (* Break stack frames into first and rest *)
         | frame :: moreFrames ->

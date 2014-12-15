@@ -52,7 +52,7 @@ let () =
     setAtomValue "true" (Value.True);
 
     setAtomValue "rethis" rethis;
-    setAtomValue "dethis" rethis;
+    setAtomValue "dethis" dethis;
     setAtomValue "decontext" rethis;
     setAtomValue "tern" tern;
 
