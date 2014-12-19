@@ -1,7 +1,7 @@
 # Test "let" on this
 # Expect:
-# 4.
 # 3.
+# 4.
 
 let .obj1 [
     let .meth ^arg{ this.let.var1 arg }
