@@ -1,4 +1,4 @@
-# Test a has statement. Bonus: Test a blank let.
+# Test intersection of "has" with an incompletely applied let
 # Expect:
 # <null>
 # <true>

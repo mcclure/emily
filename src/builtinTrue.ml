@@ -1,5 +1,5 @@
 (* Populates a prototype for trues *)
-let truePrototypeTable = ValueUtil.tableBlank Value.TrueBlank
+let truePrototypeTable = ValueUtil.tableBlank Value.NoSet
 let truePrototype = Value.TableValue(truePrototypeTable)
 
 let () =

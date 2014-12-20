@@ -12,17 +12,20 @@ let ternKnot : value ref = ref Null
 let rec tableBlank kind : tableValue =
     let t = Hashtbl.create(1) in (match kind with
         | TrueBlank -> ()
-        | NoLet -> populateUserTable t
-        | WithLet -> populateUserTable t; tableSetString t "let" (TableLetValue t)
+        | NoSet -> populateWithHas t
+        | NoLet -> populateWithSet t
+        | WithLet -> populateWithSet t; tableSetString t "let" (TableLetValue t)
         | BoxFrom parent -> let box = match parent with None -> tableBlank WithLet | Some value -> tableInheriting WithLet value in
-             tableSetString t "set" (TableSetValue t); tableSetString t "let" (TableLetValue box); (* TODO: Fancier *)
+             populateWithSet t; tableSetString t "let" (TableLetValue box); (* TODO: Fancier *)
              tableSet t currentKey (TableValue box)
     );
     if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator);
     t
-and populateUserTable t =
-    tableSetString t "set" (TableSetValue t);
+and populateWithHas t =
     tableSetString t "has" (makeHas (TableValue t))
+and populateWithSet t =
+    populateWithHas t;
+    tableSetString t "set" (TableSetValue t)
 and tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
@@ -43,7 +46,7 @@ and rawHas = snippetClosure 2 (function
     | [v;_] -> badArgTable "rawHas" v
     | _ -> impossibleArg "rawTern")
 and makeHas obj = snippetTextClosure
-    ["rawHas",rawHas;"tern",!ternKnot;"obj",obj]
+    ["rawHas",rawHas;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
     ["key"]
     "tern (rawHas obj key) ^(true) ^(
          tern (rawHas obj .parent) ^(obj.parent.has key) ^(null)

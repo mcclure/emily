@@ -1,5 +1,5 @@
 (* Populates a prototype for objects *)
-let objectPrototypeTable = ValueUtil.tableInheriting Value.TrueBlank BuiltinTrue.truePrototype
+let objectPrototypeTable = ValueUtil.tableInheriting Value.NoSet BuiltinTrue.truePrototype
 let objectPrototype = Value.TableValue(objectPrototypeTable)
 
 (* TODO: Prototype for []s? .append can live in here. *)

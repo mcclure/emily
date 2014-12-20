@@ -1,5 +1,5 @@
 (* Populates a prototype for nulls, also holds machinery used by other Builtin files *)
-let nullPrototypeTable = ValueUtil.tableBlank Value.TrueBlank
+let nullPrototypeTable = ValueUtil.tableBlank Value.NoSet
 
 (* Returns setAtomValue,setAtomFn,setAtomMethod *)
 let atomFuncs table =

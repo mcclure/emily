@@ -42,7 +42,12 @@ and value =
     | TableSetValue of tableValue
     | TableLetValue of tableValue
 
-and tableBlankKind = TrueBlank | NoLet | WithLet | BoxFrom of value option
+and tableBlankKind =
+    | TrueBlank (* Really, actually empty *)
+    | NoSet     (* Has .has *)
+    | NoLet     (* Has .set *)
+    | WithLet   (* Has .let *)
+    | BoxFrom of value option (* Has .parent *)
 
 let idGenerator = ref 0.0
 

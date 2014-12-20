@@ -1,6 +1,6 @@
 (* Populates a prototype for scopes *)
 (* Note: Scope does not inherit true because it isn't user accessible yet. *)
-let scopePrototypeTable = ValueUtil.tableBlank Value.TrueBlank
+let scopePrototypeTable = ValueUtil.tableBlank Value.NoSet
 let scopePrototype = Value.TableValue(scopePrototypeTable)
 
 let rethis = Value.snippetClosure 2 (function
