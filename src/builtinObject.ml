@@ -1,9 +1,8 @@
 (* Populates a prototype for objects *)
-let objectPrototypeTable = Value.tableInheriting Value.TrueBlank BuiltinTrue.truePrototype
+let objectPrototypeTable = ValueUtil.tableInheriting Value.TrueBlank BuiltinTrue.truePrototype
 let objectPrototype = Value.TableValue(objectPrototypeTable)
 
-
-
+(* TODO: Prototype for []s? .append can live in here. *)
 let () =
     let (_, _, _) = BuiltinNull.atomFuncs objectPrototypeTable in
 

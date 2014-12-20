@@ -50,7 +50,7 @@ let stackDepth stack =
 
 (* These three could technically move into value.ml but BuiltinObject depends on Value *)
 let scopeInheriting kind v =
-    Value.TableValue(Value.tableInheriting kind v)
+    Value.TableValue(ValueUtil.tableInheriting kind v)
 
 (* Given a parent scope and a token creates an appropriate inner group scope *)
 let groupScope tokenKind scope =
@@ -68,17 +68,20 @@ let newStateFor register v = match register with
     (* Or combine with an existing value to make a pair. *)
     | FirstValue fv -> PairValue (fv, v)
 
+
 (* THIS-FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
+
+let tableBoundSet = Value.snippetClosure 1 (function
+    | [Value.ClosureValue(a)] -> Value.ClosureValue( Value.decontext a )
+    | [a] -> ValueUtil.badArgClosure "decontext" a
+    | _ -> ValueUtil.impossibleArg "decontext")
+
 let tableBoundSet t key =
     let f value =
         if Options.(run.traceSet) then (
             print_endline @@ "        SET: " ^ (Pretty.dumpValue key) ^ " = " ^ (Pretty.dumpValue value);
             print_endline @@ "        ON:  " ^ (Pretty.dumpValueTable (Value.TableValue t)));
         Value.tableSet t key value; Value.Null
-    in Value.BuiltinFunctionValue(f)
-let tableBoundHas t key =
-    let f value =
-        Value.boolCast( Value.tableHas t key )
     in Value.BuiltinFunctionValue(f)
 
 (* Constructor for a new frame *)
@@ -331,17 +334,11 @@ and apply stack this a b =
         (* If applying a table or table op. *)
         | Value.TableValue t ->  readTable t
         (* THIS-FIXME *)
-        | Value.TableHasValue t -> if (Value.tableHas t b) then r Value.True
-            else (match Value.tableGet t Value.parentKey with
-                (* Have to step one down. FIXME: Unify this with Set implementation? *)
-                | Some parent ->
-                    executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentHasSnippet)::stack
-                | None -> r Value.Null)
         | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
             else (match Value.tableGet t Value.parentKey with
                 (* Have to step one down. FIXME: Refactor with instance below? *)
                 | Some parent ->
-                    executeStep @@ (executeFrame (Value.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
+                    executeStep @@ (executeFrame (ValueUtil.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
                 | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
         | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
             setTable t

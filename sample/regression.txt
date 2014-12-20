@@ -15,6 +15,7 @@ sample/bool.em
 
 sample/set.em
 sample/has.em
+sample/has.2.em
 sample/scope.em
 sample/scope.fallthrough.em
 sample/scope.unscoped.em

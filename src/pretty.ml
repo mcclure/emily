@@ -68,7 +68,6 @@ let dumpValueTreeGeneral wrapper v =
             let tag = match e with Value.ClosureExecUser _ -> "closure" | Value.ClosureExecBuiltin _ -> "closure-builtin" in
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
         | Value.TableValue    _ -> wrapper "table" v
-        | Value.TableHasValue _ -> wrapper "table-checker-has" v
         | Value.TableSetValue _ -> wrapper "table-setter" v
         | Value.TableLetValue _ -> wrapper "table-setter-let" v
 

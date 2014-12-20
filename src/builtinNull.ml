@@ -1,9 +1,9 @@
 (* Populates a prototype for nulls, also holds machinery used by other Builtin files *)
-let nullPrototypeTable = Value.tableBlank Value.TrueBlank
+let nullPrototypeTable = ValueUtil.tableBlank Value.TrueBlank
 
 (* Returns setAtomValue,setAtomFn,setAtomMethod *)
-let atomFuncs table = 
-    let setValue name v = Value.tableSet table (Value.AtomValue name) v in 
+let atomFuncs table =
+    let setValue name v = Value.tableSet table (Value.AtomValue name) v in
     ( (setValue)
     , (fun n fn -> setValue n (Value.BuiltinFunctionValue fn))
     , (fun n fn -> setValue n (Value.BuiltinMethodValue fn))
@@ -13,6 +13,6 @@ let atomFuncs table =
 let () =
     let (_, setAtomFn, _) = atomFuncs nullPrototypeTable in
 
-    setAtomFn "and" (fun v -> Value.boolCast false);
-    setAtomFn "or"  (fun v -> Value.boolCast (match v with Value.Null -> false | _ -> true ));
-    setAtomFn "xor" (fun v -> Value.boolCast (match v with Value.Null -> false | _ -> true ));
+    setAtomFn "and" (fun v -> ValueUtil.boolCast false);
+    setAtomFn "or"  (fun v -> ValueUtil.boolCast (match v with Value.Null -> false | _ -> true ));
+    setAtomFn "xor" (fun v -> ValueUtil.boolCast (match v with Value.Null -> false | _ -> true ));
