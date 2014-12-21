@@ -9,7 +9,8 @@ let rawMisapplyArg a b = failwith @@ "Application failure: "^(Pretty.dumpValue a
 
 let boolCast v = if v then True else Null
 
-let ternKnot : value ref = ref Null
+let ternKnot                : value ref = ref Null
+let rethisAssignToScopeKnot : value ref = ref Null
 
 let snippetClosure argCount exec =
     ClosureValue({ exec = ClosureExecBuiltin(exec); needArgs = argCount;
@@ -19,19 +20,22 @@ let rec tableBlank kind : tableValue =
     let t = Hashtbl.create(1) in (match kind with
         | TrueBlank -> ()
         | NoSet -> populateWithHas t
-        | NoLet -> populateWithSet t
-        | WithLet -> populateWithSet t; tableSetString t "let" (makeLet t)
+        | NoLet -> populateWithSet !rethisAssignToScopeKnot t
+        | WithLet ->
+            populateWithSet !rethisAssignToScopeKnot t;
+            tableSetString t "let" (makeLet rawRethisAssignToScope t)
         | BoxFrom parent -> let box = match parent with None -> tableBlank WithLet | Some value -> tableInheriting WithLet value in
-             populateWithSet t; tableSetString t "let" (makeLet box); (* TODO: Fancier *)
+             populateWithSet !rethisAssignToScopeKnot t;
+             tableSetString t "let" (makeLet rawRethisAssignToObject box);
              tableSet t currentKey (TableValue box)
     );
     if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator);
     t
 and populateWithHas t =
     tableSetString t "has" (makeHas (TableValue t))
-and populateWithSet t =
+and populateWithSet modifier t =
     populateWithHas t;
-    tableSetString t "set" (makeSet (TableValue t))
+    tableSetString t "set" (makeSet modifier (TableValue t))
 and tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
@@ -61,16 +65,27 @@ and makeHas obj = snippetTextClosure
 and rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
     | [TableValue t;key;value] -> tableSet t key value;Null
     | _ -> impossibleArg "rawSet")
-and makeSet obj = snippetTextClosure
-    ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
+and makeSet modifier obj = snippetTextClosure
+    ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null;"modifier",modifier]
     ["key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key value) ^(
-         obj.parent.set key value # Note: Fails in an inelegant way if no parent
+         obj.parent.set key (modifier value) # Note: Fails in an inelegant way if no parent
      )"
 
-and makeLet t = snippetClosure 2 (function
-    | [key;value] -> tableSet t key value;Null
+and makeLet modifier t = snippetClosure 2 (function
+    | [key;value] -> tableSet t key (modifier (TableValue t) value);Null
     | _ -> impossibleArg "makeLet")
+
+and rawRethisAssignToObject obj v = match v with (* t1 -> t2; mark blank objects ready *)
+    | ClosureValue({this=ThisBlank} as c) | ClosureValue({this=ThisReady} as c) ->
+        ClosureValue({c with this=CurrentThis(obj,obj)})
+    | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
+    | _ -> v
+
+and rawRethisAssignToScope _ v = match v with (* t1 -> t5; mark blank objects unthissable *)
+    | ClosureValue({this=ThisBlank} as c) -> ClosureValue({c with this=ThisNever})
+    | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
+    | _ -> v
 
 let rawTern = snippetClosure 3 (function
     | [Null;_;v] -> v
@@ -82,27 +97,17 @@ let tern = snippetTextClosure
     ["pred"; "a"; "b"]
     "(rawTern pred a b) null"
 
-let () =
-    ternKnot := tern
-
-let rawRethisAssignToObject obj v = match v with (* t1 -> t2; mark blank objects ready *)
-    | ClosureValue({this=ThisBlank} as c) | ClosureValue({this=ThisReady} as c) ->
-        ClosureValue({c with this=CurrentThis(obj,obj)})
-    | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
-    | _ -> v
-
 let rethisAssignToObject = snippetClosure 2 (function
     | [obj;a] -> rawRethisAssignToObject obj a
     | _ -> impossibleArg "rethisAssignToObject")
 
-let rawRethisAssignToScope _ v = match v with (* t1 -> t5; mark blank objects unthissable *)
-    | ClosureValue({this=ThisBlank} as c) -> ClosureValue({c with this=ThisNever})
-    | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
-    | _ -> v
-
 let rethisAssignToScope = snippetClosure 2 (function
     | [obj;a] -> rawRethisAssignToScope obj a
     | _ -> impossibleArg "rethisAssignToScope")
+
+let () =
+    ternKnot := tern;
+    rethisAssignToScopeKnot := rethisAssignToScope
 
 let rawRethisSuperFrom obj v = match v with (* t2 -> t3, t3->t4;  *)
     | ClosureValue({this=CurrentThis(current,_)} as c) -> ClosureValue({c with this=CurrentThis(current,obj)})
