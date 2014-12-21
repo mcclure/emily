@@ -5,7 +5,6 @@ sample/obj.dethis.em   # "decontext" does not work
 sample/builtin.obj.em  # no obj builtins yet
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-sample/set.curry.em       # table-to-apply binding for set solidifies too early
 sample/obj.2.em           # () is not correctly letting .let fall through
 sample/scope.closure.2.em #     [ibid]
 sample/obj.this.6.em      # [ this ] doesn't exist

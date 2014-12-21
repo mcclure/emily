@@ -94,7 +94,6 @@ let internalFail () = failwith "Internal consistency error: Reached impossible p
 (* -- SNIPPETS (inlined Emily code) -- *)
 
 let parentSetSnippet = Tokenize.snippet "target.parent.set key"
-let parentHasSnippet = Tokenize.snippet "target.parent.has key"
 
 (* -- INTERPRETER MAIN LOOP -- *)
 

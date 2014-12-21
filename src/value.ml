@@ -42,11 +42,11 @@ and value =
     | TableSetValue of tableValue
 
 and tableBlankKind =
-    | TrueBlank (* Really, actually empty *)
-    | NoSet     (* Has .has *)
-    | NoLet     (* Has .set *)
-    | WithLet   (* Has .let *)
-    | BoxFrom of value option (* Has .parent *)
+    | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
+    | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
+    | NoLet     (* Has .set. Used for "flat" expression groups. *)
+    | WithLet   (* Has .let. Used for scoped groups. *)
+    | BoxFrom of value option (* Has .parent and uses object literal rules. *)
 
 let idGenerator = ref 0.0
 

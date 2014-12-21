@@ -25,7 +25,7 @@ and populateWithHas t =
     tableSetString t "has" (makeHas (TableValue t))
 and populateWithSet t =
     populateWithHas t;
-    tableSetString t "set" (TableSetValue t)
+    tableSetString t "set" (makeSet (TableValue t))
 and tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
@@ -50,6 +50,16 @@ and makeHas obj = snippetTextClosure
     ["key"]
     "tern (rawHas obj key) ^(true) ^(
          tern (rawHas obj .parent) ^(obj.parent.has key) ^(null)
+     )"
+
+and rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
+    | [TableValue t;key;value] -> tableSet t key value;Null
+    | _ -> impossibleArg "rawSet")
+and makeSet obj = snippetTextClosure
+    ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
+    ["key"; "value"]
+    "tern (rawHas obj key) ^(rawSet obj key value) ^(
+         obj.parent.set key value # Note: Fails in an inelegant way if no parent
      )"
 
 and makeLet t = snippetClosure 2 (function
