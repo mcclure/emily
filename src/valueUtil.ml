@@ -14,9 +14,9 @@ let rec tableBlank kind : tableValue =
         | TrueBlank -> ()
         | NoSet -> populateWithHas t
         | NoLet -> populateWithSet t
-        | WithLet -> populateWithSet t; tableSetString t "let" (TableLetValue t)
+        | WithLet -> populateWithSet t; tableSetString t "let" (makeLet t)
         | BoxFrom parent -> let box = match parent with None -> tableBlank WithLet | Some value -> tableInheriting WithLet value in
-             populateWithSet t; tableSetString t "let" (TableLetValue box); (* TODO: Fancier *)
+             populateWithSet t; tableSetString t "let" (makeLet box); (* TODO: Fancier *)
              tableSet t currentKey (TableValue box)
     );
     if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator);
@@ -51,6 +51,10 @@ and makeHas obj = snippetTextClosure
     "tern (rawHas obj key) ^(true) ^(
          tern (rawHas obj .parent) ^(obj.parent.has key) ^(null)
      )"
+
+and makeLet t = snippetClosure 2 (function
+    | [key;value] -> tableSet t key value;Null
+    | _ -> impossibleArg "makeLet")
 
 let rawTern = snippetClosure 3 (function
     | [Null;_;v] -> v

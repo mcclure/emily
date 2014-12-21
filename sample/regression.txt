@@ -14,6 +14,7 @@ sample/math.em
 sample/bool.em
 
 sample/set.em
+sample/set.2.em
 sample/has.em
 sample/has.2.em
 sample/scope.em
