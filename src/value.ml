@@ -39,7 +39,6 @@ and value =
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
     | ClosureValue of closureValue
     | TableValue of tableValue
-    | TableSetValue of tableValue
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)

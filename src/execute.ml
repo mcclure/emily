@@ -68,32 +68,12 @@ let newStateFor register v = match register with
     (* Or combine with an existing value to make a pair. *)
     | FirstValue fv -> PairValue (fv, v)
 
-
-(* THIS-FIXME: This is no good because it will not take into account binding changes after the set is captured. *)
-
-let tableBoundSet = Value.snippetClosure 1 (function
-    | [Value.ClosureValue(a)] -> Value.ClosureValue( Value.decontext a )
-    | [a] -> ValueUtil.badArgClosure "decontext" a
-    | _ -> ValueUtil.impossibleArg "decontext")
-
-let tableBoundSet t key =
-    let f value =
-        if Options.(run.traceSet) then (
-            print_endline @@ "        SET: " ^ (Pretty.dumpValue key) ^ " = " ^ (Pretty.dumpValue value);
-            print_endline @@ "        ON:  " ^ (Pretty.dumpValueTable (Value.TableValue t)));
-        Value.tableSet t key value; Value.Null
-    in Value.BuiltinFunctionValue(f)
-
 (* Constructor for a new frame *)
 let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope}
 
 (* Only call if it really is impossible, since this gives no debug feedback *)
 (* Mostly I call this if a nested match has to implement a case already excluded *)
 let internalFail () = failwith "Internal consistency error: Reached impossible place"
-
-(* -- SNIPPETS (inlined Emily code) -- *)
-
-let parentSetSnippet = Tokenize.snippet "target.parent.set key"
 
 (* -- INTERPRETER MAIN LOOP -- *)
 
@@ -282,8 +262,6 @@ and apply stack this a b =
                 match Value.tableGet t Value.parentKey with
                     | Some parent -> apply stack this parent b
                     | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
-    in let setTable t = (* THIS-FIXME *)
-        r (tableBoundSet t b)
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
@@ -332,13 +310,6 @@ and apply stack this a b =
 
         (* If applying a table or table op. *)
         | Value.TableValue t ->  readTable t
-        (* THIS-FIXME *)
-        | Value.TableSetValue t -> if (Value.tableHas t b) then setTable t
-            else (match Value.tableGet t Value.parentKey with
-                (* Have to step one down. FIXME: Refactor with instance below? *)
-                | Some parent ->
-                    executeStep @@ (executeFrame (ValueUtil.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
-                | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
         (* If applying a primitive value. *)
         | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
         | Value.True ->          readTable BuiltinTrue.truePrototypeTable
