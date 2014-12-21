@@ -69,7 +69,7 @@ and makeSet modifier obj = snippetTextClosure
     ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null;"modifier",modifier]
     ["key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key value) ^(
-         obj.parent.set key (modifier value) # Note: Fails in an inelegant way if no parent
+         obj.parent.set key (modifier obj value) # Note: Fails in an inelegant way if no parent
      )"
 
 and makeLet modifier t = snippetClosure 2 (function

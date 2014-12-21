@@ -6,6 +6,3 @@ let privatePrototype = Value.TableValue(privatePrototypeTable)
 let () =
     let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
     ()
-
-let snippetClosure args text =
-    ()
