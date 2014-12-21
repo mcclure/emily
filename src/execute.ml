@@ -340,8 +340,6 @@ and apply stack this a b =
                 | Some parent ->
                     executeStep @@ (executeFrame (ValueUtil.snippetScope ["target",Value.TableValue(t);"key",b]) parentSetSnippet)::stack
                 | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized for set"))
-        | Value.TableLetValue t -> if (not (Value.tableHas t b)) then Value.tableSet t b Value.Null;
-            setTable t
         (* If applying a primitive value. *)
         | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
         | Value.True ->          readTable BuiltinTrue.truePrototypeTable

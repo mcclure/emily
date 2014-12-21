@@ -40,7 +40,6 @@ and value =
     | ClosureValue of closureValue
     | TableValue of tableValue
     | TableSetValue of tableValue
-    | TableLetValue of tableValue
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty *)

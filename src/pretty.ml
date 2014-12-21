@@ -69,12 +69,11 @@ let dumpValueTreeGeneral wrapper v =
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
         | Value.TableValue    _ -> wrapper "table" v
         | Value.TableSetValue _ -> wrapper "table-setter" v
-        | Value.TableLetValue _ -> wrapper "table-setter-let" v
 
 let dumpValue v =
     let simpleWrapper label obj = angleWrap label
     in let labelWrapper label obj = match obj with
-        | Value.TableValue t | Value.TableSetValue t | Value.TableLetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
+        | Value.TableValue t | Value.TableSetValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
         | _ -> angleWrap label
     in let wrapper = if Options.(run.trackObjects) then labelWrapper else simpleWrapper
 
