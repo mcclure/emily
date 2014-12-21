@@ -16,15 +16,16 @@ and closureExec =
     | ClosureExecBuiltin of (value list -> value)
 
 and closureThis =
-    | Blank
-    | Current of value
-    | CurrentThis of value*value
+    | ThisBlank     (* Newly born closure *)
+    | ThisNever     (* Closure is not a method and should not receive a this. *)
+    | ThisReady     (* Closure is a method and is awaiting a this.  *)
+    | CurrentThis of value*value (* Closure is a method, has a provisional current/this. *)
+    | FrozenThis of value*value  (* Closure is a method, has a final, assigned current/this. *)
 
 (* Is this getting kind of complicated? Should curry be wrapped closures? *)
 and closureValue = {
     exec   : closureExec;
     needArgs : int;  (* Count this down as more values are added to bound *)
-    needThis : bool; (* This will always be true if closureExecUser is present. *)
     bound  : value list;   (* Already-curried values -- BACKWARD, first application last *)
     this   : closureThis; (* Tracks the "current" and "this" bindings *)
 }
@@ -64,24 +65,3 @@ let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value
-
-(* Okay this is complicated *)
-
-let recontext r current this = { r with this=CurrentThis(current, this) }
-
-let decontext r = { r with this=Blank }
-
-let dethis r = { r with this=match r.this with
-    | CurrentThis (current,_) -> Current current
-    | okay -> okay
-}
-
-let rethis this r = { r with this=match r.this with
-    | Blank -> CurrentThis(this,this)
-    | Current current -> CurrentThis(current, this)
-    | CurrentThis (current,_) -> CurrentThis(current, this)
-}
-
-let snippetClosure argCount exec =
-    ClosureValue({ exec = ClosureExecBuiltin(exec); needArgs = argCount;
-        needThis = false; bound = []; this = Blank; })

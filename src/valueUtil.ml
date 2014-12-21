@@ -5,9 +5,15 @@ let badArgTable = badArg "table"
 let badArgClosure = badArg "closure"
 let impossibleArg name = failwith @@ "Internal failure: Impossible argument to "^name
 
+let rawMisapplyArg a b = failwith @@ "Application failure: "^(Pretty.dumpValue a)^" can't respond to "^(Pretty.dumpValue b)
+
 let boolCast v = if v then True else Null
 
 let ternKnot : value ref = ref Null
+
+let snippetClosure argCount exec =
+    ClosureValue({ exec = ClosureExecBuiltin(exec); needArgs = argCount;
+        bound = []; this = ThisNever; })
 
 let rec tableBlank kind : tableValue =
     let t = Hashtbl.create(1) in (match kind with
@@ -39,7 +45,7 @@ and snippetTextClosure context keys text =
     ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet text; scope=snippetScope context;
         scoped = false; key = keys;
     }); needArgs = List.length keys;
-        needThis = false; bound = []; this = Blank; })
+        bound = []; this = ThisNever; })
 
 and rawHas = snippetClosure 2 (function
     | [TableValue t;key] -> boolCast (tableHas t key)
@@ -78,3 +84,42 @@ let tern = snippetTextClosure
 
 let () =
     ternKnot := tern
+
+let rawRethisAssignToObject obj v = match v with (* t1 -> t2; mark blank objects ready *)
+    | ClosureValue({this=ThisBlank} as c) | ClosureValue({this=ThisReady} as c) ->
+        ClosureValue({c with this=CurrentThis(obj,obj)})
+    | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
+    | _ -> v
+
+let rethisAssignToObject = snippetClosure 2 (function
+    | [obj;a] -> rawRethisAssignToObject obj a
+    | _ -> impossibleArg "rethisAssignToObject")
+
+let rawRethisAssignToScope _ v = match v with (* t1 -> t5; mark blank objects unthissable *)
+    | ClosureValue({this=ThisBlank} as c) -> ClosureValue({c with this=ThisNever})
+    | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
+    | _ -> v
+
+let rethisAssignToScope = snippetClosure 2 (function
+    | [obj;a] -> rawRethisAssignToScope obj a
+    | _ -> impossibleArg "rethisAssignToScope")
+
+let rawRethisSuperFrom obj v = match v with (* t2 -> t3, t3->t4;  *)
+    | ClosureValue({this=CurrentThis(current,_)} as c) -> ClosureValue({c with this=CurrentThis(current,obj)})
+    | _ -> v
+
+let rethisSuperFrom = snippetClosure 2 (function
+    | [obj;a] -> rawRethisSuperFrom obj a
+    | _ -> impossibleArg "rethisSuperFrom")
+
+let misapplyArg = snippetClosure 2 (function
+    | [a;b] -> rawMisapplyArg a b
+    | _ -> impossibleArg "misapplyArg")
+
+let makeSuper current this = snippetTextClosure
+    ["rethis",rethisSuperFrom;"callCurrent",current;"obj",this;"rawHas",rawHas;"tern",tern;"misapplyArg",misapplyArg]
+    ["arg"]
+    "tern (rawHas callCurrent .parent)
+        ^(rethis obj (callCurrent.parent arg))
+        ^(missaplyArg obj arg)
+     )"

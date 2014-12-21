@@ -150,7 +150,7 @@ and executeStepWithFrames stack frame moreFrames =
     match frame.register with
         (* It has two values-- apply before we do anything else *)
         | PairValue (a, b) ->
-            apply stack a a b
+            apply stack a b
 
         (* Either no values or just one values, so let's look at the tokens *)
         | FirstValue _ | LineStart _ ->
@@ -220,13 +220,13 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     in let closureValue v =
         let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Plain -> true | _ -> false in
-        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key=key; scoped=scoped;}; bound=[]; this=Value.Blank; needArgs=(List.length key); needThis=true;
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key=key; scoped=scoped;}; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
          })
 
     (* Identify token *)
     in match token.Token.contents with
         (* Straightforward values that can be evaluated in place *)
-        | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope frame.scope (Value.AtomValue s)
+        | Token.Word s ->   apply (stackWithRegister frame.register) frame.scope (Value.AtomValue s)
         | Token.String s -> simpleValue(Value.StringValue s)
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
@@ -250,18 +250,16 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                 | _ -> closureValue group
 
 (* apply item a to item b and return it to the current frame *)
-and apply stack this a b =
+and apply stack a b =
     let r v = returnTo stack v in
     (* Pull something out of a table, possibly recursing *)
     let readTable t =
         match Value.tableGet t b with
             | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some Value.ClosureValue c -> r @@ Value.ClosureValue( Value.rethis this c )
             | Some v -> r v
             | None ->
-                match Value.tableGet t Value.parentKey with
-                    | Some parent -> apply stack this parent b
-                    | None -> failwith ("Key " ^ Pretty.dumpValue(b) ^ " not recognized")
+                print_endline @@ "DELME-OK2 " ^ (Pretty.dumpValue a) ^ " " ^ (Pretty.dumpValue b);
+                apply stack (ValueUtil.makeSuper a a) b
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
@@ -286,12 +284,13 @@ and apply stack this a b =
                                             addBound restKey restValue)
                                         | _ -> internalFail() in
                                     (let setThis current this =
+                                        print_endline "DELME-OK1";
                                         Value.tableSet t Value.currentKey current;
                                         Value.tableSet t Value.thisKey this;
-                                        Value.tableSet t Value.superKey (BuiltinScope.makeSuper current this) in
+                                        Value.tableSet t Value.superKey (ValueUtil.makeSuper current this) in
                                     match c.Value.this with
-                                        | Value.Current c -> setThis c c
-                                        | Value.CurrentThis(c,t) -> setThis c t
+                                        | Value.CurrentThis(c,t) | Value.FrozenThis(c,t)
+                                            -> setThis c t
                                         | _ -> ());
                                     addBound key bound
                                 | _ -> internalFail()

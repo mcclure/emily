@@ -3,26 +3,6 @@
 let scopePrototypeTable = ValueUtil.tableBlank Value.NoSet
 let scopePrototype = Value.TableValue(scopePrototypeTable)
 
-let rethis = Value.snippetClosure 2 (function
-    | [a;Value.ClosureValue(b)] -> Value.ClosureValue( Value.rethis a b )
-    | [a;b] -> ValueUtil.badArgClosure "rethis" b
-    | _ -> ValueUtil.impossibleArg "rethis")
-
-let dethis = Value.snippetClosure 1 (function
-    | [Value.ClosureValue(a)] -> Value.ClosureValue( Value.dethis a )
-    | [a] -> ValueUtil.badArgClosure "dethis" a
-    | _ -> ValueUtil.impossibleArg "dethis")
-
-let decontext = Value.snippetClosure 1 (function
-    | [Value.ClosureValue(a)] -> Value.ClosureValue( Value.decontext a )
-    | [a] -> ValueUtil.badArgClosure "decontext" a
-    | _ -> ValueUtil.impossibleArg "decontext")
-
-let makeSuper current this = ValueUtil.snippetTextClosure
-    ["rethis",rethis;"callCurrent",current;"obj",this]
-    ["arg"]
-    "(rethis obj (callCurrent.parent arg))"
-
 let doConstruct = ValueUtil.snippetTextClosure
     ["null", Value.Null]
     ["f"]
@@ -67,9 +47,6 @@ let () =
     setAtomValue "null" (Value.Null);
     setAtomValue "true" (Value.True);
 
-    setAtomValue "rethis" rethis;
-    setAtomValue "dethis" dethis;
-    setAtomValue "decontext" rethis;
     setAtomValue "tern" ValueUtil.tern;
     setAtomValue "nullfn" nullfn;
     setAtomValue "do" doConstruct;
