@@ -18,10 +18,12 @@
 # Tested with Python 2.6.1
 
 import sys
+import os
 import subprocess
 import optparse
 import re
 
+stddir  = "sample"
 stdfile = "sample/regression.txt"
 badfile = "sample/regression-known-bad.txt"
 
@@ -30,12 +32,13 @@ help += "\n"
 help += "Accepted arguments:\n"
 help += "-f [filename.em]  # Check single file\n"
 help += "-t [filename.txt] # Check all paths listed in file\n"
-help += "-a # Check all paths listed in standard " + stdfile + "\n"
-help += "-A # Also check all paths listed in std " + badfile + "\n"
-help += "-v # Print all output"
+help += "-a          # Check all paths listed in standard " + stdfile + "\n"
+help += "-A          # Also check all paths listed in std " + badfile + "\n"
+help += "-v          # Print all output\n"
+help += "--untested  # Check repo hygiene-- list all tests in sample/ not tested"
 
 parser = optparse.OptionParser(usage=help)
-for a in ["a", "A", "v"]: # Single letter args, flags
+for a in ["a", "A", "v", "-untested"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
 for a in ["f", "t"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
@@ -74,6 +77,13 @@ files += flag("f")
 
 if not files:
     parser.error("No files specified")
+
+if flag("untested"):
+    for filename in os.listdir("sample"):
+        path = os.path.join(stddir, filename)
+        if not (path.endswith(".txt") or path in files):
+            print path
+    sys.exit(0)
 
 stdcall = ["./package/emily"]
 
