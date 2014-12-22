@@ -1,7 +1,6 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-sample/obj.dethis.em   # "decontext" does not work
 sample/builtin.obj.em  # no obj builtins yet
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
@@ -15,4 +14,5 @@ sample/parsetest.fail.2.em    # Mismatched right-paren fallaciously allowed
 sample/parsetest.unicode.2.em # Unicode identifiers not in yet
 
 # "Expected" failures due to not-yet-implemented features
-# None
+sample/obj.dethis.em   # Rethis/dethis not user-exposed
+sample/obj.rethis.em   #    [ibid]

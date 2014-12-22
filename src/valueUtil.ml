@@ -124,7 +124,4 @@ let misapplyArg = snippetClosure 2 (function
 let makeSuper current this = snippetTextClosure
     ["rethis",rethisSuperFrom;"callCurrent",current;"obj",this;"rawHas",rawHas;"tern",tern;"misapplyArg",misapplyArg]
     ["arg"]
-    "tern (rawHas callCurrent .parent)
-        ^(rethis obj (callCurrent.parent arg))
-        ^(missaplyArg obj arg)
-     )"
+    "tern (rawHas callCurrent .parent) ^(rethis obj (callCurrent.parent arg)) ^(misapplyArg obj arg)"
