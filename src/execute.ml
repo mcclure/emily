@@ -302,10 +302,11 @@ and apply stack this a b =
             in (match c.Value.needArgs with
                 | 0 -> descend c (* Apply discarding argument *)
                 | count ->
-                    let amendedClosure = Value.{ c with needArgs=count-1; bound=b::c.bound } in
-                        match count with
-                            | 1 -> descend amendedClosure (* Apply, using argument *)
-                            | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
+                    let amendedClosure = Value.{ c with needArgs=count-1;
+                        bound=(ValueUtil.rawRethisAssignToScope b b)::c.bound } in (* b b is nonsense! *)
+                    match count with
+                        | 1 -> descend amendedClosure (* Apply, using argument *)
+                        | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
 
         (* If applying a table or table op. *)
