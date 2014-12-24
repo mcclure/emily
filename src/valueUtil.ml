@@ -91,7 +91,10 @@ and makeHas obj = snippetTextClosure
 
 (* Most tables need to be preopulated with a "set". Here's the setter for a singular table: *)
 and rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
-    | [TableValue t;key;value] | [ObjectValue t;key;value] -> tableSet t key value;Null
+    | [TableValue t as tv;key;value] | [ObjectValue t as tv;key;value] ->
+        tableSet t key value;
+        if Options.(run.trace) then print_endline @@ "Set update "^Pretty.dumpValueNewTable tv;
+        Null
     | [v;_;_] -> badArgTable "rawSet" v
     | _ -> impossibleArg "rawSet")
 
@@ -112,7 +115,10 @@ and makeObjectSet obj = snippetTextClosure
 
 (* Many tables need to be prepopulated with a "let". Here's the let setter for a singular table: *)
 and makeLet (modifier:value->value->value) (t:tableValue) = snippetClosure 2 (function
-    | [key;value] -> tableSet t key (modifier (TableValue t) value);Null
+    | [key;value] ->
+        tableSet t key (modifier (TableValue t) value);
+        if Options.(run.trace) then print_endline @@ "Let update (don't trust tag) "^Pretty.dumpValueNewTable (TableValue t);
+        Null
     | _ -> impossibleArg "makeLet")
 
 (* This handles what occurs when you assign to a table while defining a new object literal.

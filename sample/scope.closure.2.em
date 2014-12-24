@@ -1,6 +1,6 @@
 # Test variable binding for an unscoped closure.
 # Expect:
-# 4.
+# 3.
 # 3.
 
 ^(
