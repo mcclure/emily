@@ -35,8 +35,10 @@ sample/obj.this.2.em
 sample/obj.this.3.em
 sample/obj.this.4.em
 sample/obj.this.5.em
+sample/obj.this.6.em
 sample/obj.this.7.em
 sample/obj.this.8.em
+sample/obj.this.9.em
 sample/obj.this.super.em
 
 sample/tern.em

@@ -38,7 +38,7 @@ let rec tableBlank kind : tableValue =
             (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
                the other an "object" table that the code executed here funnel "let" values into. *)
             let box = match parent with None -> tableBlank NoSet | Some value -> tableInheriting NoSet value in
-            tableSetString box "set" (makeObjectSet (ObjectValue t));
+            tableSetString box "set" (makeObjectSet (ObjectValue box));
             tableSetString box "let" (makeLet rawRethisAssignObject box);
             populateWithSet t;
             tableSetString t "let" (makeLet rawRethisAssignObjectDefinition box);
@@ -91,7 +91,8 @@ and makeHas obj = snippetTextClosure
 
 (* Most tables need to be preopulated with a "set". Here's the setter for a singular table: *)
 and rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
-    | [TableValue t;key;value] -> tableSet t key value;Null
+    | [TableValue t;key;value] | [ObjectValue t;key;value] -> tableSet t key value;Null
+    | [v;_;_] -> badArgTable "rawSet" v
     | _ -> impossibleArg "rawSet")
 
 (* ...And a factory for a curried one that knows how to check the super class: *)
@@ -105,8 +106,8 @@ and makeSet obj = snippetTextClosure
 and makeObjectSet obj = snippetTextClosure
     ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null;"modifier",!rethisAssignObjectKnot]
     ["key"; "value"]
-    "tern (rawHas obj key) ^(rawSet obj key value) ^(
-         obj.parent.set key (modifier obj value) # Note: Fails in an inelegant way if no parent
+    "tern (rawHas obj key) ^(rawSet obj key (modifier value)) ^(
+         obj.parent.set key (modifier value) # Note: Fails in an inelegant way if no parent
      )"
 
 (* Many tables need to be prepopulated with a "let". Here's the let setter for a singular table: *)

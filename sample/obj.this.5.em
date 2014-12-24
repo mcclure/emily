@@ -1,7 +1,7 @@
 # Test "this" and "current" bindings shadow environment, but not arguments
 # Expect:
 # <table>
-# <table>
+# <object>
 # 5.
 # 6.
 
