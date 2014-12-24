@@ -4,6 +4,8 @@
 
 ## I am not important
 
+Users or at least library authors should be able to do the unthinkable: Participate in generation of error messages. Maybe someday optimization passes?
+
 ### I trust you
 
 ## Minimize the number of concepts

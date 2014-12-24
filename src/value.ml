@@ -18,7 +18,6 @@ and closureExec =
 and closureThis =
     | ThisBlank     (* Newly born closure *)
     | ThisNever     (* Closure is not a method and should not receive a this. *)
-    | ThisReady     (* Closure is a method and is awaiting a this.  *)
     | CurrentThis of value*value (* Closure is a method, has a provisional current/this. *)
     | FrozenThis of value*value  (* Closure is a method, has a final, assigned current/this. *)
 
@@ -40,6 +39,7 @@ and value =
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
     | ClosureValue of closureValue
     | TableValue of tableValue
+    | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)

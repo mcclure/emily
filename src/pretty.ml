@@ -52,7 +52,7 @@ let idStringForTable t =
         | Some Value.FloatValue v -> string_of_int @@ int_of_float v
         | _ -> "INVALID" (* Should be impossible *)
 let idStringForValue v = match v with
-    | Value.TableValue t -> idStringForTable t
+    | Value.TableValue t | Value.ObjectValue t -> idStringForTable t
     | _ -> "UNTABLE"
 
 let dumpValueTreeGeneral wrapper v =
@@ -67,12 +67,13 @@ let dumpValueTreeGeneral wrapper v =
         | Value.ClosureValue {Value.exec=e; Value.needArgs=n} ->
             let tag = match e with Value.ClosureExecUser _ -> "closure" | Value.ClosureExecBuiltin _ -> "closure-builtin" in
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
-        | Value.TableValue    _ -> wrapper "table" v
+        | Value.TableValue     _ -> wrapper "table" v
+        | Value.ObjectValue    _ -> wrapper "object" v
 
 let dumpValue v =
     let simpleWrapper label obj = angleWrap label
     in let labelWrapper label obj = match obj with
-        | Value.TableValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
+        | Value.TableValue t | Value.ObjectValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
         | _ -> angleWrap label
     in let wrapper = if Options.(run.trackObjects) then labelWrapper else simpleWrapper
 
@@ -81,7 +82,7 @@ let dumpValue v =
 (* FIXME: The formatting here is not even a little bit generalized. *)
 let dumpValueTable v =
     dumpValue (v) ^ match v with
-        | Value.TableValue t -> " = [\n            " ^
+        | Value.TableValue t | Value.ObjectValue t -> " = [\n            " ^
             (String.concat "\n            " (List.map (function
                 (v1, v2) -> dumpValue(v1) ^ " = " ^ dumpValue(v2)
             ) (CCHashtbl.to_list t) ) ) ^ "\n        ]"

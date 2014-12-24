@@ -254,14 +254,14 @@ and apply stack this a b =
     let r v = returnTo stack v in
     (* Pull something out of a table, possibly recursing *)
     let readTable t =
-        match Value.tableGet t b with
-            | Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f a) (* TODO: This won't work as intended with .parent *)
-            | Some (Value.ClosureValue _ as c) -> r @@ ValueUtil.rawRethisSuperFrom this c
-            | Some v -> r v
-            | None ->
-                match Value.tableGet t Value.parentKey with
-                    | Some parent -> apply stack this parent b
-                    | None -> ValueUtil.rawMisapplyArg this b
+        match (a,Value.tableGet t b) with
+                | _, Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f this)
+                | Value.ObjectValue _, Some (Value.ClosureValue _ as c) -> r @@ ValueUtil.rawRethisSuperFrom this c
+                | _, Some v -> r v
+                | _, None ->
+                    match Value.tableGet t Value.parentKey with
+                        | Some parent -> apply stack this parent b
+                        | None -> ValueUtil.rawMisapplyArg this b
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
@@ -303,14 +303,14 @@ and apply stack this a b =
                 | 0 -> descend c (* Apply discarding argument *)
                 | count ->
                     let amendedClosure = Value.{ c with needArgs=count-1;
-                        bound=(ValueUtil.rawRethisAssignToScope b b)::c.bound } in (* b b is nonsense! *)
+                        bound=b::c.bound } in (* b b is nonsense! *)
                     match count with
                         | 1 -> descend amendedClosure (* Apply, using argument *)
                         | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
 
         (* If applying a table or table op. *)
-        | Value.TableValue t ->  readTable t
+        | Value.ObjectValue t  | Value.TableValue t ->  readTable t
         (* If applying a primitive value. *)
         | Value.Null ->          readTable BuiltinNull.nullPrototypeTable
         | Value.True ->          readTable BuiltinTrue.truePrototypeTable
