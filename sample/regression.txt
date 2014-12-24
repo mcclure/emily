@@ -23,10 +23,13 @@ sample/scope.fallthrough.em
 sample/scope.unscoped.em
 sample/closure.em
 sample/scope.closure.em
+sample/scope.closure.2.em
+sample/scope.closure.3.em
 sample/curry.em
 sample/curry.2.em
 
 sample/obj.em
+sample/obj.2.em
 sample/obj.3.em
 sample/obj.current.em
 sample/obj.current.2.em

@@ -4,9 +4,7 @@
 sample/builtin.obj.em  # no obj builtins yet
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-sample/obj.2.em           # () is not correctly letting .let fall through
-sample/scope.closure.2.em #     [ibid]
-sample/scope.closure.3.em # {} is incorrectly letting .let fall through
+# None!
 
 # FAILURES -- BUGS, FIX ASAP
 sample/parsetest.fail.em      # Unclosed left-paren fallaciously allowed
