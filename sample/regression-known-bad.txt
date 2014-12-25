@@ -1,7 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-sample/builtin.obj.em  # no obj builtins yet
+# None!
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 # None!

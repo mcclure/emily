@@ -51,13 +51,15 @@ let stackDepth stack =
 (* These three could technically move into value.ml but BuiltinObject depends on Value *)
 let scopeInheriting kind v =
     Value.TableValue(ValueUtil.tableInheriting kind v)
+let objectInheriting kind v = (* is this needed? *)
+    Value.ObjectValue(ValueUtil.tableInheriting kind v)
 
 (* Given a parent scope and a token creates an appropriate inner group scope *)
 let groupScope tokenKind scope =
     match tokenKind with
         | Token.Plain  -> scope
         | Token.Scoped -> scopeInheriting Value.WithLet scope
-        | Token.Box    -> scopeInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
+        | Token.Box    -> objectInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
 
 (* Combine a value with an existing register var to make a new register var. *)
 (* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)

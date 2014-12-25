@@ -69,11 +69,11 @@ and snippetScope bindings =
     TableValue(scopeTable)
 
 (* Define an ad hoc function using a literal string inside the interpreter. *)
-and snippetTextClosure context keys text =
+and snippetTextClosureAbstract thisKind context keys text =
     ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet text; scope=snippetScope context;
         scoped = false; key = keys;
     }); needArgs = List.length keys;
-        bound = []; this = ThisNever; })
+        bound = []; this = thisKind; })
 
 (* Most tables need to be preopulated with a "has". Here's the has tester for a singular table: *)
 and rawHas = snippetClosure 2 (function
@@ -82,7 +82,7 @@ and rawHas = snippetClosure 2 (function
     | _ -> impossibleArg "rawTern")
 
 (* ...And a factory for a curried one that knows how to check the super class: *)
-and makeHas obj = snippetTextClosure
+and makeHas obj = snippetTextClosureAbstract ThisNever
     ["rawHas",rawHas;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
     ["key"]
     "tern (rawHas obj key) ^(true) ^(
@@ -99,14 +99,14 @@ and rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
     | _ -> impossibleArg "rawSet")
 
 (* ...And a factory for a curried one that knows how to check the super class: *)
-and makeSet obj = snippetTextClosure
+and makeSet obj = snippetTextClosureAbstract ThisNever
     ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
     ["key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key value) ^(
          obj.parent.set key value                # Note: Fails in an inelegant way if no parent
      )"
 
-and makeObjectSet obj = snippetTextClosure
+and makeObjectSet obj = snippetTextClosureAbstract ThisNever
     ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null;"modifier",!rethisAssignObjectKnot]
     ["key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key (modifier value)) ^(
@@ -137,6 +137,10 @@ and rawRethisAssignObject _ v = match v with
     | _ -> v
 
 (* We are now free of the big and stanza! *)
+
+(* Define an ad hoc function using a literal string inside the interpreter. *)
+let snippetTextClosure = snippetTextClosureAbstract ThisNever
+let snippetTextMethod  = snippetTextClosureAbstract ThisBlank
 
 let rethisAssignObjectDefinition = snippetClosure 2 (function
     | [obj;a] -> rawRethisAssignObjectDefinition obj a

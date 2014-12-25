@@ -1,16 +1,18 @@
 # Test object base class methods.
 # Expect:
+# Count: 4.
 # 5.
 # 3.
 # 2.
 # 1.
 
 let .array [
-    # FIXME: "current" is a really unpleasant way to do this.
-    current.append 5
-    current.append 3
-    current.append 2
-    current.append 1
 ]
 
+array.append 5
+array.append 3
+array.append 2
+array.append 1
+
+print "Count: "  (array.count) ln
 array.each ^i (println i)

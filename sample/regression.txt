@@ -50,5 +50,6 @@ sample/loop.em
 sample/loop.2.em
 sample/fibo.em
 sample/builtin.em
+sample/builtin.obj.em
 
 sample/ski.2.em

@@ -1,9 +1,26 @@
 (* Populates a prototype for objects *)
 let objectPrototypeTable = ValueUtil.tableInheriting Value.NoSet BuiltinTrue.truePrototype
-let objectPrototype = Value.TableValue(objectPrototypeTable)
+let objectPrototype = Value.ObjectValue(objectPrototypeTable)
+
+let appendConstruct = ValueUtil.snippetTextMethod
+    ["tern", ValueUtil.tern; "nullfn", BuiltinScope.nullfn]
+    ["v"]
+    "tern (this.has.count) nullfn ^(this.let.count 0)
+     this.let (this.count) v
+     this.set.count (this.count.plus 1)"
+
+let eachConstruct = ValueUtil.snippetTextMethod
+    ["while", BuiltinScope.whileConstruct]
+    ["f"]
+    "{let .idx 0
+     while ^(this.has idx) ^(
+         f (this idx);
+         set .idx (idx.plus 1)
+     )}"
 
 (* TODO: Prototype for []s? .append can live in here. *)
 let () =
-    let (_, _, _) = BuiltinNull.atomFuncs objectPrototypeTable in
+    let (setAtomValue, _, _) = BuiltinNull.atomFuncs objectPrototypeTable in
 
-    ()
+    setAtomValue "append" (ValueUtil.rawRethisAssignObjectDefinition objectPrototype appendConstruct);
+    setAtomValue "each"   (ValueUtil.rawRethisAssignObjectDefinition objectPrototype eachConstruct);
