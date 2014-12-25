@@ -26,6 +26,9 @@ let tokenize name buf : Token.token =
        but this means we have to do a reverse operation to seal the stack at the end. *)
     let cleanup = List.rev in
 
+    (* Individual lines get a more special cleanup so macro processing can occur *)
+    let completeLine l = Macro.verifySymbols @@ Macro.process @@ cleanup l in
+
     (* -- State management machinery -- *)
     (* Current tokenizer state *)
     let state = {lineStart=0; line=1} in
@@ -93,7 +96,7 @@ let tokenize name buf : Token.token =
         let matchedLexemes () = Sedlexing.Utf8.lexeme(buf) in
 
         (* Complete current line & push onto current codeSequence *)
-        let linesPlusLine () = cleanup line :: lines in
+        let linesPlusLine () = completeLine line :: lines in
 
         (* Recurse with the groupSeed and lines we started with, & the argument pushed onto the current line *)
         let addToLineProceed x = proceedWithLine (x :: line) in
@@ -173,7 +176,9 @@ let tokenize name buf : Token.token =
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
             | '^' -> addToLineProceed( openClosure [] ) (* TODO: Make macro *)
-            | _ -> parseFail "Unexpected character"
+            | Plus(Compl(Chars "#^()[]{}\\;'\"."|digit|letterPattern|white_space))
+                -> addSingle (fun x -> Token.Symbol x)
+            | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 
     (* When first entering the parser, treat the entire program as implicitly being surrounded by parenthesis *)
     in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []

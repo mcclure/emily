@@ -40,7 +40,7 @@ and tokenGroup = {
 (* Data content of a token *)
 and tokenContents =
     | Word of string   (* Alphanum *)
-(*  | Symbol of string    Punctuation-- appears pre-macro only. Disabled until macros are back *)
+    | Symbol of string (* Punctuation-- appears pre-macro only. *)
     | String of string (* "Quoted" *)
     | Atom   of string (* Ideally appears post-macro only *)
     | Number of float
