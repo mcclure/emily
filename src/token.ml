@@ -62,4 +62,6 @@ let makeToken position contents = {
 let makeGroup position closure kind items =
     makeToken position ( Group { kind=kind; closure=closure; items=items; } )
 
-let makePositionless contents = {at={fileName=None;lineNumber=0;lineOffset=0}; contents=contents}
+let noPosition = {fileName=None;lineNumber=0;lineOffset=0}
+
+let makePositionless contents = {at=noPosition; contents=contents}
