@@ -9,6 +9,7 @@ type optionSpec = {
     mutable targets : executionTarget list;
     mutable disassemble : bool;
     mutable disassembleVerbose : bool;
+    mutable stepMacro : bool;
     mutable trace : bool;
     mutable trackObjects : bool;
     mutable traceSet : bool;
@@ -16,7 +17,7 @@ type optionSpec = {
 
 let run = {
     targets=[];
-    disassemble=false; disassembleVerbose=false; trace=false; trackObjects=false; traceSet = false;
+    disassemble=false; disassembleVerbose=false; stepMacro=false; trace=false; trackObjects=false; traceSet = false;
 }
 
 let () =
@@ -49,10 +50,11 @@ Options:|})
         (* For supporting Emily development itself *)
         ("--debug-dis",   Arg.Unit(fun () -> run.disassemble <- true),        {|Print "disassembled" code and exit|});
         ("--debug-disv",  Arg.Unit(fun () -> run.disassembleVerbose <- true), {|Print "disassembled" code with position data and exit|});
+        ("--debug-macro", Arg.Unit(fun () -> run.stepMacro <- true),          {|Print results of each individual macro evaluation|});
         ("--debug-trace", Arg.Unit(fun () -> run.trace <- true),              "When executing, print interpreter state");
         ("--debug-track", Arg.Unit(fun () -> run.trackObjects <- true),       {|When executing, give all objects a unique "!id" member|});
         ("--debug-set",   Arg.Unit(fun () -> run.traceSet <- true),           {|When executing, print object contents on each set|});
-        ("--debug-all",   Arg.Unit(fun () ->
+        ("--debug-run",   Arg.Unit(fun () ->
             run.trace <- true;
             run.trackObjects <- true;
             run.traceSet <- true

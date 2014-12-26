@@ -17,7 +17,12 @@ type macroMatch = {
 
 let macroTable = Hashtbl.create(1)
 
+(* TODO: No no no I want positions *)
+let standardGroup = Token.makeGroup Token.noPosition Token.NonClosure Token.Plain
+let standardToken = Token.makeToken Token.noPosition
+
 let rec process l =
+    if Options.(run.stepMacro) then print_endline @@ Pretty.dumpCodeTreeTerse @@ standardGroup [l];
     let rec findIdeal (bestPriority:float option) bestLine (past:singleLine) present future : macroMatch option =
         let proceed priority line =
             match future with
@@ -42,13 +47,10 @@ let rec process l =
             (match findIdeal None None [] present future with
                 | None -> verifySymbols l
                 | Some {matchFunction; past; present; future} ->
+                    if Options.(run.stepMacro) then print_endline @@ "    ...becomes:";
                     process (matchFunction past present future) )
 
 (* Macros *)
-
-(* TODO: No no no I want positions *)
-let standardGroup = Token.makeGroup Token.noPosition Token.NonClosure Token.Plain
-let standardToken = Token.makeToken Token.noPosition
 
 let newFuture f = standardGroup [process f]
 let newPast p   = newFuture (List.rev p)
