@@ -18,7 +18,7 @@ type macroMatch = {
 let macroTable = Hashtbl.create(1)
 
 let rec process l =
-    let rec findIdeal bestPriority bestLine (past:singleLine) present future : macroMatch option =
+    let rec findIdeal (bestPriority:float option) bestLine (past:singleLine) present future : macroMatch option =
         let proceed priority line =
             match future with
                 | [] -> bestLine
@@ -30,15 +30,16 @@ let rec process l =
                 let v = CCHashtbl.get macroTable s in
                 (match v with
                 | Some {priority;specFunction} ->
-                    if priority < bestPriority then
-                        proceed priority (Some {past; present; future; matchFunction=specFunction})
+                    let better = (match bestPriority with Some f -> priority < f | None -> true) in
+                    if better then
+                        proceed (Some priority) (Some {past; present; future; matchFunction=specFunction})
                     else skip()
                 | _ -> skip() )
             | _ -> skip()
 
     in match l with | [] -> l
         | present::future ->
-            (match findIdeal (-1.0) None [] present future with
+            (match findIdeal None None [] present future with
                 | None -> verifySymbols l
                 | Some {matchFunction; past; present; future} ->
                     process (matchFunction past present future) )
