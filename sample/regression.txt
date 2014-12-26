@@ -8,7 +8,9 @@ sample/parsetest.unicode.fail.em
 sample/print.em
 sample/escape.em
 sample/unicode.em
+
 sample/macro.em
+sample/macro.2.em
 sample/macro.fail.em
 
 sample/statement.em

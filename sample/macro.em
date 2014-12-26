@@ -1,4 +1,4 @@
-# Test some basic macros.
+# Test some arithmetic macros.
 # Expect:
 # 7.
 # 12.
