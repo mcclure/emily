@@ -7,9 +7,10 @@ let verifySymbols l =
     ) l;
     l
 
+type macroPriority = L of float | R of float
 type singleLine = Token.token list
 type macroFunction = singleLine -> Token.token -> singleLine -> singleLine
-type macroSpec  = { priority : float ; specFunction : macroFunction }
+type macroSpec  = { priority : macroPriority ; specFunction : macroFunction }
 type macroMatch = {
     matchFunction: macroFunction ;
     past : singleLine; present : Token.token; future : singleLine
@@ -23,7 +24,7 @@ let standardToken = Token.makeToken Token.noPosition
 
 let rec process l =
     if Options.(run.stepMacro) then print_endline @@ Pretty.dumpCodeTreeTerse @@ standardGroup [l];
-    let rec findIdeal (bestPriority:float option) bestLine (past:singleLine) present future : macroMatch option =
+    let rec findIdeal (bestPriority:macroPriority option) bestLine (past:singleLine) present future : macroMatch option =
         let proceed priority line =
             match future with
                 | [] -> bestLine
@@ -35,7 +36,12 @@ let rec process l =
                 let v = CCHashtbl.get macroTable s in
                 (match v with
                 | Some {priority;specFunction} ->
-                    let better = (match bestPriority with Some f -> priority < f | None -> true) in
+                    let better = (match bestPriority,priority with
+                        | None,_ -> true
+                        | Some L _,R _ -> false  | Some R _,L _ -> true
+                        | Some L(left),L(right) -> left < right
+                        | Some R(left),R(right) -> right <= left
+                    ) in
                     if better then
                         proceed (Some priority) (Some {past; present; future; matchFunction=specFunction})
                     else skip()
@@ -59,11 +65,14 @@ let makeSplitter atomString : macroFunction = (fun past present future ->
     [ newPast past ; standardToken @@ Token.Atom atomString ; newFuture future]
 )
 
+(* Match-left-first is interpreted before match-right-first; low priority before high priority. *)
+(* Note this produces the opposite effect of "associativity" and "precedence" from, say, C. *)
+
 let builtinMacros = [
-    3., "+", makeSplitter "plus";
-    3., "-", makeSplitter "minus";
-    4., "*", makeSplitter "times";
-    4., "/", makeSplitter "divide";
+    R(3.), "+", makeSplitter "plus";
+    R(3.), "-", makeSplitter "minus";
+    R(4.), "*", makeSplitter "times";
+    R(4.), "/", makeSplitter "divide";
 ]
 
 let () =

@@ -1,7 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-sample/macro.em				  # No macros
+# None!
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 # None!
