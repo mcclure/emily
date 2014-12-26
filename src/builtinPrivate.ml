@@ -3,6 +3,8 @@
 let privatePrototypeTable = ValueUtil.tableBlank Value.NoSet
 let privatePrototype = Value.TableValue(privatePrototypeTable)
 
+(* TODO *)
+
 let () =
-    let (setAtomValue, setAtomFn, setAtomMethod) = BuiltinNull.atomFuncs scopePrototypeTable in
+    let (_, _, _) = BuiltinNull.atomFuncs scopePrototypeTable in
     ()

@@ -60,8 +60,8 @@ let makeToken position contents = {
 
 (* Quick constructor for token, group type *)
 let makeGroup position closure kind items =
-    makeToken position ( Group { kind=kind; closure=closure; items=items; } )
+    makeToken position ( Group { kind; closure; items } )
 
 let noPosition = {fileName=None;lineNumber=0;lineOffset=0}
 
-let makePositionless contents = {at=noPosition; contents=contents}
+let makePositionless contents = {at=noPosition; contents}

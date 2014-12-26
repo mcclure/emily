@@ -71,7 +71,7 @@ let newStateFor register v = match register with
     | FirstValue fv -> PairValue (fv, v)
 
 (* Constructor for a new frame *)
-let executeFrame scope code = {register=LineStart(Value.Null); code=code; scope=scope}
+let executeFrame scope code = {register=LineStart(Value.Null); code; scope}
 
 (* Only call if it really is impossible, since this gives no debug feedback *)
 (* Mostly I call this if a nested match has to implement a case already excluded *)
@@ -127,8 +127,8 @@ let rec executeStep stack =
            implying unnecessary space on the stack, then rewrite the stack to avoid them. *)
 
         (* Case #1: Remove blank lines so they don't mess up other TCO checks later *)
-        | {register=r; scope=s; code=line::[]::rest}::moreFrames ->
-            executeStep @@ {register=r; scope=s; code=line::rest}::moreFrames
+        | {register; scope; code=line::[]::rest}::moreFrames ->
+            executeStep @@ {register; scope; code=line::rest}::moreFrames
 
         (* Case #2: A normal group descent, but into an unnecessary pair of parenthesis.
            IOW, the next-to-top frame does no work; its code only ever contained a group token. *)
@@ -211,7 +211,7 @@ and returnTo stackTop v =
 and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreTokens =
     (* Helper: Given a value, and knowing register state, make a new register state and recurse *)
     let stackWithRegister register  =
-        { register=register; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
+        { register; code=moreTokens::moreLines; scope=frame.scope } :: moreFrames
 
     in let simpleValue v =
         (* ...new register state... *)
@@ -222,7 +222,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     in let closureValue v =
         let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Scoped -> true | _ -> false in
-        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key=key; scoped=scoped;}; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {code=v.Token.items; scope=frame.scope; key; scoped}; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
          })
 
     (* Identify token *)
@@ -232,6 +232,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         | Token.String s -> simpleValue(Value.StringValue s)
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
+        | Token.Symbol _ -> internalFail() (* Symbol somehow escaped tokenize phase? *)
         | Token.Group group ->
             match group.Token.closure with
                 (* Token is nontrivial to evaluate, and will require a new stack frame. *)

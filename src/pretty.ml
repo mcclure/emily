@@ -6,7 +6,7 @@
 let rec dumpCodeTreeGeneral groupPrinter token =
     match token.Token.contents with
     (* For a simple (nongrouping) token, return a string for just the item *)
-    | Token.Word x (* | Symbol x *) -> x
+    | Token.Word x | Token.Symbol x -> x
     | Token.String x -> "\"" ^ x ^ "\""
     | Token.Atom x -> "." ^ x
     | Token.Number x -> string_of_float x

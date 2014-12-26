@@ -18,20 +18,20 @@ type macroMatch = {
 let macroTable = Hashtbl.create(1)
 
 let rec process l =
-    let rec findIdeal bestScore bestLine (past:singleLine) present future : macroMatch option =
-        let proceed score line =
+    let rec findIdeal bestPriority bestLine (past:singleLine) present future : macroMatch option =
+        let proceed priority line =
             match future with
                 | [] -> bestLine
-                | nextToken :: nextFuture -> findIdeal score line (present::past) nextToken nextFuture
+                | nextToken :: nextFuture -> findIdeal priority line (present::past) nextToken nextFuture
         in let skip() =
-            proceed bestScore bestLine
+            proceed bestPriority bestLine
         in match present.Token.contents with
             | Token.Word s | Token.Symbol s ->
                 let v = CCHashtbl.get macroTable s in
                 (match v with
-                | Some ({priority=score;specFunction=specFunction} as line) ->
-                    if score < bestScore then
-                        proceed score (Some {past=past; present=present; future=future; matchFunction=specFunction})
+                | Some {priority;specFunction} ->
+                    if priority < bestPriority then
+                        proceed priority (Some {past; present; future; matchFunction=specFunction})
                     else skip()
                 | _ -> skip() )
             | _ -> skip()
@@ -40,7 +40,7 @@ let rec process l =
         | present::future ->
             (match findIdeal (-1.0) None [] present future with
                 | None -> verifySymbols l
-                | Some {matchFunction=matchFunction; past=past; present=present; future=future} ->
+                | Some {matchFunction; past; present; future} ->
                     process (matchFunction past present future) )
 
 (* Macros *)
@@ -65,5 +65,5 @@ let builtinMacros = [
 
 let () =
     List.iter (function
-        (priority, key, specFunction) -> Hashtbl.replace macroTable key {priority=priority; specFunction=specFunction}
+        (priority, key, specFunction) -> Hashtbl.replace macroTable key {priority; specFunction}
     ) builtinMacros
