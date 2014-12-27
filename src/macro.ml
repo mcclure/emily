@@ -75,6 +75,18 @@ let makeUnary atomString : macroFunction = (fun past present future ->
         | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
 )
 
+let makePrefixUnary wordString : macroFunction = (fun past present future ->
+    match future with
+        | a :: farFuture ->
+            arrange past [standardToken @@ Token.Word wordString; a] farFuture
+        | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
+)
+
+(* Unused. TODO: Use this for a future "and" in the global namespace? *)
+let makeSplitterPrefix wordString : macroFunction = (fun past _ future ->
+    [ standardToken @@ Token.Word wordString ; newPast past ; newFuture future ]
+)
+
 (* Pair operator-- Works like ocaml @@ or haskell $ *)
 let applyRight past _ future =
     [ newPast @@ newFuture future :: past ]
@@ -94,17 +106,23 @@ let builtinMacros = [
     (* Assignment *)
 
     (* Grouping *)
-    L(2.), ":", applyRight;
+    L(20.), ":", applyRight;
+
+    (* Boolean *)
+    R(40.), "||", makeSplitter "or";
+    R(45.), "&&", makeSplitter "and";
 
     (* Math *)
-    R(3.), "+", makeSplitter "plus";
-    R(3.), "-", makeSplitter "minus";
-    R(4.), "*", makeSplitter "times";
-    R(4.), "/", makeSplitter "divide";
-    R(5.), "~", makeUnary    "negate";
+    R(50.), "+", makeSplitter "plus";
+    R(50.), "-", makeSplitter "minus";
+    R(60.), "*", makeSplitter "times";
+    R(60.), "/", makeSplitter "divide";
+    R(70.), "~", makeUnary    "negate";
+
+    R(70.), "!", makePrefixUnary "not";
 
     (* Weird grouping *)
-    R(10.), "`", backtick;
+    R(90.), "`", backtick;
 ]
 
 let () =
