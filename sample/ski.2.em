@@ -23,4 +23,6 @@ let .star ^x(        # Mimic Unlambda ".*"
 )
 
 # "1729 stars" sample from Unlambda manual
+# Original author: David Madore <david.madore@ens.fr>
+
 (((s (k newline)) ((s ((s i) (k star))) (k i))) (((s ((s (k ((s i) (k (s ((s (k s)) k)))))) ((s ((s (k s)) k)) ((s ((s (k s)) k)) i)))) ((s (k ((s ((s (k s)) k)) ((s ((s (k s)) k)) i)))) (s ((s (k s)) k)))) (((s ((s (k s)) k)) i) ((s ((s (k s)) k)) ((s ((s (k s)) k)) i)))))
