@@ -61,8 +61,18 @@ let rec process l =
 let newFuture f = standardGroup [process f] (* Insert a forward-time group *)
 let newPast p   = newFuture (List.rev p)    (* Insert a reverse-time group *)
 
+let arrange past present future =
+    [ newFuture @@ List.concat [List.rev past; [newFuture present]; future] ]
+
 let makeSplitter atomString : macroFunction = (fun past _ future ->
     [ newPast past ; standardToken @@ Token.Atom atomString ; newFuture future]
+)
+
+let makeUnary atomString : macroFunction = (fun past present future ->
+    match future with
+        | a :: farFuture ->
+            arrange past [a; standardToken @@ Token.Atom atomString] farFuture
+        | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
 )
 
 (* Pair operator-- Works like ocaml @@ or haskell $ *)
@@ -73,7 +83,7 @@ let applyRight past _ future =
 let backtick past _ future =
     match future with
         | a :: b :: farFuture ->
-            [ newFuture @@ List.concat [List.rev past; [newFuture [a;b]]; farFuture] ]
+            arrange past [a;b] farFuture
         | _ -> failwith "` must be followed by two symbols"
 
 (* Match-left-first is interpreted before match-right-first; low priority before high priority. *)
@@ -91,6 +101,7 @@ let builtinMacros = [
     R(3.), "-", makeSplitter "minus";
     R(4.), "*", makeSplitter "times";
     R(4.), "/", makeSplitter "divide";
+    R(5.), "~", makeUnary    "negate";
 
     (* Weird grouping *)
     R(10.), "`", backtick;

@@ -258,7 +258,8 @@ and apply stack this a b =
     (* Pull something out of a table, possibly recursing *)
     let readTable t =
         match (a,Value.tableGet t b) with
-                | _, Some Value.BuiltinMethodValue f -> r @@ Value.BuiltinFunctionValue(f this)
+                | _, Some Value.BuiltinMethodValue      f -> r @@ Value.BuiltinFunctionValue(f this)
+                | _, Some Value.BuiltinUnaryMethodValue f -> r @@ f this
                 | Value.ObjectValue _, Some (Value.ClosureValue _ as c) -> r @@ ValueUtil.rawRethisSuperFrom this c
                 | _, Some v -> r v
                 | _, None ->
@@ -323,7 +324,8 @@ and apply stack this a b =
         (* If applying a builtin special. *)
         | Value.BuiltinFunctionValue f -> r ( f b )
         (* Unworkable -- all builtin method values should be erased by readTable *)
-        | Value.BuiltinMethodValue _ -> internalFail()
+        | Value.BuiltinMethodValue _ | Value.BuiltinUnaryMethodValue _
+            -> internalFail()
 
 (* --- MAIN LOOP ENTRY POINT --- *)
 

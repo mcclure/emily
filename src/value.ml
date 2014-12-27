@@ -35,7 +35,8 @@ and value =
     | FloatValue of float
     | StringValue of string
     | AtomValue   of string
-    | BuiltinFunctionValue of (value -> value)          (* function argument = result *)
+    | BuiltinFunctionValue          of (value -> value) (* function argument = result *)
+    | BuiltinUnaryMethodValue       of (value -> value) (* function self = result *)
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
     | ClosureValue of closureValue
     | TableValue of tableValue
