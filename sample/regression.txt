@@ -11,7 +11,10 @@ sample/unicode.em
 
 sample/macro.em
 sample/macro.2.em
+sample/macro.3.em
+sample/macro.4.em
 sample/macro.fail.em
+sample/macro.fail.2.em
 
 sample/statement.em
 sample/math.em

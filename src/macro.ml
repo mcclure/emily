@@ -20,6 +20,7 @@ let macroTable = Hashtbl.create(1)
 
 (* TODO: No no no I want positions *)
 let standardGroup = Token.makeGroup Token.noPosition Token.NonClosure Token.Plain
+let standardClosure = Token.makeGroup Token.noPosition (Token.ClosureWithBinding []) Token.Plain
 let standardToken = Token.makeToken Token.noPosition
 
 let rec process l =
@@ -98,6 +99,18 @@ let backtick past _ future =
             arrange past [a;b] farFuture
         | _ -> failwith "` must be followed by two symbols"
 
+(* Works like ocaml @@ or haskell $ *)
+let question past _ future =
+    match past with
+        | cond :: distantPast -> (
+            match future with
+                | a :: b :: farFuture ->
+                    arrange distantPast [standardToken @@ Token.Word "tern";
+                        cond; standardClosure [[a]]; standardClosure [[b]]
+                    ] farFuture
+                | _ -> failwith "? must be followed by two symbols" )
+        | _ -> failwith "? must be preceded by two symbols"
+
 (* Match-left-first is interpreted before match-right-first; low priority before high priority. *)
 (* Note this produces the opposite effect of "associativity" and "precedence" from, say, C. *)
 
@@ -106,7 +119,8 @@ let builtinMacros = [
     (* Assignment *)
 
     (* Grouping *)
-    L(20.), ":", applyRight;
+    L(20.), "?", question;
+    L(25.), ":", applyRight;
 
     (* Boolean *)
     R(40.), "||", makeSplitter "or";
