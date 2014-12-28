@@ -14,6 +14,8 @@ Users or at least library authors should be able to do the unthinkable: Particip
 
 ### One language
 
+As opposed to one language for code, plus one language for templates, plus one language for macros, plus one language for build scripts...
+
 ### Define objects by their behavior, not their nature
 
 ## DRY/SWYM
@@ -34,7 +36,9 @@ Computers are good at repetitive, non-executive tasks and bad at decisionmaking.
 
 Programming should be easy. Programming should be egaltarian.
 
-Words are better than symbols, better than dvwlld grbg.
+Words are better than symbols.
+
+Words are better than dvwlld grbg.
 
 ### Correctness should be *possible*
 
@@ -45,5 +49,7 @@ Words are better than symbols, better than dvwlld grbg.
 ## Don't pay for what you don't use
 
 C++ gets this backward
+
+## Parity of expressions and definitions
 
 ## Deployability is all-important

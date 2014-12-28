@@ -88,11 +88,11 @@ let makeSplitterPrefix wordString : macroFunction = (fun past _ future ->
     [ standardToken @@ Token.Word wordString ; newPast past ; newFuture future ]
 )
 
-(* Pair operator-- Works like ocaml @@ or haskell $ *)
+(* Apply operator-- Works like ocaml @@ or haskell $ *)
 let applyRight past _ future =
     [ newPast @@ newFuture future :: past ]
 
-(* Works like ocaml @@ or haskell $ *)
+(* "Apply pair"; works like unlambda backtick *)
 let backtick past _ future =
     match future with
         | a :: b :: farFuture ->
@@ -111,6 +111,29 @@ let question past _ future =
                 | _ -> failwith "? must be followed by two symbols" )
         | _ -> failwith "? must be preceded by two symbols"
 
+let assignment past _ future =
+    let result lookups bindings =
+        let rightside = match bindings with
+            | [] -> newFuture future
+            | _  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding bindings)
+                    Token.Plain [process future]
+        in match lookups with
+            | [] -> failwith "Found a =, but nothing to assign to."
+            | [{Token.contents=Token.Word name}] ->   [standardToken @@ Token.Word "let"; standardToken @@ Token.Atom name; rightside]
+(* | a :: rest -> [standardToken @@ Token.Atom name; standardToken @@ Token.Atom "let"; b; rightside] *)
+            | _ -> failwith "= operator can't handle more than two left-side tokens yet."
+    in let rec processPast remainingPast lookups bindings : Token.token list =
+        match remainingPast with
+            | {Token.contents=Token.Word b} :: {Token.contents=Token.Symbol "^"} :: restPast -> (
+                match lookups with
+                    | [] -> processPast restPast lookups (b::bindings)
+                    | x  -> failwith "Found an expression to the left of a = but to the right of a ^. Only variable bindings are allowed in that space."
+                )
+            | {Token.contents=Token.Symbol x} :: _ -> failwith @@ "Unexpected symbol "^x^" to left of ="
+            | l :: restPast -> processPast restPast (l::lookups) bindings
+            | [] -> result lookups bindings
+    in processPast past [] []
+
 (* Match-left-first is interpreted before match-right-first; low priority before high priority. *)
 (* Note this produces the opposite effect of "associativity" and "precedence" from, say, C. *)
 
@@ -118,10 +141,12 @@ let builtinMacros = [
 
     (* Assignment *)
 
+
     (* Grouping *)
     L(20.), "?", question;
     L(25.), ":", applyRight;
 
+    L(10.), "=",  assignment;
     (* Boolean *)
     R(40.), "||", makeSplitter "or";
     R(45.), "&&", makeSplitter "and";
