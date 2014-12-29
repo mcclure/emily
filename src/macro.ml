@@ -61,9 +61,16 @@ let rec process l =
                     | Some {priority;specFunction} ->
                         (* True if this macro is better fit than the current candidate. *)
                         let better = (match bestPriority,priority with
+                            (* No matches yet, automatic win. *)
                             | None,_ -> true
+
+                            (* If associativity varies, we can determine winner based on that alone. *)
                             | Some L _,R _ -> false  | Some R _,L _ -> true
+
+                            (* "Process leftmost first": Switch if new is higher priority. FIXME: THAT SOUNDS WRONG *)
                             | Some L(left),L(right) -> left < right
+
+                            (* "Process rightmost first": Switch if new is NOT higher priority. FIXME: IS THAT RIGHT? *)
                             | Some R(left),R(right) -> right <= left
                         ) in
                         if better then
