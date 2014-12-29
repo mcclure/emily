@@ -9,7 +9,7 @@ let verifySymbols l =
     l
 
 (* Types for macro processing. *)
-type macroPriority = L of float | R of float
+type macroPriority = L of float | R of float (* See builtinMacros comment *)
 type singleLine = Token.token list
 
 (* Note what a single macro does:
@@ -64,14 +64,16 @@ let rec process l =
                             (* No matches yet, automatic win. *)
                             | None,_ -> true
 
-                            (* If associativity varies, we can determine winner based on that alone. *)
-                            | Some L _,R _ -> false  | Some R _,L _ -> true
+                            (* If associativity varies, we can determine winner based on that alone: *)
+                            (* Prefer higher priority, but break ties toward left-first macros over right-first ones. *)
+                            | Some L(left),R(right) -> left < right
+                            | Some R(left),L(right) -> left <= right
 
-                            (* "Process leftmost first": Switch if new is higher priority. FIXME: THAT SOUNDS WRONG *)
+                            (* "Process leftmost first": Prefer higher priority, break ties to the left. *)
                             | Some L(left),L(right) -> left < right
 
-                            (* "Process rightmost first": Switch if new is NOT higher priority. FIXME: IS THAT RIGHT? *)
-                            | Some R(left),R(right) -> right <= left
+                            (* "Process rightmost first": Prefer higher priority, break ties to the right. *)
+                            | Some R(left),R(right) -> left <= right
                         ) in
                         if better then
                             proceed (Some priority) (Some {past; present; future; matchFunction=specFunction})
@@ -142,6 +144,15 @@ let makeSplitterPrefix wordString : macroFunction = (fun past _ future ->
 )
 
 (* One-off macros *)
+
+(* Ridiculous thing that only for testing the macro system itself. *)
+(* Prints what's happening, then deletes itself. *)
+let debugOp (past:singleLine) (present:Token.token) (future:singleLine) =
+    print_endline @@ "Debug macro:";
+    print_endline @@ "\tPast:    " ^ (Pretty.dumpCodeTreeTerse @@ standardGroup @@ [List.rev past]);
+    print_endline @@ "\tPresent: " ^ (Pretty.dumpCodeTreeTerse @@ present);
+    print_endline @@ "\tFuture:  " ^ (Pretty.dumpCodeTreeTerse @@ standardGroup @@ [future]);
+    List.concat [List.rev past; future]
 
 (* Apply operator-- Works like ocaml @@ or haskell $ *)
 let applyRight past _ future =
@@ -219,34 +230,54 @@ let assignment past _ future =
     (* Begin *)
     in processPast past [] []
 
-(* Match-left-first is interpreted before match-right-first; low priority before high priority. *)
-(* Note this produces the opposite effect of "associativity" and "precedence" from, say, C. *)
+(* Just to be as explicit as possible:
+
+   Each macro has a priority number and a direction preference.
+   If the priority number is high, the macro is high priority and it gets interpreted first.
+   If sweep direction is L, macros are evaluated "leftmost first"  (moving left to right)
+   If sweep direction is R, macros are evaluated "rightmost first" (moving right to left)
+   If there are multiple macros of the same priority, all the L macros (prefer-left)
+   are interpreted first, and all of the R macros (prefer-right) after.
+   (I recommend against mixing L and R macros on a single priority.)
+
+   Notice how priority and sweep direction differ from "precedence" and "associativity".
+   They're essentially opposites. The later a splitter macro evaluates, the higher
+   "precedence" the associated operator will appear to have, because splitter macros
+   wrap parenthesis around *everything else*, not around themselves.
+   For similar reasons, right-preference likes like left-associativity and vice versa.
+
+   So this table goes:
+    - From lowest priority to highest priority.
+    - From lowest-magnitude priority number to highest-magnitude priority number.
+    - From last-evaluated to earliest-evaluated macro.
+    - From closest-binding operators to loosest-binding operators
+      (In C language: From "high precedence" to "low precedence" operators)
+*)
 
 let builtinMacros = [
+    (* Weird grouping *)
+    R(20.), "`", backtick;
 
-    (* Assignment *)
-    L(10.), "=",  assignment;
-
-    (* Grouping *)
-    L(20.), "?", question;
-    L(25.), ":", applyRight;
-
-    (* Boolean *)
-    R(40.), "||", makeSplitter "or";
-    R(45.), "&&", makeSplitter "and";
+    (* More boolean *)
+    R(40.), "!", makePrefixUnary "not";
 
     (* Math *)
-    R(50.), "+", makeSplitter "plus";
-    R(50.), "-", makeSplitter "minus";
-    R(60.), "*", makeSplitter "times";
-    R(60.), "/", makeSplitter "divide";
-    R(70.), "~", makeUnary    "negate";
+    R(40.), "~", makeUnary    "negate";
+    R(50.), "/", makeSplitter "divide";
+    R(50.), "*", makeSplitter "times";
+    R(60.), "-", makeSplitter "minus";
+    R(60.), "+", makeSplitter "plus";
 
-    (* More booelan *)
-    R(70.), "!", makePrefixUnary "not";
+    (* Boolean *)
+    R(70.), "&&", makeSplitter "and";
+    R(75.), "||", makeSplitter "or";
 
-    (* Weird grouping *)
-    R(90.), "`", backtick;
+    (* Grouping *)
+    L(90.), ":", applyRight;
+    L(95.), "?", question;
+
+    (* Assignment *)
+    L(100.), "=",  assignment;
 ]
 
 (* Populate macro table from builtinMacros. *)
