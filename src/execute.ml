@@ -233,6 +233,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
         | Token.Symbol _ -> internalFail() (* Symbol somehow escaped tokenize phase? *)
+        (* Not straightforward. *)
         | Token.Group group ->
             match group.Token.closure with
                 (* Token is nontrivial to evaluate, and will require a new stack frame. *)

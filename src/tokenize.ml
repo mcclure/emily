@@ -27,7 +27,9 @@ let tokenize name buf : Token.token =
     let cleanup = List.rev in
 
     (* Individual lines get a more special cleanup so macro processing can occur *)
-    let completeLine l = Macro.process @@ cleanup l in
+    let completeLine l =
+        if Options.(run.stepMacro) then print_endline @@ "-- Macro processing for "^(Token.fileNameString name);
+        Macro.process @@ cleanup l in
 
     (* -- State management machinery -- *)
     (* Current tokenizer state *)
