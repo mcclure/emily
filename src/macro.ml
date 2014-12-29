@@ -191,19 +191,37 @@ let assignment past _ future =
             | _  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding bindings)
                     Token.Plain [process future]
 
-        (* Done with bindings now, just have to figure out what we're assigning to *)
-        in match lookups with
-            (* ...Nothing? *)
-            | [] -> failwith "Found a =, but nothing to assign to."
+        (* Recurse to try again with a different command. *)
+        (* TODO: This is all wrong... set should be default, let should be the extension.
+           However this will require... something to allow [] to work right. *)
+        in let rec resultForCommand lookups cmd =
 
-            (* Looks like a = b *)
-            | [{Token.contents=Token.Word name}] ->   [standardToken @@ Token.Word "let"; standardToken @@ Token.Atom name; rightside]
+            (* Done with bindings now, just have to figure out what we're assigning to *)
+            match lookups,cmd with
+                (* ...Nothing? *)
+                | [],_ -> failwith "Found a =, but nothing to assign to."
 
-            (* Looks like a b = c *)
-            (* | a :: rest -> [standardToken @@ Token.Atom name; standardToken @@ Token.Atom "let"; b; rightside] *)
+                (* Sorta awkward, detect the "nonlocal" prefix and swap out let. This should be generalized. *)
+                | {Token.contents=Token.Word "nonlocal"}::moreLookups,"let" -> resultForCommand moreLookups "set"
 
-            (* Apparently did something like a.b.c.d = *)
-            | _ -> failwith "= operator can't handle more than two left-side tokens yet."
+                (* Looks like a = b *)
+                | [{Token.contents=Token.Word name}],_ -> [standardToken @@ Token.Word cmd; standardToken @@ Token.Atom name; rightside]
+
+                (* Looks like a b ... = c *)
+                | ({Token.contents=Token.Word name} as firstToken)::moreLookups,_ ->
+                    (match (List.rev moreLookups) with
+                        (* Note what's happening here: We're slicing off the FINAL element, first in the reversed list. *)
+                        | finalToken::middleLookups ->
+                            List.concat [[firstToken]; List.rev middleLookups; [standardToken @@ Token.Atom cmd; finalToken; rightside]]
+
+                        (* Excluded by [{Token.word}] case above *)
+                        | _ -> failwith "Internal failure: Reached impossible place" )
+
+                (* Apparently did something like a.b.c.d = *)
+                | _,_ -> failwith "= operator can't handle more than two left-side tokens yet."
+
+        in resultForCommand lookups "let"
+
 
     (* Parsing loop, build the lookups and bindings list *)
     in let rec processPast remainingPast lookups bindings =
