@@ -23,6 +23,7 @@ let () =
     setAtomMath "times"  ( *. );
     setAtomMath "divide" ( /. );
 
+    (* Do I need all four comparators? *)
     setAtomTest "lt"     ( <  );
     setAtomTest "lte"    ( <= );
     setAtomTest "gt"     ( >  );

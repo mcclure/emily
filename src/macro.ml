@@ -145,6 +145,12 @@ let makeSplitterPrefix wordString : macroFunction = (fun past _ future ->
     [ standardToken @@ Token.Word wordString ; newPast past ; newFuture future ]
 )
 
+let makeSplitterInvert atomString : macroFunction = (fun past _ future ->
+    [ standardToken @@ Token.Word "not" ; newFuture
+        [ newPast past ; standardToken @@ Token.Atom atomString ; newFuture future]
+    ]
+)
+
 (* One-off macros *)
 
 (* Ridiculous thing that only for testing the macro system itself. *)
@@ -303,14 +309,23 @@ let builtinMacros = [
     R(20.), "`", backtick;
 
     (* More boolean *)
-    R(40.), "!", makePrefixUnary "not";
+    R(30.), "!", makePrefixUnary "not";
 
     (* Math *)
-    R(40.), "~", makeUnary    "negate";
-    R(50.), "/", makeSplitter "divide";
-    R(50.), "*", makeSplitter "times";
-    R(60.), "-", makeSplitter "minus";
-    R(60.), "+", makeSplitter "plus";
+    R(30.), "~", makeUnary    "negate";
+    R(40.), "/", makeSplitter "divide";
+    R(40.), "*", makeSplitter "times";
+    R(50.), "-", makeSplitter "minus";
+    R(50.), "+", makeSplitter "plus";
+
+    (* Comparators *)
+    R(60.), "<", makeSplitter "lt";
+    R(60.), "<=", makeSplitter "lte";
+    R(65.), ">", makeSplitter "gt";
+    R(65.), ">=", makeSplitter "gte";
+
+    R(65.), "==", makeSplitter "eq";
+    R(65.), "!=", makeSplitterInvert "eq";
 
     (* Boolean *)
     R(70.), "&&", makeSplitter "and";
