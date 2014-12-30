@@ -112,15 +112,8 @@ let tokenize name buf : Token.token =
         (* Helper: Given a string->tokenContents mapping, make the token, add it to the line and recurse *)
         let addSingle constructor = addToLineProceed(makeTokenHere(constructor(matchedLexemes()))) in
 
-        (* Sub-parser: Atoms. Call after seeing opening ".". TODO: allow whitespace prefix? *)
-        let rec atom() =
-            match%sedlex buf with
-                (* Really we're just checking for one identifier and converting it *)
-                | wordPattern -> addSingle (fun x -> Token.Atom x)
-                | _ -> parseFail "\".\" must be followed by an identifier"
-
         (* Recurse with blank code, and a new groupSeed described by the arguments *)
-        in let rec openGroup closureKind groupKind =
+        let rec openGroup closureKind groupKind =
             proceed (Token.makeGroup (currentPosition()) closureKind groupKind) [] []
 
         (* Variant assuming non-closure *)
@@ -143,9 +136,6 @@ let tokenize name buf : Token.token =
             (* Local scope variable *)
             | wordPattern -> addSingle (fun x -> Token.Word x)
 
-            (* Atom *)
-            | '.' -> atom() (* TODO: Make macro *)
-
             (* Line demarcator *)
             | ';' -> newLineProceed()
 
@@ -159,7 +149,7 @@ let tokenize name buf : Token.token =
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
-            | Plus(Compl(Chars "#()[]{}\\;'\"."|digit|letterPattern|white_space))
+            | Plus(Compl(Chars "#()[]{}\\;'\""|digit|letterPattern|white_space))
                 -> addSingle (fun x -> Token.Symbol x)
             | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 

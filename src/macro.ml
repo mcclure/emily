@@ -264,6 +264,12 @@ let closure past present future =
 
     in openClosure [] future
 
+let atom past present future =
+    match future with
+        | {Token.contents=Token.Word a} :: moreFuture ->
+            arrangeToken past (standardToken @@ Token.Atom a) moreFuture
+        | _ -> failwith "Expected identifier after ."
+
 (* Just to be as explicit as possible:
 
    Each macro has a priority number and a direction preference.
@@ -313,6 +319,7 @@ let builtinMacros = [
     (* Core *)
     L(100.), "^", closure;
     L(105.), "=",  assignment;
+    L(110.), ".",  atom;
 ]
 
 (* Populate macro table from builtinMacros. *)
