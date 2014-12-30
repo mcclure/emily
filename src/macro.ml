@@ -187,10 +187,10 @@ let assignment past _ future =
         (* The token to be eventually assigned is easy to compute early, so do that. *)
         let rightside = match bindings with
             (* No bindings; this is a normal assignment. *)
-            | [] -> newFuture future
+            | None -> newFuture future
 
             (* Bindings exist: This is a function definition. *)
-            | _  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding bindings)
+            | Some bindings  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding (List.rev bindings))
                     Token.Plain [process future]
 
         (* Recurse to try again with a different command. *)
@@ -199,7 +199,7 @@ let assignment past _ future =
         in let rec resultForCommand lookups cmd =
 
             (* Done with bindings now, just have to figure out what we're assigning to *)
-            match lookups,cmd with
+            match (List.rev lookups),cmd with
                 (* ...Nothing? *)
                 | [],_ -> failwith "Found a =, but nothing to assign to."
 
@@ -224,31 +224,35 @@ let assignment past _ future =
 
         in resultForCommand lookups "let"
 
-
     (* Parsing loop, build the lookups and bindings list *)
-    in let rec processPast remainingPast lookups bindings =
-        match remainingPast with
-            (* Pull out any ^variable bindings, toss them in bindings *)
-            | {Token.contents=Token.Word b} :: {Token.contents=Token.Symbol "^"} :: restPast -> (
-                match lookups with
-                    (* Check to make sure lookups is empty before proceeding *)
-                    | [] -> processPast restPast lookups (b::bindings)
+    in let rec processLeft remainingLeft lookups bindings =
+        match remainingLeft,bindings with
+            (* If we see a ^, switch to loading bindings *)
+            | {Token.contents=Token.Symbol "^"}::moreLeft,None ->
+                processLeft moreLeft lookups (Some [])
 
-                    (* You can't mix bound and unbound identifiers in a let, that's strange *)
-                    | x  -> failwith "Found an expression to the left of a = but to the right of a ^. Only variable bindings are allowed in that space."
-                )
+            (* If we're already loading bindings, just skip it *)
+            | {Token.contents=Token.Symbol "^"}::moreLeft,_ ->
+                processLeft moreLeft lookups bindings
 
             (* Sanitize any symbols that aren't cleared for the left side of an = *)
-            | {Token.contents=Token.Symbol x} :: _ -> failwith @@ "Unexpected symbol "^x^" to left of ="
+            | {Token.contents=Token.Symbol x} :: _,_ -> failwith @@ "Unexpected symbol "^x^" to left of ="
 
-            (* Pull out something that isn't a binding, toss it in lookups *)
-            | l :: restPast -> processPast restPast (l::lookups) bindings
+            (* We're adding bindings *)
+            | {Token.contents=Token.Word b} :: restPast,Some bindings ->
+                processLeft restPast lookups (Some (b::bindings))
+
+            (* We're adding lookups *)
+            | l :: restPast,None ->
+                processLeft restPast (l::lookups) None
 
             (* There is no more past, Jump to result. *)
-            | [] -> result lookups bindings
+            | [],_ -> result lookups bindings
 
-    (* Begin *)
-    in processPast past [] []
+            (* Probably a value to the right of ^ *)
+            | _ -> failwith "Found something unexpected to the left of a ="
+
+    in processLeft (List.rev past) [] None
 
 let closure past present future =
     let rec openClosure bindings future =
@@ -318,8 +322,8 @@ let builtinMacros = [
 
     (* Core *)
     L(100.), "^", closure;
-    L(105.), "=",  assignment;
-    L(110.), ".",  atom;
+    L(105.), "=", assignment;
+    L(110.), ".", atom;
 ]
 
 (* Populate macro table from builtinMacros. *)
