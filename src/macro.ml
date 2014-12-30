@@ -111,8 +111,10 @@ let newPast p   = newFuture (List.rev p)    (* Insert a reverse-time group *)
 
 (* A recurring pattern in the current macros is to insert a new single token
    into "the middle" of an established past and future *)
+let arrangeToken past present future =
+    [ newFuture @@ List.concat [List.rev past; [present]; future] ]
 let arrange past present future =
-    [ newFuture @@ List.concat [List.rev past; [newFuture present]; future] ]
+    arrangeToken past (newFuture present) future
 
 (* Constructors that return working macros *)
 
@@ -248,6 +250,20 @@ let assignment past _ future =
     (* Begin *)
     in processPast past [] []
 
+let closure past present future =
+    let rec openClosure bindings future =
+        match future with
+            | {Token.contents=Token.Symbol "^"} :: moreFuture ->
+                openClosure bindings moreFuture
+            | {Token.contents=Token.Word b} :: moreFuture ->
+                openClosure (b::bindings) moreFuture
+            | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
+                arrangeToken past (Token.makeGroup Token.noPosition (Token.ClosureWithBinding (List.rev bindings)) kind items) moreFuture
+            | [] -> failwith @@ "Body missing for closure"
+            | _ ->  failwith @@ "Unexpected symbol after ^"
+
+    in openClosure [] future
+
 (* Just to be as explicit as possible:
 
    Each macro has a priority number and a direction preference.
@@ -294,8 +310,9 @@ let builtinMacros = [
     L(90.), ":", applyRight;
     L(95.), "?", question;
 
-    (* Assignment *)
-    L(100.), "=",  assignment;
+    (* Core *)
+    L(100.), "^", closure;
+    L(105.), "=",  assignment;
 ]
 
 (* Populate macro table from builtinMacros. *)

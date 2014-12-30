@@ -126,24 +126,6 @@ let tokenize name buf : Token.token =
         (* Variant assuming non-closure *)
         in let openOrdinaryGroup = openGroup Token.NonClosure
 
-        in let completeClosure bindings groupKind =
-            openGroup (Token.ClosureWithBinding (List.rev bindings)) groupKind
-
-        (* Sub-parser: Closures. Call after seeing opening "^". *)
-        in let rec openClosure bindings =
-            match%sedlex buf with
-                (* Again: sedlex means we must track lines manually *)
-                | '\n' -> stateNewline (); openClosure bindings
-                (* Skip white space *)
-                | white_space -> openClosure bindings
-                (* If we see an identifier, upgrade from nullary to unary and continue *)
-                | wordPattern -> openClosure (matchedLexemes() :: bindings)
-                (* If we see a group opener, complete and re-invoke to the main parser one group level deeper *)
-                | '(' -> completeClosure bindings Token.Plain (* Sorta duplicates below *)
-                | '{' -> completeClosure bindings Token.Scoped
-                | '[' -> completeClosure bindings Token.Box
-                | _ -> parseFail "Saw something unexpected after \"^\""
-
         (* Now finally here's the actual grammar... *)
         in match%sedlex buf with
             (* Ignore comments *)
@@ -177,8 +159,7 @@ let tokenize name buf : Token.token =
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
-            | '^' -> addToLineProceed( openClosure [] ) (* TODO: Make macro *)
-            | Plus(Compl(Chars "#^()[]{}\\;'\"."|digit|letterPattern|white_space))
+            | Plus(Compl(Chars "#()[]{}\\;'\"."|digit|letterPattern|white_space))
                 -> addSingle (fun x -> Token.Symbol x)
             | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 
