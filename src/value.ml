@@ -4,11 +4,11 @@ type tableValue = (value, value) Hashtbl.t
 
 (* Closure types: *)
 and closureExecUser = {
-    body   : Token.codeSequence;
-    scoped : bool; (* Should the closure execution get its own let scope? *)
-    scope  : value; (* Context scope *)
+    body     : Token.codeSequence;
+    scoped   : bool;  (* Should the closure execution get its own let scope? *)
+    envScope : value; (* Captured scope environment of closure manufacture *)
     (* Another option would be to make the "new" scope early & excise 'key': *)
-    key    : string list; (* Not-yet-curried keys, or [] as special for "this is nullary" -- BACKWARD, first-applied key is last *)
+    key      : string list; (* Not-yet-curried keys, or [] as special for "this is nullary" -- BACKWARD, first-applied key is last *)
 }
 
 and closureExec =
@@ -41,7 +41,7 @@ and value =
     | ClosureValue of closureValue
     | TableValue of tableValue
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
-    | ContinuationValue of executeFrame
+    | ContinuationValue of executeStack
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
@@ -80,6 +80,8 @@ let thisKeyString = "this"
 let thisKey = AtomValue thisKeyString
 let superKeyString = "super"
 let superKey = AtomValue superKeyString
+let returnKeyString = "return"
+let returnKey = AtomValue returnKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value

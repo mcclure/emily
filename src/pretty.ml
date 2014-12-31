@@ -70,6 +70,7 @@ let dumpValueTreeGeneral wrapper v =
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
         | Value.TableValue     _ -> wrapper "table" v
         | Value.ObjectValue    _ -> wrapper "object" v
+        | Value.ContinuationValue _ -> "<return>"
 
 let dumpValue v =
     let simpleWrapper label obj = angleWrap label

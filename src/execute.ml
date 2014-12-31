@@ -203,7 +203,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     in let closureValue v =
         let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Scoped -> true | _ -> false in
-        simpleValue Value.(ClosureValue { exec=ClosureExecUser {body=v.Token.items; scope=frame.scope; key; scoped}; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {body=v.Token.items; envScope=frame.scope; key; scoped}; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
          })
 
     (* Identify token *)
@@ -258,7 +258,7 @@ and apply stack this a b =
                     | Value.ClosureExecUser exec ->
                         (* FIXME: should be a noscope operation for bound=[], this=None *)
                         let scopeKind = if exec.Value.scoped then Value.WithLet else Value.NoLet in
-                        let scope = scopeInheriting scopeKind exec.Value.scope in
+                        let scope = scopeInheriting scopeKind exec.Value.envScope in
                         let key = exec.Value.key in (
                             (* Trace here ONLY if command line option requests it *)
                             if Options.(run.trace) then print_endline @@ "Closure --> " ^ Pretty.dumpValueNewTable scope;
@@ -279,6 +279,7 @@ and apply stack this a b =
                                         | Value.CurrentThis(c,t) | Value.FrozenThis(c,t)
                                             -> setThis c t
                                         | _ -> ());
+                                    Value.tableSet t Value.returnKey (Value.ContinuationValue stack);
                                     addBound key bound
                                 | _ -> internalFail()
                         );
@@ -294,6 +295,9 @@ and apply stack this a b =
                         | 1 -> descend amendedClosure (* Apply, using argument *)
                         | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
+
+        | Value.ContinuationValue stack ->
+            returnTo stack b
 
         (* If applying a table or table op. *)
         | Value.ObjectValue t  | Value.TableValue t ->  readTable t
