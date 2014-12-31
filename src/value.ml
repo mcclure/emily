@@ -4,7 +4,7 @@ type tableValue = (value, value) Hashtbl.t
 
 (* Closure types: *)
 and closureExecUser = {
-    code   : Token.codeSequence;
+    body   : Token.codeSequence;
     scoped : bool; (* Should the closure execution get its own let scope? *)
     scope  : value; (* Context scope *)
     (* Another option would be to make the "new" scope early & excise 'key': *)
@@ -41,6 +41,7 @@ and value =
     | ClosureValue of closureValue
     | TableValue of tableValue
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
+    | ContinuationValue of executeFrame
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
@@ -48,6 +49,24 @@ and tableBlankKind =
     | NoLet     (* Has .set. Used for "flat" expression groups. *)
     | WithLet   (* Has .let. Used for scoped groups. *)
     | BoxFrom of value option (* Has .parent and uses object literal rules. *)
+
+(* The "registers" are values 1 and 2 described in execute.ml comments *)
+and registerState =
+    | LineStart of value
+    | FirstValue of value
+    | PairValue of (value * value)
+
+(* Each frame on the stack has the two value "registers" and a codeSequence reference which
+   is effectively an instruction pointer. *)
+and executeFrame = {
+    register : registerState;
+    code : Token.codeSequence;
+    scope: value;
+}
+
+(* The current state of an execution thread consists of just the stack of frames. *)
+and executeStack = executeFrame list
+
 
 let idGenerator = ref 0.0
 

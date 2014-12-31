@@ -39,7 +39,7 @@ let snippetScope bindings =
 
 (* Define an ad hoc function using a literal string inside the interpreter. *)
 let snippetTextClosureAbstract source thisKind context keys text =
-    ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet source text; scope=snippetScope context;
+    ClosureValue({ exec = ClosureExecUser({body = Tokenize.snippet source text; scope=snippetScope context;
         scoped = false; key = keys;
     }); needArgs = List.length keys;
         bound = []; this = thisKind; })
