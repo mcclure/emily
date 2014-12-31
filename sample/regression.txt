@@ -39,6 +39,7 @@ sample/scope.closure.2.em
 sample/scope.closure.3.em
 sample/curry.em
 sample/curry.2.em
+sample/return.em
 
 sample/obj.em
 sample/obj.2.em
