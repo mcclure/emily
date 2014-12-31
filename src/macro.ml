@@ -333,7 +333,7 @@ let builtinMacros = [
 
     (* Grouping *)
     L(90.), ":", applyRight;
-    L(95.), "?", question;
+    L(95.), "?", question; (* TODO: Should split to right and demand : to left *)
 
     (* Core *)
     L(100.), "^", closure;

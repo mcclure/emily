@@ -9,7 +9,7 @@
 goto ^y = y y
 
 counter = 5
-loop = ^(return)
+loop = do ^(return)
 println: counter
 counter = counter - 1
 (counter > 0) ? (goto loop) (null)
