@@ -1,14 +1,27 @@
 (* Data representation for an AST. *)
 
+(* Records the original source file of a token *)
+type codeSource =
+    | Stdin
+    | Cmdline
+    | Unknown
+    | Internal of string
+    | File of string
+
 (* Records the original source position of a token *)
 type codePosition = {
-    fileName : string option;
+    fileName : codeSource;
     lineNumber : int;
     lineOffset : int;
 }
 
 (* Make codePosition.fileName human-readable *)
-let fileNameString n = (match n with None -> "<Input>" | Some s -> s)
+let fileNameString n = (match n with
+    | Stdin -> "<input>"
+    | Cmdline -> "<commandline>"
+    | Unknown -> "<unknown>"
+    | Internal s -> "<internal:"^s^">"
+    | File s -> "'"^s^"'")
 
 (* Make codePosition human-readable *)
 let positionString p = Printf.sprintf "[%s line %d ch %d]"
@@ -62,6 +75,6 @@ let makeToken position contents = {
 let makeGroup position closure kind items =
     makeToken position ( Group { kind; closure; items } )
 
-let noPosition = {fileName=None;lineNumber=0;lineOffset=0}
+let noPosition = {fileName=Unknown;lineNumber=0;lineOffset=0}
 
 let makePositionless contents = {at=noPosition; contents}

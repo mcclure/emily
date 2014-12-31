@@ -157,17 +157,17 @@ let tokenize name buf : Token.token =
     in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
 
 (* Tokenize entry point typed to channel *)
-let tokenize_channel channel =
+let tokenize_channel source channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
-    tokenize None lexbuf
+    tokenize source lexbuf
 
 (* Tokenize entry point typed to string *)
-let tokenize_string str =
+let tokenize_string source str =
     let lexbuf = Sedlexing.Utf8.from_string str in
-    tokenize None lexbuf
+    tokenize source lexbuf
 
 let unwrap token = match token.Token.contents with
     | Token.Group g -> g.Token.items
     | _ -> failwith(Printf.sprintf "%s %s" "Internal error: Object in wrong place" (Token.positionString token.Token.at))
 
- let snippet str = unwrap @@ tokenize_string str
+ let snippet str = unwrap @@ tokenize_string Token.Unknown str

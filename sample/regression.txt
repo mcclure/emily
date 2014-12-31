@@ -26,6 +26,7 @@ sample/bool.em
 sample/set.em
 sample/set.2.em
 sample/set.curry.em
+sample/set.curry.fail.em
 sample/has.em
 sample/has.2.em
 sample/scope.em
