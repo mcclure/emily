@@ -48,6 +48,15 @@ let snippetTextClosureAbstract source thisKind context keys text =
 let snippetTextClosure source = snippetTextClosureAbstract source ThisNever
 let snippetTextMethod  source = snippetTextClosureAbstract source ThisBlank
 
+let snippetApply closure value =
+    match closure with
+        | ClosureValue ({bound;needArgs} as cv) ->
+            if needArgs > 1 then
+                ClosureValue {cv with bound=value::bound;needArgs=needArgs-1}
+            else
+                failwith "Internal error"
+        | _ -> failwith "Internal error"
+
 (* These first three snippet closures are relied on by the later ones *)
 
 (* Ternary function without short-circuiting... *)
@@ -94,13 +103,16 @@ let rawHas = snippetClosure 2 (function
     | [v;_] -> badArgTable "rawHas" v
     | _ -> impossibleArg "rawTern")
 
-(* ...And a factory for a curried one that knows how to check the super class: *)
-let makeHas obj = snippetTextClosure (Token.Internal "makeHas")
-    ["rawHas",rawHas;"tern",tern;"obj",obj;"true",Value.True;"null",Value.Null]
-    ["key"]
+(* A curried one which knows how to check the super class: *)
+let hasConstruct = snippetTextClosure (Token.Internal "hasConstruct")
+    ["rawHas",rawHas;"tern",tern;"true",Value.True;"null",Value.Null]
+    ["obj";"key"]
     "tern (rawHas obj key) ^(true) ^(
          tern (rawHas obj .parent) ^(obj.parent.has key) ^(null)
      )"
+
+(* ...And a factory for one with a preset object: *)
+let makeHas obj = snippetApply hasConstruct obj
 
 (* Most tables need to be preopulated with a "set". Here's the setter for a singular table: *)
 let rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
@@ -112,23 +124,28 @@ let rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
     | _ -> impossibleArg "rawSet")
 
 (* ...And a factory for a curried one that knows how to check the super class: *)
-let makeSet obj = snippetTextClosure (Token.Internal "makeSet")
-    ["rawHas",rawHas;"rawSet",rawSet;"tern",tern;"obj",obj;"true",Value.True;"null",Value.Null]
-    ["key"; "value"]
+let setConstruct = snippetTextClosure (Token.Internal "setConstruct")
+    ["rawHas",rawHas;"rawSet",rawSet;"tern",tern;"true",Value.True;"null",Value.Null]
+    ["obj";"key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key value) ^(
          obj.parent.set key value                # Note: Fails in an inelegant way if no parent
      )"
 
+let makeSet obj = snippetApply setConstruct obj
+
 (* Same thing, but for an ObjectValue instead of a TableValue.
    The difference lies in how "this" is treated *)
-let makeObjectSet obj = snippetTextClosure (Token.Internal "makeObjectSet")
-    ["rawHas",rawHas;"rawSet",rawSet;"tern",tern;"obj",obj;"true",Value.True;"null",Value.Null;"modifier",rethisAssignObject]
-    ["key"; "value"]
+let objectSetConstruct = snippetTextClosure (Token.Internal "objectSetConstruct")
+    ["rawHas",rawHas;"rawSet",rawSet;"tern",tern;"true",Value.True;"null",Value.Null;"modifier",rethisAssignObject]
+    ["obj";"key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key (modifier value)) ^(
          obj.parent.set key (modifier value) # Note: Fails in an inelegant way if no parent
      )"
 
+let makeObjectSet obj = snippetApply objectSetConstruct obj
+
 (* Many tables need to be prepopulated with a "let". Here's the let setter for a singular table: *)
+(* TODO: Don't 'make' like this? *)
 let makeLet (modifier:value->value->value) (t:tableValue) = snippetClosure 2 (function
     | [key;value] ->
         tableSet t key (modifier (TableValue t) value);
@@ -184,7 +201,9 @@ let misapplyArg = snippetClosure 2 (function
     | _ -> impossibleArg "misapplyArg")
 
 (* Factory for super functions *)
-let makeSuper current this = snippetTextClosure (Token.Internal "makeSuper")
-    ["rethis",rethisSuperFrom;"callCurrent",current;"obj",this;"rawHas",rawHas;"tern",tern;"misapplyArg",misapplyArg]
-    ["arg"]
+let superConstruct = snippetTextClosure (Token.Internal "superConstruct")
+    ["rethis",rethisSuperFrom;"rawHas",rawHas;"tern",tern;"misapplyArg",misapplyArg]
+    ["callCurrent";"obj";"arg"]
     "tern (rawHas callCurrent .parent) ^(rethis obj (callCurrent.parent arg)) ^(misapplyArg obj arg)"
+
+let makeSuper current this = snippetApply (snippetApply superConstruct current) this
