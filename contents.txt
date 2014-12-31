@@ -20,7 +20,7 @@ package/
     After build, executable will go here
 
 sample/
-    Example Emily scripts
+    Example Emily scripts (double as unit tests)
 
 src/
     All source code

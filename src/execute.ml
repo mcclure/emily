@@ -146,7 +146,7 @@ let rec executeStep stack =
 
 and executeStepWithFrames stack frame moreFrames =
     (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ (if Options.(run.trackObjects) then " | Scope " ^ Pretty.dumpValue(frame.scope) else "") ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpCodeTreeTerse ( Token.makeGroup {Token.fileName=None; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
+    if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ (if Options.(run.trackObjects) then " | Scope " ^ Pretty.dumpValue(frame.scope) else "") ^ " | State " ^ (dumpRegisterState frame.register) ^ " | Code " ^ (Pretty.dumpCodeTreeTerse ( Token.makeGroup {Token.fileName=Token.Unknown; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.code ));
 
     (* Check the state of the top frame *)
     match frame.register with

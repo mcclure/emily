@@ -64,6 +64,7 @@ let dumpValueTreeGeneral wrapper v =
         | Value.AtomValue s -> "." ^ s
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>"
+        | Value.BuiltinUnaryMethodValue _ -> "<property-builtin>"
         | Value.ClosureValue {Value.exec=e; Value.needArgs=n} ->
             let tag = match e with Value.ClosureExecUser _ -> "closure" | Value.ClosureExecBuiltin _ -> "closure-builtin" in
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"

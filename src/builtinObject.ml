@@ -2,14 +2,14 @@
 let objectPrototypeTable = ValueUtil.tableInheriting Value.NoSet BuiltinTrue.truePrototype
 let objectPrototype = Value.ObjectValue(objectPrototypeTable)
 
-let appendConstruct = ValueUtil.snippetTextMethod
+let appendConstruct = ValueUtil.snippetTextMethod (Token.Internal "append")
     ["tern", ValueUtil.tern; "nullfn", BuiltinScope.nullfn]
     ["v"]
     "tern (this.has.count) nullfn ^(this.let.count 0)
      this.let (this.count) v
      this.set.count (this.count.plus 1)"
 
-let eachConstruct = ValueUtil.snippetTextMethod
+let eachConstruct = ValueUtil.snippetTextMethod (Token.Internal "each")
     ["while", BuiltinScope.whileConstruct]
     ["f"]
     "{let .idx 0

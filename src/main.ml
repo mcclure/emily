@@ -3,9 +3,9 @@
 let () =
     let processOne target =
         let buf = match target with
-            | Options.File f -> Tokenize.tokenize_channel (open_in f)
-            | Options.Stdin -> Tokenize.tokenize_channel stdin
-            | Options.Literal s -> Tokenize.tokenize_string s
+            | Options.File f -> Tokenize.tokenize_channel (Token.File f) (open_in f)
+            | Options.Stdin -> Tokenize.tokenize_channel Token.Stdin stdin
+            | Options.Literal s -> Tokenize.tokenize_string Token.Cmdline s
         in
         (*  *)
         if Options.(run.disassemble) then print_endline (Pretty.dumpCodeTreeTerse buf) else
