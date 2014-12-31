@@ -69,8 +69,8 @@ and snippetScope bindings =
     TableValue(scopeTable)
 
 (* Define an ad hoc function using a literal string inside the interpreter. *)
-and snippetTextClosureAbstract thisKind context keys text =
-    ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet text; scope=snippetScope context;
+and snippetTextClosureAbstract source thisKind context keys text =
+    ClosureValue({ exec = ClosureExecUser({code = Tokenize.snippet source text; scope=snippetScope context;
         scoped = false; key = keys;
     }); needArgs = List.length keys;
         bound = []; this = thisKind; })
@@ -82,7 +82,7 @@ and rawHas = snippetClosure 2 (function
     | _ -> impossibleArg "rawTern")
 
 (* ...And a factory for a curried one that knows how to check the super class: *)
-and makeHas obj = snippetTextClosureAbstract ThisNever
+and makeHas obj = snippetTextClosureAbstract (Token.Internal "makeHas") ThisNever
     ["rawHas",rawHas;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
     ["key"]
     "tern (rawHas obj key) ^(true) ^(
@@ -99,14 +99,14 @@ and rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
     | _ -> impossibleArg "rawSet")
 
 (* ...And a factory for a curried one that knows how to check the super class: *)
-and makeSet obj = snippetTextClosureAbstract ThisNever
+and makeSet obj = snippetTextClosureAbstract (Token.Internal "makeSet") ThisNever
     ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null]
     ["key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key value) ^(
          obj.parent.set key value                # Note: Fails in an inelegant way if no parent
      )"
 
-and makeObjectSet obj = snippetTextClosureAbstract ThisNever
+and makeObjectSet obj = snippetTextClosureAbstract (Token.Internal "makeObjectSet") ThisNever
     ["rawHas",rawHas;"rawSet",rawSet;"tern",!ternKnot;"obj",obj;"true",Value.True;"null",Value.Null;"modifier",!rethisAssignObjectKnot]
     ["key"; "value"]
     "tern (rawHas obj key) ^(rawSet obj key (modifier value)) ^(
@@ -139,8 +139,8 @@ and rawRethisAssignObject _ v = match v with
 (* We are now free of the big and stanza! *)
 
 (* Define an ad hoc function using a literal string inside the interpreter. *)
-let snippetTextClosure = snippetTextClosureAbstract ThisNever
-let snippetTextMethod  = snippetTextClosureAbstract ThisBlank
+let snippetTextClosure source = snippetTextClosureAbstract source ThisNever
+let snippetTextMethod  source = snippetTextClosureAbstract source ThisBlank
 
 let rethisAssignObjectDefinition = snippetClosure 2 (function
     | [obj;a] -> rawRethisAssignObjectDefinition obj a
@@ -157,7 +157,7 @@ let rawTern = snippetClosure 3 (function
     | _ -> impossibleArg "rawTern")
 
 (* Which we then use to define tern itself: *)
-let tern = snippetTextClosure
+let tern = snippetTextClosure (Token.Internal "tern")
     ["rawTern", rawTern; "null", Null]
     ["pred"; "a"; "b"]
     "(rawTern pred a b) null"
@@ -178,7 +178,7 @@ let misapplyArg = snippetClosure 2 (function
     | [a;b] -> rawMisapplyArg a b
     | _ -> impossibleArg "misapplyArg")
 
-let makeSuper current this = snippetTextClosure
+let makeSuper current this = snippetTextClosure (Token.Internal "makeSuper")
     ["rethis",rethisSuperFrom;"callCurrent",current;"obj",this;"rawHas",rawHas;"tern",tern;"misapplyArg",misapplyArg]
     ["arg"]
     "tern (rawHas callCurrent .parent) ^(rethis obj (callCurrent.parent arg)) ^(misapplyArg obj arg)"

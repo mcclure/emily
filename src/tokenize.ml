@@ -170,4 +170,4 @@ let unwrap token = match token.Token.contents with
     | Token.Group g -> g.Token.items
     | _ -> failwith(Printf.sprintf "%s %s" "Internal error: Object in wrong place" (Token.positionString token.Token.at))
 
- let snippet str = unwrap @@ tokenize_string Token.Unknown str
+ let snippet source str = unwrap @@ tokenize_string source str
