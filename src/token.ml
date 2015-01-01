@@ -75,6 +75,5 @@ let makeToken position contents = {
 let makeGroup position closure kind items =
     makeToken position ( Group { kind; closure; items } )
 
-let noPosition = {fileName=Unknown;lineNumber=0;lineOffset=0}
-
-let makePositionless contents = {at=noPosition; contents}
+let clone token contents = makeToken token.at contents
+let cloneGroup token closure kind items = makeGroup token.at closure kind items

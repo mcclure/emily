@@ -26,15 +26,19 @@ type macroMatch = {
 (* The set of loaded macros lives here. *)
 let macroTable = Hashtbl.create(1)
 
-(* TODO: This is awful, macros should be saving the positions they're derived from. *)
-let standardGroup = Token.makeGroup Token.noPosition Token.NonClosure Token.Plain
-(* Note: standardClosure makes no-return closures *)
-let standardClosure = Token.makeGroup Token.noPosition (Token.ClosureWithBinding (false,[])) Token.Plain
-let standardToken = Token.makeToken Token.noPosition
+(* All manufactured tokens should be made through clone, so that position information is retained *)
+let cloneAtom at s = Token.clone at @@ Token.Atom s
+let cloneWord at s = Token.clone at @@ Token.Word s
+let cloneGroup at = Token.cloneGroup at Token.NonClosure Token.Plain
+(* Note: makes no-return closures *)
+let cloneClosure at = Token.cloneGroup at (Token.ClosureWithBinding (false,[])) Token.Plain
+
+(* Debug method gets to use this. *)
+let nullToken = Token.(makeToken {fileName=Unknown;lineNumber=0;lineOffset=0} (Symbol "_"))
 
 (* Macro processing, based on whatever builtinMacros contains *)
 let rec process l =
-    if Options.(run.stepMacro) then print_endline @@ Pretty.dumpCodeTreeTerse @@ standardGroup [l];
+    if Options.(run.stepMacro) then print_endline @@ Pretty.dumpCodeTreeTerse @@ cloneGroup nullToken [l];
 
     (* Search for macro to process next. Priority None/line None means none known yet. *)
     let rec findIdeal (bestPriority:macroPriority option) bestLine (past:singleLine) present future : macroMatch option =
@@ -107,29 +111,30 @@ let rec process l =
 
 (* Support functions for macros *)
 
-let newFuture f = standardGroup [process f] (* Insert a forward-time group *)
-let newPast p   = newFuture (List.rev p)    (* Insert a reverse-time group *)
-let newFutureClosure f = standardClosure [process f] (* Insert a forward-time group *)
+let newFutureFrom at f = cloneGroup at [process f] (* Insert a forward-time group *)
+let newPastFrom at p   = newFutureFrom at (List.rev p)    (* Insert a reverse-time group *)
+let newFutureClosureFrom at f = cloneClosure at [process f] (* Insert a forward-time group *)
 
 (* A recurring pattern in the current macros is to insert a new single token
    into "the middle" of an established past and future *)
-let arrangeToken past present future =
-    [ newFuture @@ List.concat [List.rev past; [present]; future] ]
-let arrange past present future =
-    arrangeToken past (newFuture present) future
+(* FIXME: Inferring position from "present" will work  *)
+let arrangeTokenFrom at past present future =
+    [ newFutureFrom at @@ List.concat [List.rev past; [present]; future] ]
+let arrangeFrom at past present future =
+    arrangeTokenFrom at past (newFutureFrom at present) future
 
 (* Constructors that return working macros *)
 
 (* Given argument "op", make a macro to turn `a b … OP d e …` into `(a b …) .op (d e …)` *)
-let makeSplitter atomString : macroFunction = (fun past _ future ->
-    [ newPast past ; standardToken @@ Token.Atom atomString ; newFuture future]
+let makeSplitter atomString : macroFunction = (fun past present future ->
+    [ newPastFrom present past ; cloneAtom present atomString ; newFutureFrom present future]
 )
 
 (* Given argument "op", make a macro to turn `OP a` into `((a) .op)` *)
 let makeUnary atomString : macroFunction = (fun past present future ->
     match future with
         | a :: farFuture ->
-            arrange past [a; standardToken @@ Token.Atom atomString] farFuture
+            arrangeFrom present past [a; cloneAtom present atomString] farFuture
         | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
 )
 
@@ -137,19 +142,19 @@ let makeUnary atomString : macroFunction = (fun past present future ->
 let makePrefixUnary wordString : macroFunction = (fun past present future ->
     match future with
         | a :: farFuture ->
-            arrange past [standardToken @@ Token.Word wordString; a] farFuture
+            arrangeFrom present past [cloneWord present wordString; a] farFuture
         | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
 )
 
 (* Given argument "op", make a macro to turn `a b … OP d e …` into `(op (a b …) (d e …)` *)
 (* Unused. TODO: Use this for a future "and" in the global namespace? *)
-let makeSplitterPrefix wordString : macroFunction = (fun past _ future ->
-    [ standardToken @@ Token.Word wordString ; newPast past ; newFuture future ]
+let makeSplitterPrefix wordString : macroFunction = (fun past present future ->
+    [ cloneWord present wordString ; newPastFrom present past ; newFutureFrom present future ]
 )
 
-let makeSplitterInvert atomString : macroFunction = (fun past _ future ->
-    [ standardToken @@ Token.Word "not" ; newFuture
-        [ newPast past ; standardToken @@ Token.Atom atomString ; newFuture future]
+let makeSplitterInvert atomString : macroFunction = (fun past present future ->
+    [ cloneWord present "not" ; newFutureFrom present
+        [ newPastFrom present past ; cloneAtom present atomString ; newFutureFrom present future]
     ]
 )
 
@@ -159,27 +164,27 @@ let makeSplitterInvert atomString : macroFunction = (fun past _ future ->
 (* Prints what's happening, then deletes itself. *)
 let debugOp (past:singleLine) (present:Token.token) (future:singleLine) =
     print_endline @@ "Debug macro:";
-    print_endline @@ "\tPast:    " ^ (Pretty.dumpCodeTreeTerse @@ standardGroup @@ [List.rev past]);
+    print_endline @@ "\tPast:    " ^ (Pretty.dumpCodeTreeTerse @@ cloneGroup nullToken [List.rev past]);
     print_endline @@ "\tPresent: " ^ (Pretty.dumpCodeTreeTerse @@ present);
-    print_endline @@ "\tFuture:  " ^ (Pretty.dumpCodeTreeTerse @@ standardGroup @@ [future]);
+    print_endline @@ "\tFuture:  " ^ (Pretty.dumpCodeTreeTerse @@ cloneGroup nullToken [future]);
     List.concat [List.rev past; future]
 
 (* Apply operator-- Works like ocaml @@ or haskell $ *)
-let applyRight past _ future =
-    [ newPast @@ newFuture future :: past ]
+let applyRight past present future =
+    [ newPastFrom present @@ newFutureFrom present future :: past ]
 
 (* "Apply pair"; works like unlambda backtick *)
-let backtick past _ future =
+let backtick past present future =
     match future with
         | a :: b :: farFuture ->
-            arrange past [a;b] farFuture
+            arrangeFrom present past [a;b] farFuture
         | _ -> failwith "` must be followed by two symbols"
 
 (* Works like ocaml @@ or haskell $ *)
-let rec question past _ future =
+let rec question past present future =
     let result cond a b =
-        [standardToken @@ Token.Word "tern";
-            newFuture cond; newFutureClosure a; newFutureClosure b]
+        [cloneWord present "tern";
+            newFutureFrom present cond; newFutureClosureFrom present a; newFutureClosureFrom present b]
     in let rec scan a rest =
         match rest with
             | {Token.contents=Token.Symbol ":"}::moreRest ->
@@ -192,17 +197,17 @@ let rec question past _ future =
     in scan [] future
 
 (* Assignment operator-- semantics are relatively complex. TODO: Docs. *)
-let assignment past _ future =
+let assignment past present future =
     (* The final parsed assignment will consist of a list of normal assignments
        and a list of ^ variables for a function. Perform that assignment here: *)
     let result lookups bindings =
         (* The token to be eventually assigned is easy to compute early, so do that. *)
         let rightside = match bindings with
             (* No bindings; this is a normal assignment. *)
-            | None -> newFuture future
+            | None -> newFutureFrom present future
 
             (* Bindings exist: This is a function definition. *)
-            | Some bindings  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding (true,(List.rev bindings)))
+            | Some bindings  -> Token.cloneGroup present (Token.ClosureWithBinding (true,(List.rev bindings)))
                     Token.Plain [process future]
 
         (* Recurse to try again with a different command. *)
@@ -219,14 +224,14 @@ let assignment past _ future =
                 | {Token.contents=Token.Word "nonlocal"}::moreLookups,"let" -> resultForCommand moreLookups "set"
 
                 (* Looks like a = b *)
-                | [{Token.contents=Token.Word name}],_ -> [standardToken @@ Token.Word cmd; standardToken @@ Token.Atom name; rightside]
+                | [{Token.contents=Token.Word name}],_ -> [cloneWord present cmd; cloneAtom present name; rightside]
 
                 (* Looks like a b ... = c *)
                 | ({Token.contents=Token.Word name} as firstToken)::moreLookups,_ ->
                     (match (List.rev moreLookups) with
                         (* Note what's happening here: We're slicing off the FINAL element, first in the reversed list. *)
                         | finalToken::middleLookups ->
-                            List.concat [[firstToken]; List.rev middleLookups; [standardToken @@ Token.Atom cmd; finalToken; rightside]]
+                            List.concat [[firstToken]; List.rev middleLookups; [cloneAtom present cmd; finalToken; rightside]]
 
                         (* Excluded by [{Token.word}] case above *)
                         | _ -> failwith "Internal failure: Reached impossible place" )
@@ -275,7 +280,7 @@ let closureConstruct withReturn =
                 | {Token.contents=Token.Word b} :: moreFuture ->
                     openClosure (b::bindings) moreFuture
                 | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
-                    arrangeToken past (Token.makeGroup Token.noPosition (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                    arrangeTokenFrom present past (Token.cloneGroup present (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
                 | [] -> failwith @@ "Body missing for closure"
                 | _ ->  failwith @@ "Unexpected symbol after ^"
 
@@ -284,7 +289,7 @@ let closureConstruct withReturn =
 let atom past present future =
     match future with
         | {Token.contents=Token.Word a} :: moreFuture ->
-            arrangeToken past (standardToken @@ Token.Atom a) moreFuture
+            arrangeTokenFrom present past (cloneAtom present a) moreFuture
         | _ -> failwith "Expected identifier after ."
 
 (* Just to be as explicit as possible:

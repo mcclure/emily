@@ -228,8 +228,8 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                     let newScope = (groupScope group.Token.kind frame.Value.scope) in
                     let items = match group.Token.kind with
                         | Token.Box ->
-                            let wrapperGroup = Token.(makePositionless @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
-                            let word = Token.(makePositionless @@ Word Value.currentKeyString) in
+                            let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
+                            let word = Token.(clone token @@ Word Value.currentKeyString) in
                             [ [wrapperGroup]; [word] ]
                         | _ -> group.Token.items
                     in
