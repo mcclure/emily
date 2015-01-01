@@ -111,50 +111,50 @@ let rec process l =
 
 (* Support functions for macros *)
 
-let newFutureFrom at f = cloneGroup at [process f] (* Insert a forward-time group *)
-let newPastFrom at p   = newFutureFrom at (List.rev p)    (* Insert a reverse-time group *)
-let newFutureClosureFrom at f = cloneClosure at [process f] (* Insert a forward-time group *)
+let newFuture at f        = cloneGroup at [process f] (* Insert a forward-time group *)
+let newPast at p          = newFuture at (List.rev p)    (* Insert a reverse-time group *)
+let newFutureClosure at f = cloneClosure at [process f] (* Insert a forward-time group *)
 
 (* A recurring pattern in the current macros is to insert a new single token
    into "the middle" of an established past and future *)
 (* FIXME: Inferring position from "present" will work  *)
-let arrangeTokenFrom at past present future =
-    [ newFutureFrom at @@ List.concat [List.rev past; [present]; future] ]
-let arrangeFrom at past present future =
-    arrangeTokenFrom at past (newFutureFrom at present) future
+let arrangeToken at past present future =
+    [ newFuture at @@ List.concat [List.rev past; [present]; future] ]
+let arrange at past present future =
+    arrangeToken at past (newFuture at present) future
 
 (* Constructors that return working macros *)
 
 (* Given argument "op", make a macro to turn `a b … OP d e …` into `(a b …) .op (d e …)` *)
-let makeSplitter atomString : macroFunction = (fun past present future ->
-    [ newPastFrom present past ; cloneAtom present atomString ; newFutureFrom present future]
+let makeSplitter atomString : macroFunction = (fun past at future ->
+    [ newPast at past ; cloneAtom at atomString ; newFuture at future]
 )
 
 (* Given argument "op", make a macro to turn `OP a` into `((a) .op)` *)
-let makeUnary atomString : macroFunction = (fun past present future ->
+let makeUnary atomString : macroFunction = (fun past at future ->
     match future with
         | a :: farFuture ->
-            arrangeFrom present past [a; cloneAtom present atomString] farFuture
-        | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
+            arrange at past [a; cloneAtom at atomString] farFuture
+        | _ -> failwith @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
 )
 
 (* Given argument "op", make a macro to turn `OP a` into `(op (a))` *)
-let makePrefixUnary wordString : macroFunction = (fun past present future ->
+let makePrefixUnary wordString : macroFunction = (fun past at future ->
     match future with
         | a :: farFuture ->
-            arrangeFrom present past [cloneWord present wordString; a] farFuture
-        | _ -> failwith @@ (Pretty.dumpCodeTreeTerse present) ^ " must be followed by a symbol"
+            arrange at past [cloneWord at wordString; a] farFuture
+        | _ -> failwith @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
 )
 
 (* Given argument "op", make a macro to turn `a b … OP d e …` into `(op (a b …) (d e …)` *)
 (* Unused. TODO: Use this for a future "and" in the global namespace? *)
-let makeSplitterPrefix wordString : macroFunction = (fun past present future ->
-    [ cloneWord present wordString ; newPastFrom present past ; newFutureFrom present future ]
+let makeSplitterPrefix wordString : macroFunction = (fun past at future ->
+    [ cloneWord at wordString ; newPast at past ; newFuture at future ]
 )
 
-let makeSplitterInvert atomString : macroFunction = (fun past present future ->
-    [ cloneWord present "not" ; newFutureFrom present
-        [ newPastFrom present past ; cloneAtom present atomString ; newFutureFrom present future]
+let makeSplitterInvert atomString : macroFunction = (fun past at future ->
+    [ cloneWord at "not" ; newFuture at
+        [ newPast at past ; cloneAtom at atomString ; newFuture at future]
     ]
 )
 
@@ -170,21 +170,21 @@ let debugOp (past:singleLine) (present:Token.token) (future:singleLine) =
     List.concat [List.rev past; future]
 
 (* Apply operator-- Works like ocaml @@ or haskell $ *)
-let applyRight past present future =
-    [ newPastFrom present @@ newFutureFrom present future :: past ]
+let applyRight past at future =
+    [ newPast at @@ newFuture at future :: past ]
 
 (* "Apply pair"; works like unlambda backtick *)
-let backtick past present future =
+let backtick past at future =
     match future with
         | a :: b :: farFuture ->
-            arrangeFrom present past [a;b] farFuture
+            arrange at past [a;b] farFuture
         | _ -> failwith "` must be followed by two symbols"
 
 (* Works like ocaml @@ or haskell $ *)
-let rec question past present future =
+let rec question past at future =
     let result cond a b =
-        [cloneWord present "tern";
-            newFutureFrom present cond; newFutureClosureFrom present a; newFutureClosureFrom present b]
+        [cloneWord at "tern";
+            newFuture at cond; newFutureClosure at a; newFutureClosure at b]
     in let rec scan a rest =
         match rest with
             | {Token.contents=Token.Symbol ":"}::moreRest ->
@@ -197,17 +197,17 @@ let rec question past present future =
     in scan [] future
 
 (* Assignment operator-- semantics are relatively complex. TODO: Docs. *)
-let assignment past present future =
+let assignment past at future =
     (* The final parsed assignment will consist of a list of normal assignments
        and a list of ^ variables for a function. Perform that assignment here: *)
     let result lookups bindings =
         (* The token to be eventually assigned is easy to compute early, so do that. *)
         let rightside = match bindings with
             (* No bindings; this is a normal assignment. *)
-            | None -> newFutureFrom present future
+            | None -> newFuture at future
 
             (* Bindings exist: This is a function definition. *)
-            | Some bindings  -> Token.cloneGroup present (Token.ClosureWithBinding (true,(List.rev bindings)))
+            | Some bindings  -> Token.cloneGroup at (Token.ClosureWithBinding (true,(List.rev bindings)))
                     Token.Plain [process future]
 
         (* Recurse to try again with a different command. *)
@@ -224,14 +224,14 @@ let assignment past present future =
                 | {Token.contents=Token.Word "nonlocal"}::moreLookups,"let" -> resultForCommand moreLookups "set"
 
                 (* Looks like a = b *)
-                | [{Token.contents=Token.Word name}],_ -> [cloneWord present cmd; cloneAtom present name; rightside]
+                | [{Token.contents=Token.Word name}],_ -> [cloneWord at cmd; cloneAtom at name; rightside]
 
                 (* Looks like a b ... = c *)
                 | ({Token.contents=Token.Word name} as firstToken)::moreLookups,_ ->
                     (match (List.rev moreLookups) with
                         (* Note what's happening here: We're slicing off the FINAL element, first in the reversed list. *)
                         | finalToken::middleLookups ->
-                            List.concat [[firstToken]; List.rev middleLookups; [cloneAtom present cmd; finalToken; rightside]]
+                            List.concat [[firstToken]; List.rev middleLookups; [cloneAtom at cmd; finalToken; rightside]]
 
                         (* Excluded by [{Token.word}] case above *)
                         | _ -> failwith "Internal failure: Reached impossible place" )
@@ -272,7 +272,7 @@ let assignment past present future =
     in processLeft (List.rev past) [] None
 
 let closureConstruct withReturn =
-    fun past present future ->
+    fun past at future ->
         let rec openClosure bindings future =
             match future with
                 | {Token.contents=Token.Symbol "^"} :: moreFuture ->
@@ -280,16 +280,16 @@ let closureConstruct withReturn =
                 | {Token.contents=Token.Word b} :: moreFuture ->
                     openClosure (b::bindings) moreFuture
                 | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
-                    arrangeTokenFrom present past (Token.cloneGroup present (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                    arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
                 | [] -> failwith @@ "Body missing for closure"
                 | _ ->  failwith @@ "Unexpected symbol after ^"
 
         in openClosure [] future
 
-let atom past present future =
+let atom past at future =
     match future with
         | {Token.contents=Token.Word a} :: moreFuture ->
-            arrangeTokenFrom present past (cloneAtom present a) moreFuture
+            arrangeToken at past (cloneAtom at a) moreFuture
         | _ -> failwith "Expected identifier after ."
 
 (* Just to be as explicit as possible:
