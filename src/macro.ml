@@ -108,6 +108,7 @@ let rec process l =
 
 let newFuture f = standardGroup [process f] (* Insert a forward-time group *)
 let newPast p   = newFuture (List.rev p)    (* Insert a reverse-time group *)
+let newFutureClosure f = standardClosure [process f] (* Insert a forward-time group *)
 
 (* A recurring pattern in the current macros is to insert a new single token
    into "the middle" of an established past and future *)
@@ -175,15 +176,17 @@ let backtick past _ future =
 
 (* Works like ocaml @@ or haskell $ *)
 let question past _ future =
-    match past with
-        | cond :: distantPast -> (
-            match future with
-                | a :: b :: farFuture ->
-                    arrange distantPast [standardToken @@ Token.Word "tern";
-                        cond; standardClosure [[a]]; standardClosure [[b]]
-                    ] farFuture
-                | _ -> failwith "? must be followed by two symbols" )
-        | _ -> failwith "? must be preceded by two symbols"
+    let result cond a b =
+        [standardToken @@ Token.Word "tern";
+            newFuture cond; newFutureClosure a; newFutureClosure b]
+    in let rec scan a rest =
+        match rest with
+            | {Token.contents=Token.Symbol ":"}::moreRest ->
+                result (List.rev past) (List.rev a) moreRest
+            | token::moreRest ->
+                scan (token::a) moreRest
+            | [] -> failwith ": expected somewhere to right of ?"
+    in scan [] future
 
 (* Assignment operator-- semantics are relatively complex. TODO: Docs. *)
 let assignment past _ future =
@@ -306,6 +309,9 @@ let atom past present future =
 
 let builtinMacros = [
     (* Weird grouping *)
+
+(*    R(10.), "!!!", debugOp; *)
+
     R(20.), "`", backtick;
 
     (* More boolean *)
@@ -333,7 +339,7 @@ let builtinMacros = [
 
     (* Grouping *)
     L(90.), ":", applyRight;
-    L(95.), "?", question; (* TODO: Should split to right and demand : to left *)
+    L(90.), "?", question;
 
     (* Core *)
     L(100.), "^", closure;

@@ -12,4 +12,4 @@ counter = 5
 loop = do ^(return)
 println: counter
 counter = counter - 1
-(counter > 0) ? (goto loop) (null)
+counter > 0 ? goto loop : null

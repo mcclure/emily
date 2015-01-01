@@ -1,9 +1,9 @@
 # Test ternary macro and its quirks.
 # Expect:
-# 21.
-# 4.
+# 12.
+# 3.
 
-println: true ? 1 2 + null ? 10 20
+println: null ? 1 : 2 + : true ? 10 : 20
 
 # If you accidentally use C++ syntax, something bad happens.
 # TODO: Colon and ? should work together
