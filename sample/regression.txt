@@ -42,6 +42,7 @@ sample/curry.em
 sample/curry.2.em
 sample/return.em
 sample/return.2.em
+sample/return.3.em
 
 sample/obj.em
 sample/obj.2.em

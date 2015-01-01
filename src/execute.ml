@@ -207,9 +207,9 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         in executeStep @@ stackWithRegister newState
 
     in let closureValue v =
-        let key = match v.Token.closure with Token.ClosureWithBinding b -> b | _ -> internalFail() in
+        let return,key = match v.Token.closure with Token.ClosureWithBinding(r,k) -> r,k | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Scoped -> true | _ -> false in
-        simpleValue Value.(ClosureValue { exec=ClosureExecUser {body=v.Token.items; envScope=frame.scope; key; scoped}; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {body=v.Token.items; envScope=frame.scope; key; scoped; return; }; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
          })
 
     (* Identify token *)
@@ -285,7 +285,10 @@ and apply stack this a b =
                                         | Value.CurrentThis(c,t) | Value.FrozenThis(c,t)
                                             -> setThis c t
                                         | _ -> ());
-                                    Value.tableSet t Value.returnKey (Value.ContinuationValue stack);
+                                    (match c.Value.exec with
+                                        | Value.ClosureExecUser({Value.return=true}) ->
+                                            Value.tableSet t Value.returnKey (Value.ContinuationValue stack)
+                                        | _ -> ());
                                     addBound key bound
                                 | _ -> internalFail()
                         );

@@ -35,8 +35,8 @@ type tokenGroupKind =
 
 (* Is this group a closure? What kind? *)
 type tokenClosureKind =
-    | NonClosure                        (* Is not a function *)
-    | ClosureWithBinding of string list (* Function with argument-- ideally should appear post-macro only *)
+    | NonClosure                              (* Is not a function *)
+    | ClosureWithBinding of bool*string list  (* Function with argument-- arg is return?,args *)
 
 (* Representation of a tokenized code blob. *)
 (* A codeSequence is a list of lines. A line is a list of tokens. *)

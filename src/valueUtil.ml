@@ -41,7 +41,7 @@ let snippetScope bindings =
 let snippetTextClosureAbstract source thisKind context keys text =
     ClosureValue({ exec = ClosureExecUser({body = Tokenize.snippet source text;
         envScope=snippetScope context;
-        scoped = false; key = keys;
+        scoped = false; key = keys; return = false;
     }); needArgs = List.length keys;
         bound = []; this = thisKind; })
 

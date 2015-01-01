@@ -9,6 +9,7 @@ and closureExecUser = {
     envScope : value; (* Captured scope environment of closure manufacture *)
     (* Another option would be to make the "new" scope early & excise 'key': *)
     key      : string list; (* Not-yet-curried keys, or [] as special for "this is nullary" -- BACKWARD, first-applied key is last *)
+    return : bool;    (* Should the closure execution get its own "return" continuation? *)
 }
 
 and closureExec =
@@ -21,7 +22,7 @@ and closureThis =
     | CurrentThis of value*value (* Closure is a method, has a provisional current/this. *)
     | FrozenThis of value*value  (* Closure is a method, has a final, assigned current/this. *)
 
-(* Is this getting kind of complicated? Should curry be wrapped closures? *)
+(* Is this getting kind of complicated? Should curry be wrapped closures? Should callcc be separate? *)
 and closureValue = {
     exec   : closureExec;
     needArgs : int;  (* Count this down as more values are added to bound *)

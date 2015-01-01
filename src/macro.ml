@@ -28,7 +28,8 @@ let macroTable = Hashtbl.create(1)
 
 (* TODO: This is awful, macros should be saving the positions they're derived from. *)
 let standardGroup = Token.makeGroup Token.noPosition Token.NonClosure Token.Plain
-let standardClosure = Token.makeGroup Token.noPosition (Token.ClosureWithBinding []) Token.Plain
+(* Note: standardClosure makes no-return closures *)
+let standardClosure = Token.makeGroup Token.noPosition (Token.ClosureWithBinding (false,[])) Token.Plain
 let standardToken = Token.makeToken Token.noPosition
 
 (* Macro processing, based on whatever builtinMacros contains *)
@@ -201,7 +202,7 @@ let assignment past _ future =
             | None -> newFuture future
 
             (* Bindings exist: This is a function definition. *)
-            | Some bindings  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding (List.rev bindings))
+            | Some bindings  -> Token.makeGroup Token.noPosition (Token.ClosureWithBinding (true,(List.rev bindings)))
                     Token.Plain [process future]
 
         (* Recurse to try again with a different command. *)
@@ -273,7 +274,7 @@ let closure past present future =
             | {Token.contents=Token.Word b} :: moreFuture ->
                 openClosure (b::bindings) moreFuture
             | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
-                arrangeToken past (Token.makeGroup Token.noPosition (Token.ClosureWithBinding (List.rev bindings)) kind items) moreFuture
+                arrangeToken past (Token.makeGroup Token.noPosition (Token.ClosureWithBinding(true,(List.rev bindings))) kind items) moreFuture
             | [] -> failwith @@ "Body missing for closure"
             | _ ->  failwith @@ "Unexpected symbol after ^"
 
