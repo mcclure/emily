@@ -175,7 +175,7 @@ let backtick past _ future =
         | _ -> failwith "` must be followed by two symbols"
 
 (* Works like ocaml @@ or haskell $ *)
-let question past _ future =
+let rec question past _ future =
     let result cond a b =
         [standardToken @@ Token.Word "tern";
             newFuture cond; newFutureClosure a; newFutureClosure b]
@@ -183,6 +183,8 @@ let question past _ future =
         match rest with
             | {Token.contents=Token.Symbol ":"}::moreRest ->
                 result (List.rev past) (List.rev a) moreRest
+            | {Token.contents=Token.Symbol "?"}::moreRest ->
+                failwith "Nesting like ? ? : : is not allowed."
             | token::moreRest ->
                 scan (token::a) moreRest
             | [] -> failwith ": expected somewhere to right of ?"

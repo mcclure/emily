@@ -1,4 +1,4 @@
-# Test quirks of = macro
+# Test macro internal failure.
 # Expect failure
 
-a b ^ c d = 3
+1 ? 2 ? 3 : 4 : 5

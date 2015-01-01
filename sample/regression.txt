@@ -19,6 +19,7 @@ sample/macro.scope.em
 sample/macro.fail.em
 sample/macro.fail.2.em
 sample/macro.fail.3.em
+sample/macro.fail.4.em
 
 sample/statement.em
 sample/math.em
