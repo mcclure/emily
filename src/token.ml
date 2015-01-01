@@ -80,3 +80,4 @@ let cloneGroup token closure kind items = makeGroup token.at closure kind items
 
 let failAt at mesg = failwith(Printf.sprintf "%s %s" mesg (positionString at))
 let failAtPair at mesg at2 mesg2 = failwith(Printf.sprintf "%s %s %s %s" mesg (positionString at) mesg2 (positionString at2))
+let failToken at = failAt at.at

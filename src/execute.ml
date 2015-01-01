@@ -219,7 +219,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         | Token.String s -> simpleValue(Value.StringValue s)
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
-        | Token.Symbol s -> failwith @@ "Faulty macro: Symbol "^s^" left unprocessed"
+        | Token.Symbol s -> Token.failToken token @@ "Faulty macro: Symbol "^s^" left unprocessed"
         (* Not straightforward. *)
         | Token.Group group ->
             match group.Token.closure with

@@ -111,7 +111,6 @@ let rec process l =
 
 (* Support functions for macros *)
 
-let failToken at = Token.failAt at.Token.at
 let newFuture at f        = cloneGroup at [process f] (* Insert a forward-time group *)
 let newPast at p          = newFuture at (List.rev p)    (* Insert a reverse-time group *)
 let newFutureClosure at f = cloneClosure at [process f] (* Insert a forward-time group *)
@@ -136,7 +135,7 @@ let makeUnary atomString : macroFunction = (fun past at future ->
     match future with
         | a :: farFuture ->
             arrange at past [a; cloneAtom at atomString] farFuture
-        | _ -> failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
+        | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
 )
 
 (* Given argument "op", make a macro to turn `OP a` into `(op (a))` *)
@@ -144,7 +143,7 @@ let makePrefixUnary wordString : macroFunction = (fun past at future ->
     match future with
         | a :: farFuture ->
             arrange at past [cloneWord at wordString; a] farFuture
-        | _ -> failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
+        | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
 )
 
 (* Given argument "op", make a macro to turn `a b … OP d e …` into `(op (a b …) (d e …)` *)
@@ -179,7 +178,7 @@ let backtick past at future =
     match future with
         | a :: b :: farFuture ->
             arrange at past [a;b] farFuture
-        | _ -> failToken at "` must be followed by two symbols"
+        | _ -> Token.failToken at "` must be followed by two symbols"
 
 (* Works like ocaml @@ or haskell $ *)
 let rec question past at future =
@@ -191,10 +190,10 @@ let rec question past at future =
             | ({Token.contents=Token.Symbol ":"} as colonAt)::moreRest ->
                 result colonAt (List.rev past) (List.rev a) moreRest
             | {Token.contents=Token.Symbol "?"}::moreRest ->
-                failToken at "Nesting like ? ? : : is not allowed."
+                Token.failToken at "Nesting like ? ? : : is not allowed."
             | token::moreRest ->
                 scan (token::a) moreRest
-            | [] -> failToken at ": expected somewhere to right of ?"
+            | [] -> Token.failToken at ": expected somewhere to right of ?"
     in scan [] future
 
 (* Assignment operator-- semantics are relatively complex. TODO: Docs. *)
@@ -219,7 +218,7 @@ let assignment past at future =
             (* Done with bindings now, just have to figure out what we're assigning to *)
             match (List.rev lookups),cmd with
                 (* ...Nothing? *)
-                | [],_ -> failToken at "Found a =, but nothing to assign to."
+                | [],_ -> Token.failToken at "Found a =, but nothing to assign to."
 
                 (* Sorta awkward, detect the "nonlocal" prefix and swap out let. This should be generalized. *)
                 | ({Token.contents=Token.Word "nonlocal"} as cmdToken)::moreLookups,"let" -> resultForCommand cmdToken "set" moreLookups
@@ -235,10 +234,10 @@ let assignment past at future =
                             List.concat [[firstToken]; List.rev middleLookups; [cloneAtom cmdAt cmd; finalToken; rightside]]
 
                         (* Excluded by [{Token.word}] case above *)
-                        | _ -> failToken at "Internal failure: Reached impossible place" )
+                        | _ -> Token.failToken at "Internal failure: Reached impossible place" )
 
                 (* Apparently did something like 3 = *)
-                | token::_,_ -> failToken token @@ "Don't know what to do with "^(Pretty.dumpCodeTreeTerse token)^" to left of ="
+                | token::_,_ -> Token.failToken token @@ "Don't know what to do with "^(Pretty.dumpCodeTreeTerse token)^" to left of ="
 
         in resultForCommand at "let" lookups
 
@@ -268,7 +267,7 @@ let assignment past at future =
             | [],_ -> result lookups bindings
 
             (* Apparently did something like 3 = *)
-            | token::_,_ -> failToken token @@ "Don't know what to do with "^(Pretty.dumpCodeTreeTerse token)^" to left of ="
+            | token::_,_ -> Token.failToken token @@ "Don't know what to do with "^(Pretty.dumpCodeTreeTerse token)^" to left of ="
 
     in processLeft (List.rev past) [] None
 
@@ -282,8 +281,8 @@ let closureConstruct withReturn =
                     openClosure (b::bindings) moreFuture
                 | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
                     arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
-                | [] -> failToken at @@ "Body missing for closure"
-                | _ ->  failToken at @@ "Unexpected symbol after ^"
+                | [] -> Token.failToken at @@ "Body missing for closure"
+                | _ ->  Token.failToken at @@ "Unexpected symbol after ^"
 
         in openClosure [] future
 
@@ -291,7 +290,7 @@ let atom past at future =
     match future with
         | {Token.contents=Token.Word a} :: moreFuture ->
             arrangeToken at past (cloneAtom at a) moreFuture
-        | _ -> failToken at "Expected identifier after ."
+        | _ -> Token.failToken at "Expected identifier after ."
 
 (* Just to be as explicit as possible:
 
