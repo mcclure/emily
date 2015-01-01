@@ -42,7 +42,7 @@ let rec process l =
         let proceed priority line =
             match future with
                 (* Future is empty, so future has iterated to end of line *)
-                | [] -> bestLine
+                | [] -> line
 
                 (* Future is nonempty, so move the cursor forward. *)
                 | nextToken :: nextFuture -> findIdeal priority line (present::past) nextToken nextFuture
@@ -314,8 +314,6 @@ let atom past present future =
 let builtinMacros = [
     (* Weird grouping *)
 
-(*    R(10.), "!!!", debugOp; *)
-
     R(20.), "`", backtick;
 
     (* More boolean *)
@@ -346,10 +344,10 @@ let builtinMacros = [
     L(90.), "?", question;
 
     (* Core *)
-    L(100.), "^", closureConstruct true;
+    L(100.), "^",  closureConstruct true;
     L(100.), "^!", closureConstruct false;
-    L(105.), "=", assignment;
-    L(110.), ".", atom;
+    L(105.), "=",  assignment;
+    L(110.), ".",  atom;
 ]
 
 (* Populate macro table from builtinMacros. *)
