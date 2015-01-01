@@ -38,10 +38,8 @@ let tokenize name buf : Token.token =
     let stateNewline () = state.lineStart <- Sedlexing.lexeme_end buf; state.line <- state.line + 1 in
     (* Use tokenizer state to translate sedlex position into a codePosition *)
     let currentPosition () = Token.{fileName=name; lineNumber=state.line; lineOffset = Sedlexing.lexeme_end buf-state.lineStart} in
-    (* Use tokenizer state to translate sedlex position into a human-readable string. *)
-    let currentPositionString () = Token.positionString(currentPosition()) in
     (* Parse failure. Append human-readable code position string. *)
-    let parseFail mesg = failwith(Printf.sprintf "%s %s" mesg (currentPositionString())) in
+    let parseFail mesg = Token.failAt (currentPosition()) mesg in
 
     (* -- Parsers -- *)
 
