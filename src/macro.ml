@@ -266,19 +266,20 @@ let assignment past _ future =
 
     in processLeft (List.rev past) [] None
 
-let closure past present future =
-    let rec openClosure bindings future =
-        match future with
-            | {Token.contents=Token.Symbol "^"} :: moreFuture ->
-                openClosure bindings moreFuture
-            | {Token.contents=Token.Word b} :: moreFuture ->
-                openClosure (b::bindings) moreFuture
-            | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
-                arrangeToken past (Token.makeGroup Token.noPosition (Token.ClosureWithBinding(true,(List.rev bindings))) kind items) moreFuture
-            | [] -> failwith @@ "Body missing for closure"
-            | _ ->  failwith @@ "Unexpected symbol after ^"
+let closureConstruct withReturn =
+    fun past present future ->
+        let rec openClosure bindings future =
+            match future with
+                | {Token.contents=Token.Symbol "^"} :: moreFuture ->
+                    openClosure bindings moreFuture
+                | {Token.contents=Token.Word b} :: moreFuture ->
+                    openClosure (b::bindings) moreFuture
+                | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
+                    arrangeToken past (Token.makeGroup Token.noPosition (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                | [] -> failwith @@ "Body missing for closure"
+                | _ ->  failwith @@ "Unexpected symbol after ^"
 
-    in openClosure [] future
+        in openClosure [] future
 
 let atom past present future =
     match future with
@@ -345,7 +346,8 @@ let builtinMacros = [
     L(90.), "?", question;
 
     (* Core *)
-    L(100.), "^", closure;
+    L(100.), "^", closureConstruct true;
+    L(100.), "^!", closureConstruct false;
     L(105.), "=", assignment;
     L(110.), ".", atom;
 ]
