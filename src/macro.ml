@@ -182,13 +182,13 @@ let backtick past at future =
 
 (* Works like ocaml @@ or haskell $ *)
 let rec question past at future =
-    let result cond a b =
+    let result colonAt cond a b =
         [cloneWord at "tern";
-            newFuture at cond; newFutureClosure at a; newFutureClosure at b]
+            newFuture at cond; newFutureClosure at a; newFutureClosure colonAt b]
     in let rec scan a rest =
         match rest with
-            | {Token.contents=Token.Symbol ":"}::moreRest ->
-                result (List.rev past) (List.rev a) moreRest
+            | ({Token.contents=Token.Symbol ":"} as colonAt)::moreRest ->
+                result colonAt (List.rev past) (List.rev a) moreRest
             | {Token.contents=Token.Symbol "?"}::moreRest ->
                 failwith "Nesting like ? ? : : is not allowed."
             | token::moreRest ->
@@ -213,7 +213,7 @@ let assignment past at future =
         (* Recurse to try again with a different command. *)
         (* TODO: This is all wrong... set should be default, let should be the extension.
            However this will require... something to allow [] to work right. *)
-        in let rec resultForCommand lookups cmd =
+        in let rec resultForCommand cmdAt cmd lookups =
 
             (* Done with bindings now, just have to figure out what we're assigning to *)
             match (List.rev lookups),cmd with
@@ -221,17 +221,17 @@ let assignment past at future =
                 | [],_ -> failwith "Found a =, but nothing to assign to."
 
                 (* Sorta awkward, detect the "nonlocal" prefix and swap out let. This should be generalized. *)
-                | {Token.contents=Token.Word "nonlocal"}::moreLookups,"let" -> resultForCommand moreLookups "set"
+                | ({Token.contents=Token.Word "nonlocal"} as cmdToken)::moreLookups,"let" -> resultForCommand cmdToken "set" moreLookups
 
                 (* Looks like a = b *)
-                | [{Token.contents=Token.Word name}],_ -> [cloneWord at cmd; cloneAtom at name; rightside]
+                | [({Token.contents=Token.Word name}) as wordAt],_ -> [cloneWord cmdAt cmd; cloneAtom wordAt name; rightside]
 
                 (* Looks like a b ... = c *)
                 | ({Token.contents=Token.Word name} as firstToken)::moreLookups,_ ->
                     (match (List.rev moreLookups) with
                         (* Note what's happening here: We're slicing off the FINAL element, first in the reversed list. *)
                         | finalToken::middleLookups ->
-                            List.concat [[firstToken]; List.rev middleLookups; [cloneAtom at cmd; finalToken; rightside]]
+                            List.concat [[firstToken]; List.rev middleLookups; [cloneAtom cmdAt cmd; finalToken; rightside]]
 
                         (* Excluded by [{Token.word}] case above *)
                         | _ -> failwith "Internal failure: Reached impossible place" )
@@ -239,7 +239,7 @@ let assignment past at future =
                 (* Apparently did something like a.b.c.d = *)
                 | _,_ -> failwith "= operator can't handle more than two left-side tokens yet."
 
-        in resultForCommand lookups "let"
+        in resultForCommand at "let" lookups
 
     (* Parsing loop, build the lookups and bindings list *)
     in let rec processLeft remainingLeft lookups bindings =
