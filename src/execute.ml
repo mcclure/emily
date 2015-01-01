@@ -52,7 +52,7 @@ let newStateFor register v = match register with
     | Value.FirstValue fv -> Value.PairValue (fv, v)
 
 (* Constructor for a new frame *)
-let executeNext scope code = Value.{register=LineStart(Value.Null); code; scope}
+let executeNext scope code = Value.{register=LineStart Value.Null; code; scope}
 
 (* Only call if it really is impossible, since this gives no debug feedback *)
 (* Mostly I call this if a nested match has to implement a case already excluded *)
@@ -120,6 +120,12 @@ let rec executeStep stack =
            We can thus excise the frame that's just waiting for the application to return. *)
         | frame :: {Value.register=Value.PairValue _; Value.code=[[]]} :: moreFrames ->
             executeStep @@ frame::moreFrames
+
+        (* Case #4: Applying a continuation: We can ditch all other context. *)
+        | {Value.register=Value.FirstValue (Value.ContinuationValue continueStack);
+           Value.code = (_::_)::_ (* "Match a nonempty two-dimensional list" *)
+          } as frame :: moreFrames ->
+            executeStep @@ Value.{frame with register=LineStart Null}::continueStack
 
         (* Break stack frames into first and rest *)
         | frame :: moreFrames ->
