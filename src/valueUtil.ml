@@ -7,7 +7,8 @@ let badArgTable = badArg "table"
 let badArgClosure = badArg "closure"
 let impossibleArg name = failwith @@ "Internal failure: Impossible argument to "^name
 
-let rawMisapplyArg a b = failwith @@ "Application failure: "^(Pretty.dumpValue a)^" can't respond to "^(Pretty.dumpValue b)
+let misapplyString a b = "Application failure: "^(Pretty.dumpValue a)^" can't respond to "^(Pretty.dumpValue b)
+let rawMisapplyArg a b = failwith @@ misapplyString a b
 
 (* Tools *)
 let boolCast v = if v then True else Null
@@ -208,3 +209,17 @@ let superConstruct = snippetTextClosure (Token.Internal "superConstruct")
     "tern (rawHas callCurrent .parent) ^(rethis obj (callCurrent.parent arg)) ^(misapplyArg obj arg)"
 
 let makeSuper current this = snippetApply (snippetApply superConstruct current) this
+
+let stackString stack =
+    let rec stackStringImpl stack accum =
+        match stack with
+            | [] -> accum
+            | frame::moreFrames ->
+                stackStringImpl moreFrames @@ accum ^ "\n\t" ^ (
+                    match frame with
+                        | {code=[]} -> "<empty file>"
+                        | {code=[]::_} -> "<empty>"
+                        | {code=({Token.at}::_)::_} -> Token.positionString at)
+    in stackStringImpl stack "Stack:"
+
+let rawMisapplyStack stack a b = failwith @@ (misapplyString a b) ^ "\n" ^ (stackString stack)

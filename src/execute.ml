@@ -253,7 +253,7 @@ and apply stack this a b =
                 | _, None ->
                     match Value.tableGet t Value.parentKey with
                         | Some parent -> apply stack this parent b
-                        | None -> ValueUtil.rawMisapplyArg this b
+                        | None -> ValueUtil.rawMisapplyStack stack this b
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
