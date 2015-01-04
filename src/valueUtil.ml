@@ -222,11 +222,6 @@ let stackString stack =
                         | {register=PairValue (_,_,_,at)} -> Token.positionString at
                         | {code=[]} -> "<empty file>"
                         | {code=[]::_} -> "<lost place>")
-                ^ (match frame with
-                    |{register=LineStart _}->" LS"
-                    |{register=FirstValue _}->" FV"
-                    |{register=PairValue _}->" PV"
-                )
     in stackStringImpl stack "Stack:"
 
 let rawMisapplyStack stack a b = failwith @@ (misapplyString a b) ^ "\n" ^ (stackString stack)
