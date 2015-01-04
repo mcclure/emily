@@ -68,10 +68,24 @@ let tokenize name buf : Token.token =
                 | '\\' -> add (escapedChar()); proceed()
                 (* Unescaped quote found, we are done. Return the data from the buffer. *)
                 | '"'  -> Buffer.contents accum
+                (* Probably should not let strings run to eof. *)
+                | eof -> parseFail "Reached end of file inside string. Missing quote?"
                 (* Any normal character add to the buffer and proceed. *)
                 | any  -> add (Sedlexing.Utf8.lexeme buf); proceed()
-                | _ -> parseFail "Unrecognized escape sequence"
+                | _ -> parseFail "Internal failure: Reached impossible place"
         in proceed()
+
+    (* Sub-parser: backslash. Eat up to, and possibly including, newline *)
+    in let rec escape () =
+        match%sedlex buf with
+            (* Have reached newline, no text in between. We're done. *)
+            | '\n' -> stateNewline()
+            (* Skip over white space until newline is reached *)
+            | white_space -> escape()
+            | eof -> parseFail "Found EOF immediately after backslash, expected token or new line."
+            (* TODO: Ignore rather than error *)
+            | any -> parseFail "Non-whitespace character after \\"
+            | _ -> parseFail "Internal failure: Reached impossible place"
 
     (* Main loop. *)
     (* Takes a constructor that's prepped with all the properties for the enclosing group, and
@@ -99,6 +113,7 @@ let tokenize name buf : Token.token =
         let linesPlusLine () = completeLine line :: lines in
 
         (* Recurse with the groupSeed and lines we started with, & the argument pushed onto the current line *)
+        (* Notice stateNewLine and addToLineProceed are using ndifferent notions of a "line". *)
         let addToLineProceed x = proceedWithLine (x :: line) in
 
         (* Recurse with the groupSeed we started with, the current line pushed onto the codeSequence, & a new blank line *)
@@ -140,10 +155,13 @@ let tokenize name buf : Token.token =
             (* Line demarcator (but remember, we have to track newlines) *)
             | '\n' -> stateNewline(); newLineProceed()
 
+            (* Reader instructions *)
+            | '\\' -> escape(); skip()
+
             (* Ignore whitespace *)
             | white_space -> skip ()
 
-            (* On groups or closures, open a new parser (NO TCO) and add its result token to the current line *)
+            (* On groups or closures, open a new parser (NO TCO AT THIS TIME) and add its result token to the current line *)
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )

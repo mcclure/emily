@@ -2,12 +2,16 @@
 
 sample/trivial.em
 sample/parsetest.2.em
+sample/parsetest.fail.3.em
 sample/parsetest.unicode.em
 sample/parsetest.unicode.fail.em
 
 sample/print.em
 sample/escape.em
 sample/unicode.em
+sample/backslash.em
+sample/backslash.fail.em
+sample/backslash.fail.2.em
 
 sample/macro.em
 sample/macro.2.em
