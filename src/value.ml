@@ -84,7 +84,7 @@ let superKey = AtomValue superKeyString
 let returnKeyString = "return"
 let returnKey = AtomValue returnKeyString
 
-let tableGet table (key:value) = CCHashtbl.get table key
+let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value

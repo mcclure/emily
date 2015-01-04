@@ -149,7 +149,7 @@ and executeStepWithFrames stack frame moreFrames =
             (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
 
 and evaluateToken stack frame moreFrames =
-    (* Look et code senuence in frame *)
+    (* Look at code sequence in frame *)
     match frame.Value.code with
         (* It's empty. We have reached the end of the group. *)
         | [] -> let avalue = match frame.Value.register with (* Unpack Value 1 from register *)
@@ -246,7 +246,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
 (* apply item a to item b and return it to the current frame *)
 and apply stack this a b =
     let bv,bat = b in
-    let r v = returnTo stack b in
+    let r v = returnTo stack (v,bat) in
     (* Pull something out of a table, possibly recursing *)
     let readTable t =
         match (a,Value.tableGet t bv) with
