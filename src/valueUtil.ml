@@ -217,9 +217,11 @@ let stackString stack =
             | frame::moreFrames ->
                 stackStringImpl moreFrames @@ accum ^ "\n\t" ^ (
                     match frame with
+                        | {register=LineStart _; code=({Token.at}::_)::_} -> Token.positionString at
+                        | {register=FirstValue (_,_,at)} -> Token.positionString at
+                        | {register=PairValue (_,_,_,at)} -> Token.positionString at
                         | {code=[]} -> "<empty file>"
-                        | {code=[]::_} -> "<empty>"
-                        | {code=({Token.at}::_)::_} -> Token.positionString at)
+                        | {code=[]::_} -> "<lost place>")
                 ^ (match frame with
                     |{register=LineStart _}->" LS"
                     |{register=FirstValue _}->" FV"
