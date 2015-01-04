@@ -42,7 +42,7 @@ and value =
     | ClosureValue of closureValue
     | TableValue of tableValue
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
-    | ContinuationValue of executeStack
+    | ContinuationValue of executeStack * Token.codePosition
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
@@ -52,10 +52,11 @@ and tableBlankKind =
     | BoxFrom of value option (* Has .parent and uses object literal rules. *)
 
 (* The "registers" are values 1 and 2 described in execute.ml comments *)
+(* The codePositions are (1) the root of the current group (2) the symbol yielding "value 2" *)
 and registerState =
-    | LineStart of value
-    | FirstValue of value
-    | PairValue of (value * value)
+    | LineStart of (value * Token.codePosition)
+    | FirstValue of (value * Token.codePosition * Token.codePosition)
+    | PairValue of (value * value * Token.codePosition * Token.codePosition)
 
 (* Each frame on the stack has the two value "registers" and a codeSequence reference which
    is effectively an instruction pointer. *)
@@ -83,7 +84,7 @@ let superKey = AtomValue superKeyString
 let returnKeyString = "return"
 let returnKey = AtomValue returnKeyString
 
-let tableGet table key = CCHashtbl.get table key
+let tableGet table (key:value) = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value

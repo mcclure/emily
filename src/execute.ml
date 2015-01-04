@@ -15,9 +15,9 @@
 (* Pretty print for registerState. Can't go in Pretty.ml because module recursion. *)
 let dumpRegisterState registerState =
     match registerState with
-    | Value.LineStart v -> "LineStart:" ^ (Pretty.dumpValue v)
-    | Value.FirstValue v -> "FirstValue:" ^ (Pretty.dumpValue v)
-    | Value.PairValue (v1,v2) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "," ^ (Pretty.dumpValue v2)
+    | Value.LineStart (v,_) -> "LineStart:" ^ (Pretty.dumpValue v)
+    | Value.FirstValue (v,_,_) -> "FirstValue:" ^ (Pretty.dumpValue v)
+    | Value.PairValue (v1,v2,_,_) -> "PairValue:" ^ (Pretty.dumpValue v1) ^ "," ^ (Pretty.dumpValue v2)
 
 (* FIXME: I wonder if there's a existing function for this in List or something. *)
 let stackDepth stack =
@@ -28,6 +28,8 @@ let stackDepth stack =
     in stackDepthImpl 0 stack
 
 (* -- PRACTICAL HELPERS -- *)
+
+type anchoredValue = Value.value * Token.codePosition
 
 (* These three could technically move into value.ml but BuiltinObject depends on Value *)
 let scopeInheriting kind v =
@@ -45,14 +47,14 @@ let groupScope tokenKind scope =
 (* Combine a value with an existing register var to make a new register var. *)
 (* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)
 (* so only call if we know this is not a pair already (unless we *want* to flatten) *)
-let newStateFor register v = match register with
+let newStateFor register av = match register,av with
     (* Either throw out a stale LineStart / PairValue and simply take the new value, *)
-    | Value.LineStart _ | Value.PairValue _ -> Value.FirstValue (v)
+    | Value.LineStart (_,rat),(v,at) | Value.PairValue (_,_,rat,_),(v,at) -> Value.FirstValue (v, rat, at)
     (* Or combine with an existing value to make a pair. *)
-    | Value.FirstValue fv -> Value.PairValue (fv, v)
+    | Value.FirstValue (v,rat,_),(v2,at) -> Value.PairValue (v, v2, rat, at)
 
 (* Constructor for a new frame *)
-let executeNext scope code = Value.{register=LineStart Value.Null; code; scope}
+let executeNext scope code at = Value.{register=LineStart(Value.Null,at); code; scope}
 
 (* Only call if it really is impossible, since this gives no debug feedback *)
 (* Mostly I call this if a nested match has to implement a case already excluded *)
@@ -122,10 +124,10 @@ let rec executeStep stack =
             executeStep @@ frame::moreFrames
 
         (* Case #4: Applying a continuation: We can ditch all other context. *)
-        | {Value.register=Value.FirstValue (Value.ContinuationValue continueStack);
+        | {Value.register=Value.FirstValue (Value.ContinuationValue (continueStack,at),_,_);
            Value.code = (_::_)::_ (* "Match a nonempty two-dimensional list" *)
           } as frame :: moreFrames ->
-            executeStep @@ Value.{frame with register=LineStart Null}::continueStack
+            executeStep @@ Value.{frame with register=LineStart(Null, at)}::continueStack
 
         (* Break stack frames into first and rest *)
         | frame :: moreFrames ->
@@ -138,8 +140,8 @@ and executeStepWithFrames stack frame moreFrames =
     (* Check the state of the top frame *)
     match frame.Value.register with
         (* It has two values-- apply before we do anything else *)
-        | Value.PairValue (a, b) ->
-            apply stack a a b
+        | Value.PairValue (a, b, rat, bat) ->
+            apply stack a a (b,bat)
 
         (* Either no values or just one values, so let's look at the tokens *)
         | Value.FirstValue _ | Value.LineStart _ ->
@@ -147,14 +149,14 @@ and executeStepWithFrames stack frame moreFrames =
             (* Pop current frame from the stack, integrate the result into the last frame and recurse (TODO) *)
 
 and evaluateToken stack frame moreFrames =
-    (* Look at code sequence in frame *)
+    (* Look et code senuence in frame *)
     match frame.Value.code with
         (* It's empty. We have reached the end of the group. *)
-        | [] -> let value = match frame.Value.register with (* Unpack Value 1 from register *)
-                | Value.LineStart v | Value.FirstValue v -> v
+        | [] -> let avalue = match frame.Value.register with (* Unpack Value 1 from register *)
+                | Value.LineStart (v,rat) | Value.FirstValue (v,rat,_) -> (v,rat)
                 | _ -> internalFail() (* If PairValue, should have branched off above *)
             (* "Return from frame" and recurse *)
-            in returnTo moreFrames value
+            in returnTo moreFrames avalue
 
         (* Break lines in current frame's codeSequence into first and rest *)
         | line :: moreLines ->
@@ -167,7 +169,7 @@ and evaluateTokenFromLines stack frame moreFrames line moreLines =
         | [] ->
             (* Convert Value 1 to a LineStart value to persist to next line *)
             let newState = match frame.Value.register with
-                | Value.LineStart v | Value.FirstValue v -> Value.LineStart v
+                | Value.LineStart (v,rat) | Value.FirstValue (v,rat,_) -> Value.LineStart (v,rat)
                 | _ -> internalFail() (* Again: if PairValue, should have branched off above *)
 
             (* Replace current frame, new code sequence is rest-of-lines, and recurse *)
@@ -178,9 +180,9 @@ and evaluateTokenFromLines stack frame moreFrames line moreLines =
             evaluateTokenFromTokens stack frame moreFrames line moreLines token moreTokens
 
 (* Enter a frame as if returning this value from a function. *)
-and returnTo stackTop v =
+and returnTo stackTop av =
     (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "<-- " ^ (Pretty.dumpValue v);
+    if Options.(run.trace) then print_endline @@ "<-- " ^ (let v,_ = av in Pretty.dumpValue v);
 
     (* Unpack the new stack. *)
     match stackTop with
@@ -189,7 +191,7 @@ and returnTo stackTop v =
 
         (* Pull one frame off the stack so we can replace the register var and re-add it. *)
         | {Value.register=parentRegister; Value.code=parentCode; Value.scope=parentScope} :: pastReturnFrames ->
-            let newState = newStateFor parentRegister v in
+            let newState = newStateFor parentRegister av in
             executeStep @@ Value.{ register = newState; code = parentCode; scope = parentScope } :: pastReturnFrames
 
 (* evaluateTokenFromTokens and apply are the functions that "do things"-- they
@@ -202,7 +204,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
 
     in let simpleValue v =
         (* ...new register state... *)
-        let newState = newStateFor frame.Value.register v
+        let newState = newStateFor frame.Value.register (v,token.Token.at)
         (* Replace current line by replacing current frame, new line is rest-of-line, and recurse *)
         in executeStep @@ stackWithRegister newState
 
@@ -215,7 +217,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     (* Identify token *)
     in match token.Token.contents with
         (* Straightforward values that can be evaluated in place *)
-        | Token.Word s ->   apply (stackWithRegister frame.Value.register) frame.Value.scope frame.Value.scope (Value.AtomValue s)
+        | Token.Word s ->   apply (stackWithRegister frame.Value.register) frame.Value.scope frame.Value.scope (Value.AtomValue s, token.Token.at)
         | Token.String s -> simpleValue(Value.StringValue s)
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
@@ -237,15 +239,17 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                     (* Trace here ONLY if command line option requests it *)
                     if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValueNewTable newScope;
 
-                    executeStep @@ (executeNext newScope items)::(stackWithRegister frame.Value.register)
+                    (* New frame: Group descent *)
+                    executeStep @@ (executeNext newScope items token.Token.at)::(stackWithRegister frame.Value.register)
                 | _ -> closureValue group
 
 (* apply item a to item b and return it to the current frame *)
 and apply stack this a b =
-    let r v = returnTo stack v in
+    let bv,bat = b in
+    let r v = returnTo stack b in
     (* Pull something out of a table, possibly recursing *)
     let readTable t =
-        match (a,Value.tableGet t b) with
+        match (a,Value.tableGet t bv) with
                 | _, Some Value.BuiltinMethodValue      f -> r @@ Value.BuiltinFunctionValue(f this)
                 | _, Some Value.BuiltinUnaryMethodValue f -> r @@ f this
                 | Value.ObjectValue _, Some (Value.ClosureValue _ as c) -> r @@ ValueUtil.rawRethisSuperFrom this c
@@ -253,7 +257,7 @@ and apply stack this a b =
                 | _, None ->
                     match Value.tableGet t Value.parentKey with
                         | Some parent -> apply stack this parent b
-                        | None -> ValueUtil.rawMisapplyStack stack this b
+                        | None -> ValueUtil.rawMisapplyStack stack this bv
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
@@ -287,25 +291,25 @@ and apply stack this a b =
                                         | _ -> ());
                                     (match c.Value.exec with
                                         | Value.ClosureExecUser({Value.return=true}) ->
-                                            Value.tableSet t Value.returnKey (Value.ContinuationValue stack)
+                                            Value.tableSet t Value.returnKey (Value.ContinuationValue (stack,bat))
                                         | _ -> ());
                                     addBound key bound
                                 | _ -> internalFail()
                         );
-                        executeStep @@ (executeNext scope exec.Value.body)::stack
+                        executeStep @@ (executeNext scope exec.Value.body bat)::stack
                 | Value.ClosureExecBuiltin f ->
                     r (f bound)
             in (match c.Value.needArgs with
                 | 0 -> descend c (* Apply discarding argument *)
                 | count ->
                     let amendedClosure = Value.{ c with needArgs=count-1;
-                        bound=b::c.bound } in (* b b is nonsense! *)
+                        bound=bv::c.bound } in (* b b is nonsense! *)
                     match count with
                         | 1 -> descend amendedClosure (* Apply, using argument *)
                         | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)
             )
 
-        | Value.ContinuationValue stack ->
+        | Value.ContinuationValue (stack,_) -> (* FIXME: Won't this be optimized out? *)
             returnTo stack b
 
         (* If applying a table or table op. *)
@@ -317,7 +321,7 @@ and apply stack this a b =
         | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
         | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
         (* If applying a builtin special. *)
-        | Value.BuiltinFunctionValue f -> r ( f b )
+        | Value.BuiltinFunctionValue f -> r ( f bv )
         (* Unworkable -- all builtin method values should be erased by readTable *)
         | Value.BuiltinMethodValue _ | Value.BuiltinUnaryMethodValue _
             -> internalFail()
@@ -330,6 +334,6 @@ let execute code =
     | Token.Group contents ->
         (* Make a new blank frame with the given code sequence and an empty scope, *)
         let initialScope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
-        let initialFrame = executeNext initialScope contents.Token.items
+        let initialFrame = executeNext initialScope contents.Token.items code.Token.at
         in executeStep @@ [initialFrame] (* then place it as the start of the stack. *)
     | _ -> () (* Execute a constant value-- no effect *)
