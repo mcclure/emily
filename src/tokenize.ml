@@ -171,7 +171,7 @@ let tokenize name buf : Token.token =
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
             | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
-            | Plus(Compl(Chars "#()[]{}\\;'\""|digit|letterPattern|white_space))
+            | Plus(Compl(Chars "#()[]{}\\;\""|digit|letterPattern|white_space))
                 -> addSingle (fun x -> Token.Symbol x)
             | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 

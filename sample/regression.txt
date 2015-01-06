@@ -38,6 +38,7 @@ sample/has.2.em
 sample/scope.em
 sample/scope.fallthrough.em
 sample/scope.unscoped.em
+sample/scope.parent.em
 sample/closure.em
 sample/scope.closure.em
 sample/scope.closure.2.em
