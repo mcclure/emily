@@ -18,3 +18,4 @@ ML coding standards for Emily project
 - When writing comments or documentation:
 	- The preferred pronoun for describing a nonspecific third person is singular "they".
 	- Never use "foo", "bar", or "baz" as example names for variables. Just... find something else.
+	- Standalone documentation files should be in [Bitbucket-format Markdown](https://bitbucket.org/tutorials/markdowndemo).

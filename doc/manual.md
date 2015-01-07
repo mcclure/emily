@@ -1,6 +1,6 @@
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
 
-Non-language-lawyers will likely want to skip to the "Syntax" section.
+Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedence" section and read from there
 
 [TOC]
 
@@ -100,3 +100,76 @@ An "empty" statement (i.e., two semicolons or two newlines with only whitespace 
 2. For a group token: All statements in the group are immediately executed in order. The value the group token evaluates to depends on the type of group (see below).
 3. For a closure token: A new closure value is created, bound to the current scope object (see section on closures below). The evaluation will not have side-effects.
 4. For any other kind of token: The token becomes a value in "the obvious way" (The token 3 becomes the number 3, etc). The evaluation will not have side-effects.
+
+# Syntax
+
+## Order of evaluation
+
+This is only important to know if you are writing macros (not possible in Emily 0.1). If you are writing code, you probably actually want the "operator precedence" table in the section below.
+
+In the table below, operators higher in the table are "evaluated" first. If a symbol is LTR, symbols of that phase to the left are evaluated before symbols of that phase to the right.
+
+Phase   | Order | Symbol
+--------|-------|----------
+Reader  | LTR   | \
+	    |       | \version
+	    |       | #
+	    |       | ;
+	    |       | ( )
+	    |       | [ ]
+	    |       | { }
+	    |       | " "
+110     | LTR   | .
+105     | LTR   | =
+100     | LTR   | ^
+        |       | ^!
+90      | LTR   | ?
+        |       | :
+75      | RTL   | ||
+70      | RTL   | &&
+65      | RTL   | !=
+        |       | ==
+60      | RTL   | >=
+        |       | >
+        |       | <=
+        |       | <
+50      | RTL   | +
+	    |       | -
+40      | RTL   | *
+        |       | /
+30      | RTL   | ~
+        | RTL   | !
+20      | RTL   | `
+
+(This table can be different from conventional "precedence" because all the macros do different things when they execute-- for example the `.` macro adheres directly to the item to its right, whereas the `+` macro creates groups out of its entire left and right sides and adheres directly to neither.)
+
+## Operator precedence
+
+If you just ignore all this "macro" stuff and consider the symbols in Emily as normal operators, here's what another language would call "precedence" and "associativity" for those operators.
+
+In the table below, higher items are "higher precedence" (bind tighter). Left-associative operators "bind to the left" (prefer to group left in the absence of clarifying parenthesis).
+
+Precedence | Associativity | Operator
+-----------|---------------|----------
+1          | Right         | \version
+2          | Right         | .
+3          | Right         | ^
+           |               | ^!
+4          | Left          | ~
+           |               | !
+5          | Left          | *
+           |               | /
+6          | Left          | +
+           |               | -
+7          | Left          | >=
+           |               | >
+           |               | <=
+           |               | <
+8          | Left          | !=
+           |               | ==
+9          | Left          | &&
+10         | Left          | ||
+11         | Right         | ?:
+12         | Right         | =
+13         | Left          | `
+

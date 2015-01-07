@@ -334,8 +334,8 @@ let builtinMacros = [
     (* Comparators *)
     R(60.), "<", makeSplitter "lt";
     R(60.), "<=", makeSplitter "lte";
-    R(65.), ">", makeSplitter "gt";
-    R(65.), ">=", makeSplitter "gte";
+    R(60.), ">", makeSplitter "gt";
+    R(60.), ">=", makeSplitter "gte";
 
     R(65.), "==", makeSplitter "eq";
     R(65.), "!=", makeSplitterInvert "eq";
