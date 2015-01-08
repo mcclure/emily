@@ -18,7 +18,7 @@ You are "applying" a to b. This expression evaluates to a value, which is the re
 
 All expressions evaluate to values, which means expressions can be chained. If you write:
 
-	3 .plus 4
+    3 .plus 4
 
 You will apply "3" to its argument ".plus". This will return a function that takes a number as argument and returns that integer plus 3. This function then is applied to its argument 4, returning the number 7.
 
@@ -64,7 +64,7 @@ An Emily program is a series of statements ("lines of code" separated by ; or ne
 - Unscoped groups: `(` ... `)`
 - Scoped groups: `{` ... `}`
 - Object-literal groups: `[` ... `]`
-- Symbols: (Any unicode character other than whitespace, or one of the characters #()[]{}\;" )
+- Symbols: Any unicode character other than `#` `(` `)` `[` `]` `{` `}` `\` `;` `"` or whitespace.
 
 Strings and groups may contain newlines within them.
 
@@ -74,7 +74,7 @@ After macro processing, all Symbols will be eliminated and two new types of toke
 
 Each statement is executed in context of a "scope". This is an invisible, inaccessible object that the interpreter knows about. Any word token, at evaluation time, will be converted to a atom token and the scope object will be applied to it. In other words, the expression
 
-	a
+    a
 
 By itself, is a field lookup on the scope object.
 
@@ -111,35 +111,35 @@ In the table below, operators higher in the table are "evaluated" first. If a sy
 
 Phase   | Order | Symbol
 --------|-------|----------
-Reader  | LTR   | \
-	    |       | \version
-	    |       | #
-	    |       | ;
-	    |       | ( )
-	    |       | [ ]
-	    |       | { }
-	    |       | " "
-110     | LTR   | .
-105     | LTR   | =
-100     | LTR   | ^
-        |       | ^!
-90      | LTR   | ?
-        |       | :
-75      | RTL   | ||
-70      | RTL   | &&
-65      | RTL   | !=
-        |       | ==
-60      | RTL   | >=
-        |       | >
-        |       | <=
-        |       | <
-50      | RTL   | +
-	    |       | -
-40      | RTL   | *
-        |       | /
-30      | RTL   | ~
-        | RTL   | !
-20      | RTL   | `
+Reader  | LTR   | `\`
+        |       | `\version`
+        |       | `#`
+        |       | `;`
+        |       | `(` ... `)`
+        |       | `{` ... `}`
+        |       | `[` ... `]`
+        |       | `"` ... `"`
+110     | LTR   | `.`
+105     | LTR   | `=`
+100     | LTR   | `^`
+        |       | `^!`
+90      | LTR   | `?` ... `:`
+        |       | `:`
+75      | RTL   | `||`
+70      | RTL   | `&&`
+65      | RTL   | `!=`
+        |       | `==`
+60      | RTL   | `>=`
+        |       | `>`
+        |       | `<=`
+        |       | `<`
+50      | RTL   | `+`
+        |       | `-`
+40      | RTL   | `*`
+        |       | `/`
+30      | RTL   | `~`
+        | RTL   | `!`
+20      | RTL   | ` (backtick)
 
 (This table can be different from conventional "precedence" because all the macros do different things when they execute-- for example the `.` macro adheres directly to the item to its right, whereas the `+` macro creates groups out of its entire left and right sides and adheres directly to neither.)
 
@@ -151,25 +151,223 @@ In the table below, higher items are "higher precedence" (bind tighter). Left-as
 
 Precedence | Associativity | Operator
 -----------|---------------|----------
-1          | Right         | \version
-2          | Right         | .
-3          | Right         | ^
-           |               | ^!
-4          | Left          | ~
-           |               | !
-5          | Left          | *
-           |               | /
-6          | Left          | +
-           |               | -
-7          | Left          | >=
-           |               | >
-           |               | <=
-           |               | <
-8          | Left          | !=
-           |               | ==
-9          | Left          | &&
-10         | Left          | ||
-11         | Right         | ?:
-12         | Right         | =
-13         | Left          | `
+1          | Right         | `\version`
+2          | Right         | `.`
+3          | Right         | `^`
+           |               | `^!`
+4          | Left          | `~`
+           |               | `!`
+5          | Left          | `*`
+           |               | `/`
+6          | Left          | `+`
+           |               | `-`
+7          | Left          | `>=`
+           |               | `>`
+           |               | `<=`
+           |               | `<`
+8          | Left          | `!=`
+           |               | `==`
+9          | Left          | `&&`
+10         | Left          | `||`
+11         | Right         | `?` `:`
+12         | Right         | `=`
+13         | Left          | ` (backtick)
+
+## Operators
+
+### `\`
+
+This stitches lines together. If a line "ends with" a `\` (nothing may appear after the `\` except `\`, `\version`, comments or whitespace) the following line will be considered part of the same statement.
+
+If a `\` is followed by anything else, or by an end-of-file, this is a failure and the program will terminate without running.
+
+### `\version *[version number]*`
+
+This is a reader instruction (right now, the only one) which reports the interface version of Emily that the program was written against. In this version of Emily, if anything at all is written here other than the literal string `\version 0.1`, this is a failure and the program will terminate without running.
+
+In the long term, for **all future versions of Emily**, the plan is that when the Emily interpreter sees `\version *[number]*`, it will:
+
+- If the host version of Emily is backward compatible with *[number]*, it will do nothing and run the program.
+- If the host version of Emily has backward-incompatible changes, it will attempt to run the program in a compatibility mode.
+- If this is not possible, or the version number is not recognized (for example it is a future version of the language), this is a failure and the program will terminate without running.
+
+Ideally a program should always start with `\version`, and should select the oldest interface version which can run the code.
+
+### `#`
+
+Comment. Everything from the # until a newline is ignored.
+
+### `;`
+
+Statement separator. So is non-escaped newline.
+
+### `(` *[any number of statements]* `)`
+
+Unscoped group. Executes all statements between the parenthesis, in context of the enclosing statement's scope. The group evaluates to the value of the final nonempty statement.
+
+`()` with nothing in between evaluates to `null`.
+
+### `{` *[any number of statements]* `}`
+
+Scoped group. Creates a new scope object which is a prototype-child of the enclosing statement's scope (new `has`, `set` and `let`). Executes all statements between the braces in context of this new scope. 
+
+Like with unscoped groups, the group evaluates to the value of the final nonempty statement and `{}` with nothing in between evaluates to `null`.
+
+### `[` *[any number of statements]* `]`
+
+Object-literal group. Creates a new user object, and executes the statements in a specially prepared scope designed for convenient object construction. For more detail see the section on objects below.
+
+### `"` *[string contents]* `"`
+
+See "values" above.
+
+### `.` *[word]*
+
+Atom constructor. Captures the token directly to the right of the `.`; if it is a valid word, this evaluates to the atom for that word. Otherwise this is a failure and the program will terminate without running.
+
+### `^` *[optional: any number of words]* *[group]*
+
+Closure literal. Captures to the right zero or more word tokens, and one group token. If non-word tokens are found before the group, or the group is not found, this is a failure and the program will terminate without running. Evaluates to a user closure which has: the given words as bound arguments; the enclosing statement's scope as context scope; and the given group as its code.
+
+For more information on closure values, see "About user closures" below.
+
+### `^!` *[optional: any number of words]* *[group]*
+
+Exactly the same as `^`, but when the there will not be a "return" created in the execution scope. You probably don't ever actually want this.
+
+### `:`
+
+Apply right: Captures the entire rest of the statement to the right of the `:`, and replaces the tokens with one unscoped group containing the captured tokens.
+
+*Treated as a macro:*
+
+    a b c: d e f
+
+*...becomes*
+
+    a b c (d e f)
+
+### *[statement condition]* `?` *[statement 1]* `:` *[statement 2]*
+
+Ternary operator. Captures the entire statement and splits it in three. At run time, *[statement condition]* is evaluated, if it is true, *[statement 1]* will be evaluated and its value returned; otherwise, *[statement 2]* will be evaluated and its value returned. *[statement 1]* cannot contain a question mark as a token, *[statement 2]* can. (To be explicit: `a?(b?c:d):e` is allowed, `a?b:c?d:e` is allowed, `a?b?c:d:e` is not.) Any of the three statements may be blank, in which case the value for that statement will be null.
+
+*Treated as a macro:*
+
+    a b c ? d e f : g h i
+
+*...becomes*
+
+    tern (a b c) ^!(d e f) ^!(g h i)
+
+### `~` *[token]*
+
+Negation. Captures one token to the right and evaluates to that token with `.negate` as argument.
+
+*Treated as a macro:*
+
+    a b ~ c d e
+
+*...becomes*
+
+    a b (c.negate) d e
+
+### `!` *[token]*
+
+"Not". Captures one token to the right and evaluates to that token applied as argument to the `not` function (see below). `not` is ALWAYS the standard `not` function, not whatever `not` is in the current scope.
+
+*Treated as a macro:*
+
+    a b ~ c d e
+
+*...becomes*
+
+    a b (not c) d e
+
+### ` *[token]* *[token]*
+
+Backtick is the "apply pair" operator. It captures two tokens to the right, and replaces the tokens with an unscoped group comparing the tokens. Useful for performing a quick application in the middle of a long expression (remember, `cos a.b` in this language is evaluated like `((cos a) b)`, not `(cos (a (b)))`).
+
+*Treated as a macro:*
+
+    a b `c d e f
+
+*...becomes*
+
+    a b (c d) e f
+
+## Splitter operators
+
+The remaining operators are all of a particular type; for brevity, a single explanation will be given here.
+
+Each of these operators is a "splitter" for some designated atom: it captures the entire line, splits it into two statements, and at run time evaluates to the entire left-side statement, applied to the designated atom, applied to the entire right-side statement. 
+
+Take `+` as an example; its designated atom is `.plus`. Treated as a macro,
+
+    a b c + d e f
+
+*...becomes*
+    
+    (a b c) .plus (d e f)
+
+The familiar "order of operations" emerges from the grouping caused by all this splitting.
+
+What the application of `.plus`, or any other atom, means in practice will depend on the type returned by the left-side statement.
+
+### *[statement 1]* `||` *[statement 2]*
+
+Splitter for `.or`. Intended for boolean OR. **Notice: Because splitters evaluate both their arguments, || and && do NOT short-circuit. This is a bad thing and will be fixed in a future language version.**
+
+### *[statement 1]* `&&` *[statement 2]*
+
+Splitter for `.and`. Intended for boolean AND.
+
+### *[statement 1]* `==` *[statement 2]*
+
+Splitter for `.eq`. Intended for equality test.
+
+### *[statement 1]* `!=` *[statement 2]*
+
+"Not Equal". Not actually a splitter; splits for `.eq`, then NOTs the entire thing.
+
+In other words, *treated as a macro:*
+
+    a b c != d e f
+
+*...becomes*
+
+    not ( (a b c) .eq (d e f) )
+
+As with `!`, this is always standard `not` and does not depend on the scope.
+
+### *[statement 1]* `>=` *[statement 2]*
+
+Splitter for `.gte`. Intended for "greater than or equal to" test.
+
+### *[statement 1]* `>` *[statement 2]*
+
+Splitter for `.gt`. Intended for "greater than" test.
+
+### *[statement 1]* `<=` *[statement 2]*
+
+Splitter for `.lte`. Intended for "less than or equal to" test.
+
+### *[statement 1]* `<` *[statement 2]*
+
+Splitter for `.lt`. Intended for "less than" test.
+
+### *[statement 1]* `+` *[statement 2]*
+
+Splitter for `.plus`. Intended for mathematical addition or something like it.
+
+### *[statement 1]* `-` *[statement 2]*
+
+Splitter for `.minus`. Intended for mathematical addition or something like it.
+
+### *[statement 1]* `*` *[statement 2]*
+
+Splitter for `.times`. Intended for mathematical multiplication or something like it.
+
+### *[statement 1]* `/` *[statement 2]*
+
+Splitter for `.divide`. Intended for mathematical division or something like it.
 
