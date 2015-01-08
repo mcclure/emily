@@ -52,6 +52,8 @@ In addition, there are builtin closures, "scope objects", and continuations (`re
 
 "Numbers" are double-precision floats.
 
+There is a `true` but is no "false"; `null` is used as the "false" value. Library functions which must evaluate true vs falsehood, like `if`, treat any non-null value as true.
+
 Remember: these different kinds of values only differ in terms of which arguments they will accept (without failing) when applied as functions.
 
 ## Token types
@@ -249,7 +251,7 @@ Apply right: Captures the entire rest of the statement to the right of the `:`, 
 
 ### *[statement condition]* `?` *[statement 1]* `:` *[statement 2]*
 
-Ternary operator. Captures the entire statement and splits it in three. At run time, *[statement condition]* is evaluated, if it is true, *[statement 1]* will be evaluated and its value returned; otherwise, *[statement 2]* will be evaluated and its value returned. *[statement 1]* cannot contain a question mark as a token, *[statement 2]* can. (To be explicit: `a?(b?c:d):e` is allowed, `a?b:c?d:e` is allowed, `a?b?c:d:e` is not.) Any of the three statements may be blank, in which case the value for that statement will be null.
+Ternary operator. Captures the entire statement and splits it in three. At run time, *[statement condition]* is evaluated, if it is true (non-null), *[statement 1]* will be evaluated and its value returned; otherwise, *[statement 2]* will be evaluated and its value returned. *[statement 1]* cannot contain a question mark as a token, *[statement 2]* can. (To be explicit: `a?(b?c:d):e` is allowed, `a?b:c?d:e` is allowed, `a?b?c:d:e` is not.) Any of the three statements may be blank, in which case the value for that statement will be null.
 
 *Treated as a macro:*
 
@@ -371,3 +373,146 @@ Splitter for `.times`. Intended for mathematical multiplication or something lik
 
 Splitter for `.divide`. Intended for mathematical division or something like it.
 
+## Builtins
+
+In each of the following sections, the documented fiends are in the base prototype for the section's type. The value `3` has "integer" as its base prototype, so any methods in the integer base prototype will be usable on `3`.
+
+Remember for scopes, a field lookup is done by just writing a word, like `not`; for other kind of objects, the field lookup requires a `.`, like `3.negate`.
+
+### Scope
+
+#### `null`
+
+Null value.
+
+#### `true`
+
+True value.
+
+#### `print` *[arg]*
+
+Takes any argument, prints it to stdout as a string, then returns `print` again (so it can be chained).
+
+*Example:* `print 1 2 3` (prints "123")
+
+#### `println` *[arg]*
+
+Takes any argument, prints it to stdout as a string followed by a newline, then returns `println` again (so it can be chained).
+
+*Example:* `println 1 2 3` (prints 1, 2 and 3 separated by newlines)
+
+**Note: The behavior of `print` and `println` with regard to buffer flushing is currently undefined, but incidentally, the current 0.1 interpreter flushes every time it prints something with `println` and never flushes for `print`.**
+
+#### `ln`
+
+Value equal to "\n".
+
+#### `do` *[arg]*
+
+Performs `arg null` and returns the result. Useful for executing a zero-argument closure.
+
+*Example:* `do ^( println 3 )`
+
+#### `loop` *[arg]*
+
+Takes a value assumed to be a zero-argument closure, executes it by passing null as an argument, if the return value is true (non-null) executes it again, if that return value is true executes it again, if that...
+
+#### `if` *[arg 1]* *[arg 2]*
+
+*[arg 2]* is assumed to be a zero-argument closure, *[arg 1]* is anything.
+
+If *[arg 1]* is true (non-null) executes *[arg 2]* by passing null as an argument.
+
+#### `while` *[arg 1]* *[arg 2]*
+
+Takes two arguments, both assumed to be zero-argument closures. Repeatedly executes *[arg 1]* by passing null as an argument, if the result is false (null) stops looping, if the result is true (not null) executes *[arg 2]* and repeats.
+
+#### `not` *[arg]*
+
+Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
+
+#### `nullfn` 
+
+Slightly arcane, takes an argument, ignores it and returns null.
+
+#### `tern` *[arg 1]* *[arg 2]* *[arg 3]*
+
+Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (non-null) this executes *[arg 2]* by passing null as an argument, otherwise executes *[arg 3]* by passing null as an argument.
+
+### Common
+
+These methods are present in common for all values which are not scopes. Embarrassingly, this includes null.
+
+For anything below, a reference to "the target" means whatever object the field lookup was performed on, i.e., `3` in the case of `3.negate`.
+
+As a point of trivia, the reason these three methods are common to ALL objects is they are methods on `true`, which is the prototype all other prototypes inherit from (except `null`).
+
+#### `and` *[arg 1]*
+
+Returns `true` if both the target and *[arg 1]* are true (not null)
+
+#### `or` *[arg 1]*
+
+Returns `true` if either the target and *[arg 1]* are true (not null)
+
+#### `xor` *[arg 1]*
+
+Returns `true` if exactly one of the target and *[arg 1]* are true (not null)
+
+### Object
+
+In other words, user objects, created with `[` ... `]`.
+
+#### `append` *[arg 1]*
+
+Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming "0" if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`. 
+
+#### `each` *[arg 1]*
+
+Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, invokes *[arg 1]* for each *n* which the object possesses as a key (testing with `.has`) until one is not present, then stops.
+
+### Number
+
+For all number members taking arguments, the argument must be another number. If it is not, this is a failure and the program halts on evaluation.
+
+#### `negate`
+
+Returns the target times -1.
+
+#### `add` *[arg 1]*
+
+Adds the target to *[arg 1]* and returns the result.
+
+#### `minus` *[arg 1]*
+
+Subtracts *[arg 1]* from the target and returns the result.
+
+#### `times` *[arg 1]*
+
+Multiples *[arg 1]* with the target and returns the result.
+
+#### `divide` *[arg 1]*
+
+Divides the target by *[arg 1]* and returns the result.
+
+#### `lt` *[arg 1]*
+
+If *[arg 1]* is less than the target, returns `true`. Otherwise returns `null`.
+
+#### `lte` *[arg 1]*
+
+If *[arg 1]* is less than or equal to the target, returns `true`. Otherwise returns `null`.
+
+#### `gt` *[arg 1]*
+
+If *[arg 1]* is greater than the target, returns `true`. Otherwise returns `null`.
+
+#### `gte` *[arg 1]*
+
+If *[arg 1]* is greater than or equal to the target, returns `true`. Otherwise returns `null`.
+
+#### `eq` *[arg 1]*
+
+If *[arg 1]* is equal to the target, returns `true`. Otherwise returns `null`.
+
+Notice something very alarming: This is method on number. It is not present on true, false, strings, or objects.
