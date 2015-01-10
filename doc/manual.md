@@ -113,37 +113,37 @@ This is only important to know if you are writing macros (not possible in Emily 
 
 In the table below, operators higher in the table are "evaluated" first. If a symbol is LTR, symbols of that phase to the left are evaluated before symbols of that phase to the right.
 
-Phase   | Order | Symbol
---------|-------|----------
-Reader  | LTR   | `\`
-        |       | `\version`
-        |       | `#`
-        |       | `;`
-        |       | `(` ... `)`
-        |       | `{` ... `}`
-        |       | `[` ... `]`
-        |       | `"` ... `"`
-110     | LTR   | `.`
-105     | LTR   | `=`
-100     | LTR   | `^`
-        |       | `^!`
-90      | LTR   | `?` ... `:`
-        |       | `:`
-75      | RTL   | `||`
-70      | RTL   | `&&`
-65      | RTL   | `!=`
-        |       | `==`
-60      | RTL   | `>=`
-        |       | `>`
-        |       | `<=`
-        |       | `<`
-50      | RTL   | `+`
-        |       | `-`
-40      | RTL   | `*`
-        |       | `/`
-30      | RTL   | `~`
-        | RTL   | `!`
-20      | RTL   | ` (backtick)
+    Phase   | Order | Symbol
+    --------|-------|----------
+    Reader  | LTR   | \
+            |       | \version
+            |       | #
+            |       | ;
+            |       | ( )
+            |       | { }
+            |       | [ ]
+            |       | " "
+    110     | LTR   | .
+    105     | LTR   | =
+    100     | LTR   | ^
+            |       | ^!
+    90      | LTR   | ? :
+            |       | :
+    75      | RTL   | ||
+    70      | RTL   | &&
+    65      | RTL   | !=
+            |       | ==
+    60      | RTL   | >=
+            |       | >
+            |       | <=
+            |       | <
+    50      | RTL   | +
+            |       | -
+    40      | RTL   | *
+            |       | /
+    30      | RTL   | ~
+            | RTL   | !
+    20      | RTL   | `
 
 (This table can be different from conventional "precedence" because all the macros do different things when they execute-- for example the `.` macro adheres directly to the item to its right, whereas the `+` macro creates groups out of its entire left and right sides and adheres directly to neither.)
 
@@ -153,39 +153,41 @@ If you just ignore all this "macro" stuff and consider the symbols in Emily as n
 
 In the table below, higher items are "higher precedence" (bind tighter). Left-associative operators "bind to the left" (prefer to group left in the absence of clarifying parenthesis).
 
-Precedence | Associativity | Operator
------------|---------------|----------
-1          | Right         | `\version`
-2          | Right         | `.`
-3          | Right         | `^`
-           |               | `^!`
-4          | Left          | `~`
-           |               | `!`
-5          | Left          | `*`
-           |               | `/`
-6          | Left          | `+`
-           |               | `-`
-7          | Left          | `>=`
-           |               | `>`
-           |               | `<=`
-           |               | `<`
-8          | Left          | `!=`
-           |               | `==`
-9          | Left          | `&&`
-10         | Left          | `||`
-11         | Right         | `?` `:`
-12         | Right         | `=`
-13         | Left          | ` (backtick)
+    Precedence | Associativity | Operator
+    -----------|---------------|-------------
+    1          | Right         | \version
+    2          | Right         | .
+    3          | Right         | ^
+               |               | ^!
+    4          | Left          | ~
+               |               | !
+    5          | Left          | *
+               |               | /
+    6          | Left          | +
+               |               | -
+    7          | Left          | >=
+               |               | >
+               |               | <=
+               |               | <
+    8          | Left          | !=
+               |               | ==
+    9          | Left          | &&
+    10         | Left          | ||
+    11         | Right         | ? :
+    12         | Right         | =
+    13         | Left          | `
 
 ## Operators
 
-### `\`
+### \
 
 This stitches lines together. If a line "ends with" a `\` (nothing may appear after the `\` except `\`, `\version`, comments or whitespace) the following line will be considered part of the same statement.
 
 If a `\` is followed by anything else, or by an end-of-file, this is a failure and the program will terminate without running.
 
-### `\version *[version number]*`
+### \version
+
+**Usage:** `\version` *[version number]*
 
 This is a reader instruction (right now, the only one) which reports the interface version of Emily that the program was written against. In this version of Emily, if anything at all is written here other than the literal string `\version 0.1`, this is a failure and the program will terminate without running.
 
@@ -197,49 +199,63 @@ In the long term, for **all future versions of Emily**, the plan is that when th
 
 Ideally a program should always start with `\version`, and should select the oldest interface version which can run the code.
 
-### `#`
+### #
 
 Comment. Everything from the # until a newline is ignored.
 
-### `;`
+### ;
 
 Statement separator. So is non-escaped newline.
 
-### `(` *[any number of statements]* `)`
+### ( )
+
+**Usage:** `(` *[any number of statements]* `)`
 
 Unscoped group. Executes all statements between the parenthesis, in context of the enclosing statement's scope. The group evaluates to the value of the final nonempty statement.
 
 `()` with nothing in between evaluates to `null`.
 
-### `{` *[any number of statements]* `}`
+### { }
+
+**Usage:** `{` *[any number of statements]* `}`
 
 Scoped group. Creates a new scope object which is a prototype-child of the enclosing statement's scope (new `has`, `set` and `let`). Executes all statements between the braces in context of this new scope. 
 
 Like with unscoped groups, the group evaluates to the value of the final nonempty statement and `{}` with nothing in between evaluates to `null`.
 
-### `[` *[any number of statements]* `]`
+### [ ]
+
+**Usage:** `[` *[any number of statements]* `]`
 
 Object-literal group. Creates a new user object, and executes the statements in a specially prepared scope designed for convenient object construction. For more detail see the section on objects below.
 
-### `"` *[string contents]* `"`
+### " "
+
+**Usage:** `"` *[string contents]* `"`
 
 See "values" above.
 
-### `.` *[word]*
+### .
+
+**Usage:** `.` *[word]*
 
 Atom constructor. Captures the token directly to the right of the `.`; if it is a valid word, this evaluates to the atom for that word. Otherwise this is a failure and the program will terminate without running.
 
-### `^` *[optional: any number of words]* *[group]*
+### ^
+
+**Usage:** `^` *[optional: any number of words]* *[group]*
 
 Closure literal. Captures to the right zero or more word tokens, and one group token. If non-word tokens are found before the group, or the group is not found, this is a failure and the program will terminate without running. Evaluates to a user closure which has: the given words as bound arguments; the enclosing statement's scope as context scope; and the given group as its code.
 
 For more information on closure values, see "About user closures" below.
 
-### `^!` *[optional: any number of words]* *[group]*
+### ^!
+
+**Usage:** `^!` *[optional: any number of words]* *[group]*
 
 Exactly the same as `^`, but when the there will not be a "return" created in the execution scope. You probably don't ever actually want this.
 
-### `:`
+### :
 
 Apply right: Captures the entire rest of the statement to the right of the `:`, and replaces the tokens with one unscoped group containing the captured tokens.
 
@@ -251,7 +267,9 @@ Apply right: Captures the entire rest of the statement to the right of the `:`, 
 
     a b c (d e f)
 
-### *[statement condition]* `?` *[statement 1]* `:` *[statement 2]*
+### ? :
+
+**Usage:** *[statement condition]* `?` *[statement 1]* `:` *[statement 2]*
 
 Ternary operator. Captures the entire statement and splits it in three. At run time, *[statement condition]* is evaluated, if it is true (non-null), *[statement 1]* will be evaluated and its value returned; otherwise, *[statement 2]* will be evaluated and its value returned. *[statement 1]* cannot contain a question mark as a token, *[statement 2]* can. (To be explicit: `a?(b?c:d):e` is allowed, `a?b:c?d:e` is allowed, `a?b?c:d:e` is not.) Any of the three statements may be blank, in which case the value for that statement will be null.
 
@@ -263,7 +281,9 @@ Ternary operator. Captures the entire statement and splits it in three. At run t
 
     tern (a b c) ^!(d e f) ^!(g h i)
 
-### `~` *[token]*
+### ~
+
+**Usage:** `~` *[token]*
 
 Negation. Captures one token to the right and evaluates to that token with `.negate` as argument.
 
@@ -275,7 +295,9 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
     a b (c.negate) d e
 
-### `!` *[token]*
+### !
+
+**Usage:** `!` *[token]*
 
 "Not". Captures one token to the right and evaluates to that token applied as argument to the `not` function (see below). `not` is ALWAYS the standard `not` function, not whatever `not` is in the current scope.
 
@@ -287,7 +309,9 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
     a b (not c) d e
 
-### ` *[token]* *[token]*
+### `
+
+**Usage:** `` ` `` *[token]* *[token]*
 
 Backtick is the "apply pair" operator. It captures two tokens to the right, and replaces the tokens with an unscoped group comparing the tokens. Useful for performing a quick application in the middle of a long expression (remember, `cos a.b` in this language is evaluated like `((cos a) b)`, not `(cos (a (b)))`).
 
@@ -298,6 +322,28 @@ Backtick is the "apply pair" operator. It captures two tokens to the right, and 
 *...becomes*
 
     a b (c d) e f
+
+## =
+
+**Usage examples:**
+
+    a = 3
+    a.b = 3
+    a ^ x = x + 1
+    a.b.c (3) ^ x y = x + y
+    nonlocal a = 3
+
+`=` is the most complicated operator, and its behavior is based on trying to do "what you expect". It defines a new key on some object somewhere and sets its value. If a single token appears to the left of the `=`, this is a key on the scope object. If a multi-token expression is to the left of the `=`, the rightmost token is used as a key on the expression defined by the other tokens.
+
+If a `^` appears to the left of the `=`, everything to the right of `^` is argument bindings for a closure. In other words `x ^ = 3` is equivalent to `x = ^ (3)` and `x ^b c = 4` is equivalent to `x = ^ b c (4)`.
+
+If the first token to the left is `nonlocal`, this is a special flag to `=` that rather than defining a new key, it should set on an existing key, setting the key on a parent if necessary, and failing if the existing key is not found. This for example makes it possible to set a variable in a parent scope, similar to the `nonlocal` directive in Python.
+
+`=` currently can set fields on objects, but can't implicitly make new ones; `a.b = 4` is only legal if `a` is already an existing table. `a = []; a.b = 4` is legal.
+
+`=` cannot set a non-word key on a scope object. In other words, `4 = 5` is an error.
+
+*Treated as a macro*, `=` is actually identifying a key (the rightmost token to the left of the `=`, or, if present, the `^`) and a target (everything to the left of the key), and invoking *[target]* `.let` *[key]*. If the `nonlocal` modifier is present, it uses `.set` instead of `.let`.
 
 ## Splitter operators
 
@@ -317,19 +363,27 @@ The familiar "order of operations" emerges from the grouping caused by all this 
 
 What the application of `.plus`, or any other atom, means in practice will depend on the type returned by the left-side statement.
 
-### *[statement 1]* `||` *[statement 2]*
+### ||
+
+**Usage:** *[statement 1]* `||` *[statement 2]*
 
 Splitter for `.or`. Intended for boolean OR. **Notice: Because splitters evaluate both their arguments, || and && do NOT short-circuit. This is a bad thing and will be fixed in a future language version.**
 
-### *[statement 1]* `&&` *[statement 2]*
+### &&
+
+**Usage:** *[statement 1]* `&&` *[statement 2]*
 
 Splitter for `.and`. Intended for boolean AND.
 
-### *[statement 1]* `==` *[statement 2]*
+### ==
+
+**Usage:** *[statement 1]* `==` *[statement 2]*
 
 Splitter for `.eq`. Intended for equality test.
 
-### *[statement 1]* `!=` *[statement 2]*
+### !=
+
+**Usage:** *[statement 1]* `!=` *[statement 2]*
 
 "Not Equal". Not actually a splitter; splits for `.eq`, then NOTs the entire thing.
 
@@ -343,35 +397,51 @@ In other words, *treated as a macro:*
 
 As with `!`, this is always standard `not` and does not depend on the scope.
 
-### *[statement 1]* `>=` *[statement 2]*
+### >=
+
+**Usage:** *[statement 1]* `>=` *[statement 2]*
 
 Splitter for `.gte`. Intended for "greater than or equal to" test.
 
-### *[statement 1]* `>` *[statement 2]*
+### >
+
+**Usage:** *[statement 1]* `>` *[statement 2]*
 
 Splitter for `.gt`. Intended for "greater than" test.
 
-### *[statement 1]* `<=` *[statement 2]*
+### <=
+
+**Usage:** *[statement 1]* `<=` *[statement 2]*
 
 Splitter for `.lte`. Intended for "less than or equal to" test.
 
-### *[statement 1]* `<` *[statement 2]*
+### <
+
+**Usage:** *[statement 1]* `<` *[statement 2]*
 
 Splitter for `.lt`. Intended for "less than" test.
 
-### *[statement 1]* `+` *[statement 2]*
+### +
+
+**Usage:** *[statement 1]* `+` *[statement 2]*
 
 Splitter for `.plus`. Intended for mathematical addition or something like it.
 
-### *[statement 1]* `-` *[statement 2]*
+### -
+
+**Usage:** *[statement 1]* `-` *[statement 2]*
 
 Splitter for `.minus`. Intended for mathematical addition or something like it.
 
-### *[statement 1]* `*` *[statement 2]*
+### *
+
+**Usage:** *[statement 1]* `*` *[statement 2]*
 
 Splitter for `.times`. Intended for mathematical multiplication or something like it.
 
-### *[statement 1]* `/` *[statement 2]*
+### /
+
+**Usage:** *[statement 1]* `/` *[statement 2]*
 
 Splitter for `.divide`. Intended for mathematical division or something like it.
 
@@ -383,53 +453,67 @@ Remember for scopes, a field lookup is done by just writing a word, like `not`; 
 
 ### Scope
 
-#### `null`
+#### null
 
 Null value.
 
-#### `true`
+#### true
 
 True value.
 
-#### `print` *[arg]*
+#### print
+
+**Usage:** `print` *[arg]*
 
 Takes any argument, prints it to stdout as a string, then returns `print` again (so it can be chained).
 
 *Example:* `print 1 2 3` (prints "123")
 
-#### `println` *[arg]*
+#### println
+
+**Usage:** `println` *[arg]*
 
 Takes any argument, prints it to stdout as a string followed by a newline, then returns `println` again (so it can be chained).
 
 *Example:* `println 1 2 3` (prints 1, 2 and 3 separated by newlines)
 
-**Note: The behavior of `print` and `println` with regard to buffer flushing is currently undefined, but incidentally, the current 0.1 interpreter flushes every time it prints something with `println` and never flushes for `print`.**
+Note: The behavior of `print` and `println` with regard to buffer flushing is currently undefined, but incidentally, the current 0.1 interpreter flushes every time it prints something with `println` and never flushes for `print`.
 
 #### `ln`
 
 Value equal to "\n".
 
-#### `do` *[arg]*
+#### do
+
+**Usage:** `do` *[arg]*
 
 Performs `arg null` and returns the result. Useful for executing a zero-argument closure.
 
 *Example:* `do ^( println 3 )`
 
-#### `loop` *[arg]*
+#### loop
+
+**Usage:** `loop` *[arg]*
 
 Takes a value assumed to be a zero-argument closure, executes it by passing null as an argument, if the return value is true (non-null) executes it again, if that return value is true executes it again, if that...
 
-#### `if` *[arg 1]* *[arg 2]*
+#### if
+
+**Usage:** `if` *[arg 1]* *[arg 2]*
 
 *[arg 2]* is assumed to be a zero-argument closure, *[arg 1]* is anything.
 
 If *[arg 1]* is true (non-null) executes *[arg 2]* by passing null as an argument.
 
-#### `while` *[arg 1]* *[arg 2]*
+#### while
+
+**Usage:** `while` *[arg 1]* *[arg 2]*
 
 Takes two arguments, both assumed to be zero-argument closures. Repeatedly executes *[arg 1]* by passing null as an argument, if the result is false (null) stops looping, if the result is true (not null) executes *[arg 2]* and repeats.
 
-#### `not` *[arg]*
+#### not
+
+**Usage:** `not` *[arg]*
 
 Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
 
@@ -437,7 +521,9 @@ Takes one argument. If the argument is `null`, returns `true`. If the argument i
 
 Slightly arcane, takes an argument, ignores it and returns null.
 
-#### `tern` *[arg 1]* *[arg 2]* *[arg 3]*
+#### tern
+
+**Usage:** `tern` *[arg 1]* *[arg 2]* *[arg 3]*
 
 Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (non-null) this executes *[arg 2]* by passing null as an argument, otherwise executes *[arg 3]* by passing null as an argument.
 
@@ -455,15 +541,21 @@ As a point of trivia, the reason these three methods are common to ALL objects i
 
 These methods will not exist in future versions.
 
-#### `and` *[arg 1]*
+#### and
+
+**Usage:** `and` *[arg 1]*
 
 Returns `true` if both the target and *[arg 1]* are true (not null)
 
-#### `or` *[arg 1]*
+#### or
+
+**Usage:** `or` *[arg 1]*
 
 Returns `true` if either the target and *[arg 1]* are true (not null)
 
-#### `xor` *[arg 1]*
+#### xor
+
+**Usage:** `xor` *[arg 1]*
 
 Returns `true` if exactly one of the target and *[arg 1]* are true (not null)
 
@@ -471,11 +563,15 @@ Returns `true` if exactly one of the target and *[arg 1]* are true (not null)
 
 In other words, user objects, created with `[` ... `]`.
 
-#### `append` *[arg 1]*
+#### append
+
+**Usage:** `append` *[arg 1]*
 
 Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming "0" if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`. 
 
-#### `each` *[arg 1]*
+#### each
+
+**Usage:** `each` *[arg 1]*
 
 Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, invokes *[arg 1]* for each *n* which the object possesses as a key (testing with `.has`) until one is not present, then stops.
 
@@ -487,39 +583,57 @@ For all number members taking arguments, the argument must be another number. If
 
 Returns the target times -1.
 
-#### `add` *[arg 1]*
+#### add
+
+**Usage:** `add` *[arg 1]*
 
 Adds the target to *[arg 1]* and returns the result.
 
-#### `minus` *[arg 1]*
+#### minus
+
+**Usage:** `minus` *[arg 1]*
 
 Subtracts *[arg 1]* from the target and returns the result.
 
-#### `times` *[arg 1]*
+#### times
+
+**Usage:** `times` *[arg 1]*
 
 Multiples *[arg 1]* with the target and returns the result.
 
-#### `divide` *[arg 1]*
+#### divide
+
+**Usage:** `divide` *[arg 1]*
 
 Divides the target by *[arg 1]* and returns the result.
 
-#### `lt` *[arg 1]*
+#### lt
+
+**Usage:** `lt` *[arg 1]*
 
 If *[arg 1]* is less than the target, returns `true`. Otherwise returns `null`.
 
-#### `lte` *[arg 1]*
+#### lte
+
+**Usage:** `lte` *[arg 1]*
 
 If *[arg 1]* is less than or equal to the target, returns `true`. Otherwise returns `null`.
 
-#### `gt` *[arg 1]*
+#### gt
+
+**Usage:** `gt` *[arg 1]*
 
 If *[arg 1]* is greater than the target, returns `true`. Otherwise returns `null`.
 
-#### `gte` *[arg 1]*
+#### gte
+
+**Usage:** `gte` *[arg 1]*
 
 If *[arg 1]* is greater than or equal to the target, returns `true`. Otherwise returns `null`.
 
-#### `eq` *[arg 1]*
+#### eq
+
+**Usage:** `eq` *[arg 1]*
 
 If *[arg 1]* is equal to the target, returns `true`. Otherwise returns `null`.
 
