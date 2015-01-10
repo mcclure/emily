@@ -12,5 +12,4 @@ sample/parsetest.fail.2.em    # Mismatched right-paren fallaciously allowed
 sample/parsetest.unicode.2.em # Unicode identifiers not in yet
 
 # "Expected" failures due to not-yet-implemented features
-sample/obj.dethis.em   # Rethis/dethis not user-exposed
-sample/obj.rethis.em   #    [ibid]
+# None.

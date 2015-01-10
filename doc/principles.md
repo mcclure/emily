@@ -73,3 +73,5 @@ C++ has a design rule like this, but gets it backward; it ensures you never have
 ### Parity of expressions and definitions
 
 ## Deployability is all-important
+
+## No magic

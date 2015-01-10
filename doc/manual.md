@@ -1,6 +1,8 @@
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
 
-Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedence" section and read from there
+Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedence" section and read from there.
+
+Table of contents:
 
 [TOC]
 
@@ -439,6 +441,10 @@ Slightly arcane, takes an argument, ignores it and returns null.
 
 Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (non-null) this executes *[arg 2]* by passing null as an argument, otherwise executes *[arg 3]* by passing null as an argument.
 
+#### thisTransplant, thisInit, thisFreeze, thisUpdate
+
+See "About objects" below.
+
 ### Common
 
 These methods are present in common for all values which are not scopes. Embarrassingly, this includes null.
@@ -446,6 +452,8 @@ These methods are present in common for all values which are not scopes. Embarra
 For anything below, a reference to "the target" means whatever object the field lookup was performed on, i.e., `3` in the case of `3.negate`.
 
 As a point of trivia, the reason these three methods are common to ALL objects is they are methods on `true`, which is the prototype all other prototypes inherit from (except `null`).
+
+These methods will not exist in future versions.
 
 #### `and` *[arg 1]*
 
@@ -515,4 +523,4 @@ If *[arg 1]* is greater than or equal to the target, returns `true`. Otherwise r
 
 If *[arg 1]* is equal to the target, returns `true`. Otherwise returns `null`.
 
-Notice something very alarming: This is method on number. It is not present on true, false, strings, or objects.
+Notice something very alarming: In 0.1 this is a method on number. It is not present on true, false, strings, or objects. This will be fixed in later versions.

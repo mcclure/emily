@@ -189,6 +189,15 @@ and tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
 
+(* Not used by interpreter, but present for user *)
+let rawRethisTransplant obj = match obj with
+    | ClosureValue c -> ClosureValue({c with this=ThisBlank})
+    | _ -> obj
+
+let rethisTransplant = snippetClosure 1 (function
+    | [obj] -> rawRethisTransplant obj
+    | _ -> impossibleArg "rethisSuperFrom")
+
 (* Helpers for super function *)
 let rawRethisSuperFrom obj v = match v with
     | ClosureValue({this=CurrentThis(current,_)} as c) -> ClosureValue({c with this=CurrentThis(current,obj)})

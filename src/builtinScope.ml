@@ -62,3 +62,8 @@ let () =
             Value.BuiltinFunctionValue(printFunction)
         in printFunction
     );
+
+    setAtomValue "thisTransplant" ValueUtil.rethisTransplant;
+    setAtomValue "thisInit" ValueUtil.rethisAssignObjectDefinition;
+    setAtomValue "thisFreeze" ValueUtil.rethisAssignObject;
+    setAtomValue "thisUpdate" ValueUtil.rethisSuperFrom;

@@ -1,5 +1,3 @@
-* DESCRIBES ASPIRATIONS NOT REALITY *
-
 ## BEHAVIOR
 
 `this` is probably one of the more mechanically complicated things in Emily, and veers dangerously close to "magic". `this` is the way it is because the semantics are chasing an intuitive notion of "how it should work".
@@ -14,10 +12,9 @@ Let's call 1 "methods" and 2 "functions".
 3. If an object inherits a method from another object, then you expect on invoking it that `this` refers to the inheriting object.
 4. If a method was invoked on a `super` object, then you expect that inside the method body `this` refers to the super-calling object.
 
-5. If you store a method in a variable or a dictionary-- say object.method but do not invoke it--, you expect it to have no effect on the `this` binding. You expect it to act like currying.
-6. If you store a function in a dictionary, you expect this to have no effect on the `this` binding.
+5. If you store a either a "function" or a "method" in a variable or a dictionary-- something like, you say `x = object.method`, thus storing object.method to invoke later--, you expect it to have no effect on the `this` binding. You expect passing `.method` to `object` to act like currying.
 
-7. It should be possible for `parent` to be a function without fundamentally breaking anything above.
+7. It should be possible for `parent` to be set to a function rather than an object without fundamentally breaking anything above.
 
 ## IMPLEMENTATION
 
@@ -25,24 +22,23 @@ I implement this by each function secretly being in one of four states:
 
     | ThisBlank
     | ThisNever
-    | ThisReady
     | CurrentThis of value*value
     | FrozenThis of value*value
 
 Functions move between states at particular times:
-t1. Everything starts ThisBlank.
-t2. If a ThisBlank closure is assigned to an object inside a declaration, it becomes ThisReady.
-t3. If a ThisReady closure is fetched from an object, it gets CurrentThis'd with this and current=obj.
-t4. If a CurrentThis closure is fetched from an object, the This part gets updated with this=obj.
-t5. If a ThisBlank closure is stored in a scope or object except inside an object declaration, it becomes ThisNever.
-t6. If a CurrentThis closure is stored in a scope or object except inside an object declaration, it becomes FrozenThis.
 
-Some of these are desirable:
+1. Everything starts ThisBlank.
+2. If a ThisBlank closure is assigned to a user object x inside a declaration, it becomes CurrentThis(x,x).
+3. If a ThisBlank closure is assigned to a user object x at any other time, it becomes ThisNever.
+4. If a CurrentThis(x,y) closure is assigned to a user object ever, at any time, it becomes FrozenThis(x,y).
+5. When a CurrentThis(a,b) or FrozenThis(a,b) closure is executed, a `this` and a `super` is populated in the scope equal to b. "this" is equal to b. When a field is read from `super`, it is fetched from `a.parent` and if it is a CurrentThis(x,y) closure then that closure is converted to CurrentThis(x,b).
+t6. If the interpreter attempts to read a field from a user object z, does not find it, and reads it from the object's parent, if the object is CurrentThis(x,y), then the closure is converted to CurrentThis(x,z).
+
+Because user code should be able to do anything the interpreter can do, some user methods are available:
+
 - calling `thisTransplant method` unconditionally resets method to ThisBlank.
-- calling `thisReady method` conditionally does transform t2
-- calling `thisUpdate newThis method` conditionally does transforms t3,t4
-- calling `thisFreeze method` conditionally does transforms t5, t6
+- calling `thisInit newThis method` performs the same transform as assigning `method` to an object at definition time (set a CurrentThis if method is ThisBlank, otherwise freeze).
+- calling `thisFreeze method` does the same transform of assigning `method` to an object at non-definition time (change to ThisNever or FrozenThis, as appropriate).
+- calling `thisUpdate newThis method` performs the same transform as pulling method out of a `super` for `newThis` method (If method is CurrentThis(x,y) make it CurrentThis(x,newThis), otherwise change nothing).
 
-- calling `thisState method` should return an enum explaining state, when such a thing exists.
-- calling `thisGet method` should return the bound this (or an error?).
-- calling `thisGetCurrent method` should return the bound current (or an error?).
+Any references to "transform" or "conversion" above are non-mutating, by the way.
