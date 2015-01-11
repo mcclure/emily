@@ -4,7 +4,8 @@
 sample/equal.em
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-# None!
+sample/set.shadow.em
+sample/set.shadow.2.em
 
 # FAILURES -- BUGS, FIX ASAP
 sample/parsetest.fail.em      # Unclosed left-paren fallaciously allowed

@@ -196,7 +196,7 @@ let rec question past at future =
             | [] -> Token.failToken at ": expected somewhere to right of ?"
     in scan [] future
 
-(* Assignment operator-- semantics are relatively complex. TODO: Docs. *)
+(* Assignment operator-- semantics are relatively complex. See manual.md. *)
 let assignment past at future =
     (* The final parsed assignment will consist of a list of normal assignments
        and a list of ^ variables for a function. Perform that assignment here: *)
@@ -271,17 +271,32 @@ let assignment past at future =
 
     in processLeft (List.rev past) [] None
 
+(* Constructor for closure constructor, depending on whether return wanted. See manual.md *)
 let closureConstruct withReturn =
     fun past at future ->
+        (* Scan line picking up bindings until group reached. *)
         let rec openClosure bindings future =
             match future with
+                (* If redundant ^s seen, skip them. *)
                 | {Token.contents=Token.Symbol "^"} :: moreFuture ->
                     openClosure bindings moreFuture
+
+                (* This is a binding, add to list. *)
                 | {Token.contents=Token.Word b} :: moreFuture ->
                     openClosure (b::bindings) moreFuture
+
+                (* This is a group, we are done now. *)
                 | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
-                    arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                    (* They asked for ^[], unsupported. *)
+                    if kind=Token.Box then Token.failToken at @@ "Can't use object literal with ^"
+
+                    (* Supported group *)
+                    else arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+
+                (* Reached end of line *)
                 | [] -> Token.failToken at @@ "Body missing for closure"
+
+                (* Any other symbol *)
                 | _ ->  Token.failToken at @@ "Unexpected symbol after ^"
 
         in openClosure [] future

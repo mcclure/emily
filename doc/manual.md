@@ -84,6 +84,8 @@ By itself, is a field lookup on the scope object.
 
 Inside of a group or a closure, the scope may be different from that of the surrounding code. The scope will not change over the course of an executed statement (although the contents of the scope may change).
 
+Scopes in Emily are objects, which means they can have parents via object inheritance. If a scoped group encloses another scoped group in the code, the inner group's scope will have the outer group's scope as a parent.
+
 ## Sequencing
 
 All Emily values are functions; this means they map one value to one value, and evaluating the map may optionally have a side effect. The order evaluations (and thus, potentially, side effects) occur in is precise.
@@ -219,7 +221,7 @@ Unscoped group. Executes all statements between the parenthesis, in context of t
 
 **Usage:** `{` *[any number of statements]* `}`
 
-Scoped group. Creates a new scope object which is a prototype-child of the enclosing statement's scope (new `has`, `set` and `let`). Executes all statements between the braces in context of this new scope. 
+Scoped group. Creates a new scope object which is a child of the enclosing statement's scope (new `has`, `set` and `let`). Executes all statements between the braces in context of this new scope.
 
 Like with unscoped groups, the group evaluates to the value of the final nonempty statement and `{}` with nothing in between evaluates to `null`.
 
@@ -247,7 +249,9 @@ Atom constructor. Captures the token directly to the right of the `.`; if it is 
 
 Closure literal. Captures to the right zero or more word tokens, and one group token. If non-word tokens are found before the group, or the group is not found, this is a failure and the program will terminate without running. Evaluates to a user closure which has: the given words as bound arguments; the enclosing statement's scope as context scope; and the given group as its code.
 
-For more information on closure values, see "About user closures" below.
+Redundant ^s are allowed-- `^a b (a)` does the same thing as `^a ^b (a)`. Imagine the currying is actually multiple wrapped closures, if you like.
+
+For more information on closure values, see "About functions -> user closures" below.
 
 ### ^!
 
@@ -323,7 +327,7 @@ Backtick is the "apply pair" operator. It captures two tokens to the right, and 
 
     a b (c d) e f
 
-## =
+### =
 
 **Usage examples:**
 
@@ -335,7 +339,7 @@ Backtick is the "apply pair" operator. It captures two tokens to the right, and 
 
 `=` is the most complicated operator, and its behavior is based on trying to do "what you expect". It defines a new key on some object somewhere and sets its value. If a single token appears to the left of the `=`, this is a key on the scope object. If a multi-token expression is to the left of the `=`, the rightmost token is used as a key on the expression defined by the other tokens.
 
-If a `^` appears to the left of the `=`, everything to the right of `^` is argument bindings for a closure. In other words `x ^ = 3` is equivalent to `x = ^ (3)` and `x ^b c = 4` is equivalent to `x = ^ b c (4)`.
+If a `^` appears to the left of the `=`, everything to the right of `^` is argument bindings for a closure. In other words `x ^ = 3` is equivalent to `x = ^ (3)` and `x ^b c = 4` is equivalent to `x = ^ b c (4)`. Like with normal `^`, multiple `^`s are allowed.
 
 If the first token to the left is `nonlocal`, this is a special flag to `=` that rather than defining a new key, it should set on an existing key, setting the key on a parent if necessary, and failing if the existing key is not found. This for example makes it possible to set a variable in a parent scope, similar to the `nonlocal` directive in Python.
 
@@ -349,14 +353,14 @@ If the first token to the left is `nonlocal`, this is a special flag to `=` that
 
 The remaining operators are all of a particular type; for brevity, a single explanation will be given here.
 
-Each of these operators is a "splitter" for some designated atom: it captures the entire line, splits it into two statements, and at run time evaluates to the entire left-side statement, applied to the designated atom, applied to the entire right-side statement. 
+Each of these operators is a "splitter" for some designated atom: it captures the entire line, splits it into two statements, and at run time evaluates to the entire left-side statement, applied to the designated atom, applied to the entire right-side statement.
 
 Take `+` as an example; its designated atom is `.plus`. Treated as a macro,
 
     a b c + d e f
 
 *...becomes*
-    
+
     (a b c) .plus (d e f)
 
 The familiar "order of operations" emerges from the grouping caused by all this splitting.
@@ -447,7 +451,7 @@ Splitter for `.divide`. Intended for mathematical division or something like it.
 
 ## Builtins
 
-In each of the following sections, the documented fiends are in the base prototype for the section's type. The value `3` has "integer" as its base prototype, so any methods in the integer base prototype will be usable on `3`.
+In each of the following sections, the documented fiends are in the base prototype for the section's type. The value `3` has "integer" as its base prototype, so any methods in the integer base prototype will be usable on `3`. For an explanation of prototypes, see "About objects" below.
 
 Remember for scopes, a field lookup is done by just writing a word, like `not`; for other kind of objects, the field lookup requires a `.`, like `3.negate`.
 
@@ -517,7 +521,7 @@ Takes two arguments, both assumed to be zero-argument closures. Repeatedly execu
 
 Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
 
-#### `nullfn` 
+#### `nullfn`
 
 Slightly arcane, takes an argument, ignores it and returns null.
 
@@ -567,7 +571,7 @@ In other words, user objects, created with `[` ... `]`.
 
 **Usage:** `append` *[arg 1]*
 
-Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming "0" if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`. 
+Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming "0" if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`.
 
 #### each
 
@@ -638,3 +642,37 @@ If *[arg 1]* is greater than or equal to the target, returns `true`. Otherwise r
 If *[arg 1]* is equal to the target, returns `true`. Otherwise returns `null`.
 
 Notice something very alarming: In 0.1 this is a method on number. It is not present on true, false, strings, or objects. This will be fixed in later versions.
+
+## About user closures
+
+Everything in Emily "is a function", so what we usually think of as "a function"-- a block of reusable code you define-- in Emily is just one particular kind of function, called a "closure". Closures are created with the ^ operator; if you see a ^, you know you're making a closure.
+
+Closures consist of a group (`()`, `{}` or `[]`) full of code, but they carry around several pieces of information with them:
+
+    - A list of argument names.
+    - The scope in which it was defined.
+    - Each closure knows whether or not to create `return`.
+    - Each closure knows whether and how to create object context (`current`, `this` and `super`). See "about objects" below.
+
+These four things are determined by how the scope was created.
+
+When a closure executes, its code executes in a special scope with the enclosing scope as parent; this new scope is pre-populated with whichever of `return`, `current`, `this` and `super` are appropriate, then with all arguments. The behavior of assignment-- in other words, `set`, `let` and `=`-- is determined by the kind of group. In the case of an unscoped group (`^()`) they will "fall through" and occur directly in the enclosing scope. In the case of a scoped group (`^{}`) will exist in a new scope, created just for the function application, which is a child of the enclosing scope. (`^[]` is not allowed.)
+
+TODO: Explain the behavior of set and let on an argument variable.
+
+### return
+
+`return` is populated into the scope each time a function executes. It behaves the same way as `return` in other languages; putting a value after "return" causes the function to immediately terminate and its call site evaluate to the returned value. There is one way `return` differs from other languages: `return` is not a keyword, but rather is just a name given to a function, a special function called a "continuation" which when called causes program execution to jump somewhere else. Because `return` is thus a value like any other, the value of `return` can be stored in a variable and can even outlive the function call itself. This can lead to a sort of time travel:
+
+    savedReturn = null
+    value = do ^(
+        savedReturn = return
+
+        return 5
+    )
+    println value
+    value > 0 ? savedReturn (value - 1) : println "done"
+
+Continuations are basically the functional-programming equivalent of GOTO.
+
+## About objects
