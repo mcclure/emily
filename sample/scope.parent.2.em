@@ -3,8 +3,8 @@
 # Expect:
 # f
 # s
-# 4
-# 5
+# 4.
+# 5.
 
 let .x 5
 set .parent println

@@ -39,6 +39,7 @@ sample/scope.em
 sample/scope.fallthrough.em
 sample/scope.unscoped.em
 sample/scope.parent.em
+sample/scope.parent.2.em
 sample/closure.em
 sample/scope.closure.em
 sample/scope.closure.2.em
@@ -64,6 +65,8 @@ sample/obj.this.7.em
 sample/obj.this.8.em
 sample/obj.this.9.em
 sample/obj.this.super.em
+sample/obj.rethis.em
+sample/obj.rethis.2.em
 
 sample/tern.em
 sample/tern.2.em

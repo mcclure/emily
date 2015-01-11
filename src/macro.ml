@@ -301,8 +301,10 @@ let closureConstruct withReturn =
 
         in openClosure [] future
 
+(* Atom *)
 let atom past at future =
     match future with
+        (* Look at next token and nothing else. *)
         | {Token.contents=Token.Word a} :: moreFuture ->
             arrangeToken at past (cloneAtom at a) moreFuture
         | _ -> Token.failToken at "Expected identifier after ."

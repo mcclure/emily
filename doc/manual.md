@@ -347,7 +347,7 @@ If the first token to the left is `nonlocal`, this is a special flag to `=` that
 
 `=` cannot set a non-word key on a scope object. In other words, `4 = 5` is an error.
 
-*Treated as a macro*, `=` is actually identifying a key (the rightmost token to the left of the `=`, or, if present, the `^`) and a target (everything to the left of the key), and invoking *[target]* `.let` *[key]*. If the `nonlocal` modifier is present, it uses `.set` instead of `.let`.
+*Treated as a macro*, `=` is actually identifying a key (the rightmost token to the left of the `=`, or, if present, the `^`) and a target (everything to the left of the key), and invoking *[target]* `.let` *[key]*. If the `nonlocal` modifier is present, it uses `.set` instead of `.let`. See "Assignments" below.
 
 ## Splitter operators
 
@@ -533,7 +533,7 @@ Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (n
 
 #### thisTransplant, thisInit, thisFreeze, thisUpdate
 
-See "About objects" below.
+See "Manual control of 'this' and 'current'" below.
 
 ### Common
 
@@ -656,6 +656,10 @@ Closures consist of a group (`()`, `{}` or `[]`) full of code, but they carry ar
 
 These four things are determined by how the scope was created.
 
+In order to execute a closure, it must be given as many arguments as it has defined. The arguments are "curried", so if a function has two arguments then calling it with an argument returns a function which if called with an argument returns the closure's result. You can save the partially-applied function and reuse it.
+
+If a closure has zero arguments, you still have to give it an argument to execute it, just the argument will be discarded. A handy value for this purpose is `null`, which since `()` is a shorthand for `null` means the familiar-looking syntax `object.method()` will work. You can also use `do function` as defined above.
+
 When a closure executes, its code executes in a special scope with the enclosing scope as parent; this new scope is pre-populated with whichever of `return`, `current`, `this` and `super` are appropriate, then with all arguments. The behavior of assignment-- in other words, `set`, `let` and `=`-- is determined by the kind of group. In the case of an unscoped group (`^()`) they will "fall through" and occur directly in the enclosing scope. In the case of a scoped group (`^{}`) will exist in a new scope, created just for the function application, which is a child of the enclosing scope. (`^[]` is not allowed.)
 
 TODO: Explain the behavior of set and let on an argument variable.
@@ -676,3 +680,68 @@ TODO: Explain the behavior of set and let on an argument variable.
 Continuations are basically the functional-programming equivalent of GOTO.
 
 ## About objects
+
+Functions are maps from value to value. A closure, in Emily, is a function which is expressed as a series of lines of code, and the mapping is defined by that value. A special kind of function is the object, which another language might call a dictionary, which is a map from a finite set of keys to a finite set of values. A lookup on an object is generally non-mutating.
+
+Object creation is done with a group wrapped by the `[` ... `]` symbols. Like `{ }`, `[ ]` creates a new scope. The difference is that `{ }` returns the value from the final line and discards its scope, whereas `[ ]` discards its final line and returns the scope.In other words, by making assignments inside a `[ ]` you are building up an object, and then at the end of the `[ ]` this object is returned.
+
+Objects have a "parent". This is what some languages call a "prototype". If a key is requested on an object, and the object does not have a value for that key, it will check the parent (which is literally the field `parent`). If the parent doesn't have it, it will then check *its* parent, and so on. If an object is reached in this chain with no parent and the key still has not been matched, this is a failure and the program will halt.
+
+Because objects are interchangeable with other functions, the parent can be a a closure.
+
+### Assignments
+
+There are two ways to set values on an object: `let` and `set`. **You should not directly use `.set` and `.let`.** You should use `=` which is a shorthand for `let` and `nonlocal` `=` which is a shorthand for `set`; see `=` above. However, if you are in a situation you need to call the functions directly, here is how they work:
+
+`.let` will directly set a key, creating a new key->value pair if necessary.
+
+`.set` will set a key which already exists; if it does not exist, it will attempt to set it on the parent. (If it gets all the way to the end of the prototype chain and has not found a object which has a match for that key, this is a failure and the program will halt.)
+
+`let` and `set` take two curried arguments, a key and a value. To use `let` to set the variable `a` to 3, for example, this would be `let .a 3` for a scope variable or `object.let .a 3` for a object member.
+
+### Object-oriented programming
+
+There is one more wrinkle.
+
+In languages where objects can act as "containers" for functions, we often want to have those functions be "methods" on the object-- aware of and able to operate on the object they were fetched from. In Emily, if a function is defined "inside" of an object (if it is assigned inside of the object literal group) it becomes a "method" and when it is executed it will have three special variables defined in its scope: `this`, `current` and `super`. `this` is the object that the method was invoked on. `current` is the object that the method was originally defined as part of; it can be different if the method was inherited from a parent object. (You will usually want to use `this` and ignore `current`.) A method invoked on `super` will be fetched from a parent object, then executed with the `this` of the invoked object. So for example:
+
+    object1 = [
+        field = 1;
+        method ^ = ( print (current.field) ", " (this.field) ln )
+    ]
+    object2 = [
+        field = 2
+        method ^ = ( print "Hello: "; do: super.method )
+        parent = object1
+    ]
+    do: object2.method
+
+This will print "Hello: 1 2". When it is run, `method` will be invoked on object2, `this` and `current` will be pointing to object2, and "super" will be pointing to object1. `object2.method` then invokes `super.method`, which causes `object1` to be invoked with `current`=`object1` and `this`=`object2`.
+
+`this` and `current` are also visible inside object literals (Example: `[ this 3 = 4 ]` will work). `super` is not.
+
+#### For language lawyers: Edge cases
+
+Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append "x"` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior-- if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
+
+This intuitive idea is achieved by each closure being in one of four states:
+
+- The closure is created in "blank" state; it has no `this` or `current`, and if the closure is called those variables will not be set.
+- If a "blank" closure is stored as part of an **object literal** definition-- that is, if it is assigned to a field between a `[` and `]`-- it will upgrade to "method" state. In "method" state, if it is pulled out of an object (either directly, or through the `.parent` chain) the "this" and "current" will be set appropriately.
+- If a "method" closure is ever stored in a **user object** at a time that is **not** defining an object literal, it will be moved to "frozen" state. The `this` and `current` from the moment the closure was frozen will be remembered and afterward not ever be updated.
+- Similarly, if a "blank" closure is ever stored in a **user object**, it enters "never" state, which means that it is frozen in a state of never accepting a `this` or `current`. (Any `this` or `current` captured from the enclosing scope will of course be visible.)
+
+Storing a blank/method closure in a scope object (in other words: in a variable) does not freeze it.
+
+This is a bit complicated!, and it involves something nonobvious and slightly "magic" happening behind the scenes. I am interested in finding a simpler way to achieve these same goals in a later version of Emily.
+
+#### For language lawyers: Manual control of "this" and "current"
+
+A design goal of Emily is that anything the language interpreter can do, a third-party library can also do. To this end, some standard functions are available that can invoke functions with `this` and `current` set specifically. These are:
+
+- `thisTransplant` *[closure]* - Resets ANY closure to "blank" state. If something that isn't a closure is passed in, it's returned unaltered.
+- `thisFreeze` *[closure]* - If closure is "blank", converts to "never". If closure is "method", converts it to "frozen".
+- `thisInit` *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, converts it to "frozen".
+- thisUpdate *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, leaves `current` unaltered and updates `this` to *[object]*.
+
+In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me these are useful.

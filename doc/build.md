@@ -8,6 +8,6 @@ In order to build this, you will need to install:
 
 To build, this should be sufficient:
 
-make
+    make
 
 The build product will be left in the "package" directory.
