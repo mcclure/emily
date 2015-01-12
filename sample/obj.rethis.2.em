@@ -1,12 +1,12 @@
 # Compare different ways of inheriting a method.
-# FIXME: Are these... are these remotely what I want? 6 and 7 surprise me.
+# FIXME: Is this *correct*? 7 surprises me.
 # Expect:
 # 2. 2.
 # 2. 3.
 # 2. 2.
 # 2. 2.
-# 2. 2.
-# 2. 2.
+# 2. 6.
+# 2. 6.
 
 sp = " "
 
@@ -18,7 +18,7 @@ obj2 = [
     meth ^ = print `current.var1 sp `this.var1 ln
 ]
 
-# Object inherits from obj2 normally
+# Object inherits from obj2 normally -- "this" updates
 obj3 = [
     var1 = 3
 
@@ -43,7 +43,7 @@ obj5 = [
 obj6 = [
     var1 = 6
 
-    parent ^x = thisUpdate this obj2 x
+    parent ^x = thisUpdate this: obj2 x
 ]
 
 # Object inherits from obj6, which inherits from obj2 through weird method + thisUpdate

@@ -1,3 +1,6 @@
+**Emily programming language, version 0.1**
+**Reference manual**
+
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
 
 Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedence" section and read from there.
@@ -720,11 +723,11 @@ This will print "Hello: 1 2". When it is run, `method` will be invoked on object
 
 `this` and `current` are also visible inside object literals (Example: `[ this 3 = 4 ]` will work). `super` is not.
 
-#### For language lawyers: Edge cases
+#### Edge cases
 
 Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append "x"` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior-- if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
 
-This intuitive idea is achieved by each closure being in one of four states:
+This intuitive idea is achieved by each closure being in one of four states (language lawyer alert on the following):
 
 - The closure is created in "blank" state; it has no `this` or `current`, and if the closure is called those variables will not be set.
 - If a "blank" closure is stored as part of an **object literal** definition-- that is, if it is assigned to a field between a `[` and `]`-- it will upgrade to "method" state. In "method" state, if it is pulled out of an object (either directly, or through the `.parent` chain) the "this" and "current" will be set appropriately.
@@ -735,7 +738,7 @@ Storing a blank/method closure in a scope object (in other words: in a variable)
 
 This is a bit complicated!, and it involves something nonobvious and slightly "magic" happening behind the scenes. I am interested in finding a simpler way to achieve these same goals in a later version of Emily.
 
-#### For language lawyers: Manual control of "this" and "current"
+#### Manual control of "this" and "current"
 
 A design goal of Emily is that anything the language interpreter can do, a third-party library can also do. To this end, some standard functions are available that can invoke functions with `this` and `current` set specifically. These are:
 
@@ -745,3 +748,11 @@ A design goal of Emily is that anything the language interpreter can do, a third
 - thisUpdate *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, leaves `current` unaltered and updates `this` to *[object]*.
 
 In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me these are useful.
+
+## Compiling Emily
+
+Please see [build.md](build.md)
+
+## Running Emily
+
+Please see the man page.

@@ -1,6 +1,7 @@
 (* Parse and validate command line arguments. *)
 
-let version = "0.0 DEVELOPMENT"
+let version = "0.1b"
+let fullversion = ("Emily language interpreter: Version " ^ version)
 let machineVersion = [0,0,0]
 
 type executionTarget = Stdin | File of string | Literal of string
@@ -26,8 +27,7 @@ let () =
 
     let targetParse t = targets := File t :: !targets in
 
-    let usage =
-("Emily language interpreter: version " ^ version ^ {|
+    let usage = (fullversion ^ {|
 
 Sample usage:
     emily filename.em    # Execute program
