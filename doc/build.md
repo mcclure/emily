@@ -6,6 +6,8 @@ In order to build this, you will need to install:
 - ppx_tools -- I use 0.99.2, installed via opam (Required by sedlex)
 - containers -- I use 0.4.1, installed via opam
 
+You should be able to just install ocaml and opam from your package manager, and then run `opam install ocamlfind sedlex containers`.
+
 To build, this should be sufficient:
 
     make
