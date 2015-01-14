@@ -538,7 +538,19 @@ Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (n
 
 See "Manual control of 'this' and 'current'" below.
 
-### Common
+### Common: Scopes and objects
+
+These methods are present in common for scopes and user objects.
+
+#### has
+
+Also present on numbers and strings, but broken there.
+
+#### set
+
+#### let
+
+### Common: Objects and values
 
 These methods are present in common for all values which are not scopes. Embarrassingly, this includes null.
 
@@ -749,10 +761,16 @@ A design goal of Emily is that anything the language interpreter can do, a third
 
 In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me these are useful.
 
+## Miscellania
+
+Emily is garbage-collected.
+
+The standard file extension for Emily source files is `.em`.
+
 ## Compiling Emily
 
 Please see [build.md](build.md)
 
 ## Running Emily
 
-Please see the man page.
+Please see the [man page](manpage.md).

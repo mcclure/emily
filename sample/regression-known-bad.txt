@@ -2,6 +2,7 @@
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
 sample/equal.em
+sample/obj.rethis.2.em
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 sample/set.shadow.em

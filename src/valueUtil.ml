@@ -148,16 +148,16 @@ let makeObjectSet obj = snippetApply objectSetConstruct obj
 
 (* Many tables need to be prepopulated with a "let". Here's the let setter for a singular table: *)
 (* TODO: Don't 'make' like this? *)
-let makeLet (modifier:value->value->value) (t:tableValue) = snippetClosure 2 (function
+let makeLet (modifier:value->value->value) (target:value) (t:tableValue) = snippetClosure 2 (function
     | [key;value] ->
-        tableSet t key (modifier (TableValue t) value);
-        if Options.(run.traceSet) then print_endline @@ "Let update (don't trust tag) "^Pretty.dumpValueNewTable (TableValue t);
+        tableSet t key (modifier target value);
+        if Options.(run.traceSet) then print_endline @@ "Let update "^Pretty.dumpValueNewTable target;
         Null
     | _ -> impossibleArg "makeLet")
 
 (* Helpers for tableBlank *)
 let populateWithHas t =
-    tableSetString t "has" (makeHas (TableValue t))
+    tableSetString t "has" (makeHas (TableValue t)) (* FIXME: Should this ever be ObjectValue...? *)
 let populateWithSet t =
     populateWithHas t;
     tableSetString t "set" (makeSet (TableValue t))
@@ -170,17 +170,18 @@ let rec tableBlank kind : tableValue =
         | NoLet -> populateWithSet t
         | WithLet ->
             populateWithSet t;
-            tableSetString t "let" (makeLet ignoreFirst t)
+            tableSetString t "let" (makeLet ignoreFirst (TableValue t) t)
         | BoxFrom parent ->
             (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
                the other an "object" table that the code executed here funnel "let" values into. *)
             let box = match parent with None -> tableBlank NoSet | Some value -> tableInheriting NoSet value in
-            tableSetString box "set" (makeObjectSet (ObjectValue box));
-            tableSetString box "let" (makeLet rawRethisAssignObject box);
+            let boxValue = ObjectValue box in
+            tableSetString box "set" (makeObjectSet boxValue);
+            tableSetString box "let" (makeLet rawRethisAssignObject boxValue box);
             populateWithSet t;
-            tableSetString t "let" (makeLet rawRethisAssignObjectDefinition box);
-            tableSet t currentKey (ObjectValue box);
-            tableSet t thisKey    (ObjectValue box)
+            tableSetString t "let" (makeLet rawRethisAssignObjectDefinition boxValue box);
+            tableSet t currentKey boxValue;
+            tableSet t thisKey    boxValue
     );
     sealTable t;
     t

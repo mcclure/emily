@@ -211,8 +211,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
     in let closureValue v =
         let return,key = match v.Token.closure with Token.ClosureWithBinding(r,k) -> r,k | _ -> internalFail() in
         let scoped = match v.Token.kind with Token.Scoped -> true | _ -> false in
-        simpleValue Value.(ClosureValue { exec=ClosureExecUser {body=v.Token.items; envScope=frame.scope; key; scoped; return; }; bound=[]; this=Value.ThisBlank; needArgs=(List.length key);
-         })
+        simpleValue Value.(ClosureValue { exec=ClosureExecUser {body=v.Token.items; envScope=frame.scope; key; scoped; return; }; bound=[]; this=Value.ThisBlank; needArgs=(List.length key) })
 
     (* Identify token *)
     in match token.Token.contents with

@@ -2,7 +2,7 @@ This last year I've been working on a programming language. Around April, I sat 
 
 In this file:
 
-[toc]
+[TOC]
 
 ## An example
 
@@ -183,7 +183,7 @@ What you see here is part of a [more ambitious set of ideas](http://msm.runhello
 - C++
 - Reader macros
 
-These are all Big Ideas though, and the language already needs  so for 0.2 I'm going to be focused on basic functionality improvements (less confusing scoping, operators on strings, short-circuiting booleans, user-defined operators, unicode, package loading, IO).
+These are all Big Ideas though, and the ideas the language **already** has could stand some cleanup, so for 0.2 I'm going to be focused on basic functionality improvements (less confusing scoping, operators on strings, short-circuiting booleans, user-defined operators, unicode, package loading, IO).
 
 ## Downloading and running Emily
 
