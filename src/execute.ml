@@ -254,9 +254,11 @@ and apply stack this a b =
                 | Value.ObjectValue _, Some (Value.ClosureValue _ as c) -> r @@ ValueUtil.rawRethisSuperFrom this c
                 | _, Some v -> r v
                 | _, None ->
-                    match Value.tableGet t Value.parentKey with
-                        | Some parent -> apply stack this parent b
-                        | None -> ValueUtil.rawMisapplyStack stack this bv
+                    match a,Value.tableGet t Value.parentKey with
+                        | Value.ObjectValue _, Some (Value.ClosureValue _ as parent) ->
+                            apply stack this (ValueUtil.rawRethisSuperFrom this parent) b
+                        | _,Some parent -> apply stack this parent b
+                        | _,None -> ValueUtil.rawMisapplyStack stack this bv
     (* Perform the application *)
     in match a with
         (* If applying a closure. *)
