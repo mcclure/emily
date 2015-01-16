@@ -177,10 +177,14 @@ There's a couple more interesting things that made it into the language, even as
 
 ## What next?
 
-What you see here is part of a [more ambitious set of ideas](http://msm.runhello.com/p/934), some of which may not be completely feasible (link goes to a planning document I wrote before even attempting any code).
+What you see here is part of a [more ambitious set of ideas](http://msm.runhello.com/p/934) (link goes to my original design writeup before I started writing any code). Here's some things I want in Emily eventually; some of this may not be completely feasible, but I think even making it part of the way would be exciting.
 
 - Types
+
+    Emily right now is a fully dynamic language; there's nothing to stop you from saying, say, `3 (4)`.
+
 - C++
+
 - Reader macros
 
 These are all Big Ideas though, and the ideas the language **already** has could stand some cleanup, so for 0.2 I'm going to be focused on basic functionality improvements (less confusing scoping, operators on strings, short-circuiting booleans, user-defined operators, unicode, package loading, IO).

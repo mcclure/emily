@@ -452,113 +452,31 @@ Splitter for `.times`. Intended for mathematical multiplication or something lik
 
 Splitter for `.divide`. Intended for mathematical division or something like it.
 
-## Builtins
+# Builtins
 
-In each of the following sections, the documented fiends are in the base prototype for the section's type. The value `3` has "integer" as its base prototype, so any methods in the integer base prototype will be usable on `3`. For an explanation of prototypes, see "About objects" below.
+A set of builtin functions and other values are available on the various built-in types.
+
+In each of the following sections, the documented fields are in the base prototype for the section's type. The value `3` has "integer" as its base prototype, so any methods in the integer base prototype will be usable on `3`. For an explanation of prototypes, see "About objects" below.
 
 Remember for scopes, a field lookup is done by just writing a word, like `not`; for other kind of objects, the field lookup requires a `.`, like `3.negate`.
 
-### Scope
+For anything below, a reference to "the target" means whatever object the field lookup was performed on, i.e., `3` in the case of `3.negate`.
 
-#### null
+## Common
 
-Null value.
-
-#### true
-
-True value.
-
-#### print
-
-**Usage:** `print` *[arg]*
-
-Takes any argument, prints it to stdout as a string, then returns `print` again (so it can be chained).
-
-*Example:* `print 1 2 3` (prints "123")
-
-#### println
-
-**Usage:** `println` *[arg]*
-
-Takes any argument, prints it to stdout as a string followed by a newline, then returns `println` again (so it can be chained).
-
-*Example:* `println 1 2 3` (prints 1, 2 and 3 separated by newlines)
-
-Note: The behavior of `print` and `println` with regard to buffer flushing is currently undefined, but incidentally, the current 0.1 interpreter flushes every time it prints something with `println` and never flushes for `print`.
-
-#### `ln`
-
-Value equal to "\n".
-
-#### do
-
-**Usage:** `do` *[arg]*
-
-Performs `arg null` and returns the result. Useful for executing a zero-argument closure.
-
-*Example:* `do ^( println 3 )`
-
-#### loop
-
-**Usage:** `loop` *[arg]*
-
-Takes a value assumed to be a zero-argument closure, executes it by passing null as an argument, if the return value is true (non-null) executes it again, if that return value is true executes it again, if that...
-
-#### if
-
-**Usage:** `if` *[arg 1]* *[arg 2]*
-
-*[arg 2]* is assumed to be a zero-argument closure, *[arg 1]* is anything.
-
-If *[arg 1]* is true (non-null) executes *[arg 2]* by passing null as an argument.
-
-#### while
-
-**Usage:** `while` *[arg 1]* *[arg 2]*
-
-Takes two arguments, both assumed to be zero-argument closures. Repeatedly executes *[arg 1]* by passing null as an argument, if the result is false (null) stops looping, if the result is true (not null) executes *[arg 2]* and repeats.
-
-#### not
-
-**Usage:** `not` *[arg]*
-
-Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
-
-#### `nullfn`
-
-Slightly arcane, takes an argument, ignores it and returns null.
-
-#### tern
-
-**Usage:** `tern` *[arg 1]* *[arg 2]* *[arg 3]*
-
-Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (non-null) this executes *[arg 2]* by passing null as an argument, otherwise executes *[arg 3]* by passing null as an argument.
-
-#### thisTransplant, thisInit, thisFreeze, thisUpdate
-
-See "Manual control of 'this' and 'current'" below.
-
-### Common: Scopes and objects
-
-These methods are present in common for scopes and user objects.
+### All objects
 
 #### has
 
-Also present on numbers and strings, but broken there.
+**Usage:** `has` *[arg 1]*
 
-#### set
+Takes a value and returns `true` if the target is able to properly handle the value and `null` if it is not (i.e., the result is `null` if applying the target against *[arg 1]* will result in an error).
 
-#### let
+Note: Even `null` responds to this.
 
 ### Common: Objects and values
 
-These methods are present in common for all values which are not scopes. Embarrassingly, this includes null.
-
-For anything below, a reference to "the target" means whatever object the field lookup was performed on, i.e., `3` in the case of `3.negate`.
-
-As a point of trivia, the reason these three methods are common to ALL objects is they are methods on `true`, which is the prototype all other prototypes inherit from (except `null`).
-
-These methods will not exist in future versions.
+These methods are used for boolean logic and are present in common for all values which are not scopes.Because of the short-circuiting program described under `&&` above, they will not exist in future versions.
 
 #### and
 
@@ -578,79 +496,167 @@ Returns `true` if either the target and *[arg 1]* are true (not null)
 
 Returns `true` if exactly one of the target and *[arg 1]* are true (not null)
 
-### Object
+### Common: Scopes and objects
+
+These methods are present in common for scopes and user objects (things that act as containers).
+
+#### set, let
+
+See "About objects: Assignments" below.
+
+## Scope
+
+### null
+
+Null value.
+
+### true
+
+True value.
+
+### print
+
+**Usage:** `print` *[arg]*
+
+Takes any argument, prints it to stdout as a string, then returns `print` again (so it can be chained).
+
+*Example:* `print 1 2 3` (prints "123")
+
+### println
+
+**Usage:** `println` *[arg]*
+
+Takes any argument, prints it to stdout as a string followed by a newline, then returns `println` again (so it can be chained).
+
+*Example:* `println 1 2 3` (prints 1, 2 and 3 separated by newlines)
+
+Note: The behavior of `print` and `println` with regard to buffer flushing is currently undefined, but incidentally, the current 0.1 interpreter flushes every time it prints something with `println` and never flushes for `print`.
+
+### `ln`
+
+Value equal to "\n".
+
+### do
+
+**Usage:** `do` *[arg]*
+
+Performs `arg null` and returns the result. Useful for executing a zero-argument closure.
+
+*Example:* `do ^( println 3 )`
+
+### loop
+
+**Usage:** `loop` *[arg]*
+
+Takes a value assumed to be a zero-argument closure, executes it by passing null as an argument, if the return value is true (non-null) executes it again, if that return value is true executes it again, if that...
+
+### if
+
+**Usage:** `if` *[arg 1]* *[arg 2]*
+
+*[arg 2]* is assumed to be a zero-argument closure, *[arg 1]* is anything.
+
+If *[arg 1]* is true (non-null) executes *[arg 2]* by passing null as an argument.
+
+### while
+
+**Usage:** `while` *[arg 1]* *[arg 2]*
+
+Takes two arguments, both assumed to be zero-argument closures. Repeatedly executes *[arg 1]* by passing null as an argument, if the result is false (null) stops looping, if the result is true (not null) executes *[arg 2]* and repeats.
+
+### not
+
+**Usage:** `not` *[arg]*
+
+Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
+
+### `nullfn`
+
+Slightly arcane, takes an argument, ignores it and returns null.
+
+### tern
+
+**Usage:** `tern` *[arg 1]* *[arg 2]* *[arg 3]*
+
+Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (non-null) this executes *[arg 2]* by passing null as an argument, otherwise executes *[arg 3]* by passing null as an argument.
+
+### thisTransplant, thisInit, thisFreeze, thisUpdate
+
+See "Manual control of 'this' and 'current'" below.
+
+## Object
 
 In other words, user objects, created with `[` ... `]`.
 
-#### append
+### append
 
 **Usage:** `append` *[arg 1]*
 
 Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming "0" if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`.
 
-#### each
+### each
 
 **Usage:** `each` *[arg 1]*
 
 Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, invokes *[arg 1]* for each *n* which the object possesses as a key (testing with `.has`) until one is not present, then stops.
 
-### Number
+## Number
 
 For all number members taking arguments, the argument must be another number. If it is not, this is a failure and the program halts on evaluation.
 
-#### `negate`
+### `negate`
 
 Returns the target times -1.
 
-#### add
+### add
 
 **Usage:** `add` *[arg 1]*
 
 Adds the target to *[arg 1]* and returns the result.
 
-#### minus
+### minus
 
 **Usage:** `minus` *[arg 1]*
 
 Subtracts *[arg 1]* from the target and returns the result.
 
-#### times
+### times
 
 **Usage:** `times` *[arg 1]*
 
 Multiples *[arg 1]* with the target and returns the result.
 
-#### divide
+### divide
 
 **Usage:** `divide` *[arg 1]*
 
 Divides the target by *[arg 1]* and returns the result.
 
-#### lt
+### lt
 
 **Usage:** `lt` *[arg 1]*
 
 If *[arg 1]* is less than the target, returns `true`. Otherwise returns `null`.
 
-#### lte
+### lte
 
 **Usage:** `lte` *[arg 1]*
 
 If *[arg 1]* is less than or equal to the target, returns `true`. Otherwise returns `null`.
 
-#### gt
+### gt
 
 **Usage:** `gt` *[arg 1]*
 
 If *[arg 1]* is greater than the target, returns `true`. Otherwise returns `null`.
 
-#### gte
+### gte
 
 **Usage:** `gte` *[arg 1]*
 
 If *[arg 1]* is greater than or equal to the target, returns `true`. Otherwise returns `null`.
 
-#### eq
+### eq
 
 **Usage:** `eq` *[arg 1]*
 
@@ -658,7 +664,7 @@ If *[arg 1]* is equal to the target, returns `true`. Otherwise returns `null`.
 
 Notice something very alarming: In 0.1 this is a method on number. It is not present on true, false, strings, or objects. This will be fixed in later versions.
 
-## About user closures
+# About user closures
 
 Everything in Emily "is a function", so what we usually think of as "a function"-- a block of reusable code you define-- in Emily is just one particular kind of function, called a "closure". Closures are created with the ^ operator; if you see a ^, you know you're making a closure.
 
@@ -679,7 +685,7 @@ When a closure executes, its code executes in a special scope with the enclosing
 
 TODO: Explain the behavior of set and let on an argument variable.
 
-### return
+## return
 
 `return` is populated into the scope each time a function executes. It behaves the same way as `return` in other languages; putting a value after "return" causes the function to immediately terminate and its call site evaluate to the returned value. There is one way `return` differs from other languages: `return` is not a keyword, but rather is just a name given to a function, a special function called a "continuation" which when called causes program execution to jump somewhere else. Because `return` is thus a value like any other, the value of `return` can be stored in a variable and can even outlive the function call itself. This can lead to a sort of time travel:
 
@@ -694,7 +700,7 @@ TODO: Explain the behavior of set and let on an argument variable.
 
 Continuations are basically the functional-programming equivalent of GOTO.
 
-## About objects
+# About objects
 
 Functions are maps from value to value. A closure, in Emily, is a function which is expressed as a series of lines of code, and the mapping is defined by that value. A special kind of function is the object, which another language might call a dictionary, which is a map from a finite set of keys to a finite set of values. A lookup on an object is generally non-mutating.
 
@@ -702,9 +708,9 @@ Object creation is done with a group wrapped by the `[` ... `]` symbols. Like `{
 
 Objects have a "parent". This is what some languages call a "prototype". If a key is requested on an object, and the object does not have a value for that key, it will check the parent (which is literally the field `parent`). If the parent doesn't have it, it will then check *its* parent, and so on. If an object is reached in this chain with no parent and the key still has not been matched, this is a failure and the program will halt.
 
-Because objects are interchangeable with other functions, the parent can be a a closure.
+Because objects are interchangeable with other functions, the parent can be a a closure. When invoked, the `.parent` closure will be treated like any other closure (e.g. `this` and `current` will be correct).
 
-### Assignments
+## Assignments
 
 There are two ways to set values on an object: `let` and `set`. **You should not directly use `.set` and `.let`.** You should use `=` which is a shorthand for `let` and `nonlocal` `=` which is a shorthand for `set`; see `=` above. However, if you are in a situation you need to call the functions directly, here is how they work:
 
@@ -714,7 +720,7 @@ There are two ways to set values on an object: `let` and `set`. **You should not
 
 `let` and `set` take two curried arguments, a key and a value. To use `let` to set the variable `a` to 3, for example, this would be `let .a 3` for a scope variable or `object.let .a 3` for a object member.
 
-### Object-oriented programming
+## Object-oriented programming
 
 There is one more wrinkle.
 
@@ -735,7 +741,7 @@ This will print "Hello: 1 2". When it is run, `method` will be invoked on object
 
 `this` and `current` are also visible inside object literals (Example: `[ this 3 = 4 ]` will work). `super` is not.
 
-#### Edge cases
+### Edge cases
 
 Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append "x"` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior-- if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
 
@@ -750,7 +756,7 @@ Storing a blank/method closure in a scope object (in other words: in a variable)
 
 This is a bit complicated!, and it involves something nonobvious and slightly "magic" happening behind the scenes. I am interested in finding a simpler way to achieve these same goals in a later version of Emily.
 
-#### Manual control of "this" and "current"
+### Manual control of "this" and "current"
 
 A design goal of Emily is that anything the language interpreter can do, a third-party library can also do. To this end, some standard functions are available that can invoke functions with `this` and `current` set specifically. These are:
 
@@ -761,7 +767,7 @@ A design goal of Emily is that anything the language interpreter can do, a third
 
 In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me these are useful.
 
-## Miscellania
+# Miscellania
 
 Emily is garbage-collected.
 

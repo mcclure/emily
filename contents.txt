@@ -19,6 +19,9 @@ doc/
 package/
     After build, executable will go here
 
+resources/
+    Static files to be incorporated during build
+
 sample/
     Example Emily scripts (double as unit tests)
 

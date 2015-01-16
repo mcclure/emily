@@ -1,3 +1,5 @@
+# Building Emily
+
 In order to build this, you will need to install:
 
 - ocaml -- I use 4.02.1 installed via MacPorts
@@ -8,8 +10,17 @@ In order to build this, you will need to install:
 
 You should be able to just install ocaml and opam from your package manager, and then run `opam install ocamlfind sedlex containers`.
 
-To build, this should be sufficient:
+To build, this should be sufficient (assuming everything above is installed:
 
     make
 
 The build product will be left in the "package" directory.
+
+# Optional builds
+
+Building a new version of the manpage from the Markdown file requires the presence of:
+
+- ruby -- I use 2.1.2p95, installed via MacPorts
+- ronn -- I use 0.7.3, installed via RubyGems
+
+You do not need to do this unless you edit [manpage.md](manpage.md).

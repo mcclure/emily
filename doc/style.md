@@ -13,7 +13,9 @@ ML coding standards for Emily project
 
     Because `make test` is meant to catch and document *regressions*, nothing should ever be intentionally checked in if `make test` is failing. If a commit must be made while a test is failing, the test in question should be moved from `regression.txt` to `regression-known-bad.txt`. "Actually all tests" including the known bad ones can be tested with `make test-all`.
 
-- Nothing critical to the build should ever depend on anything but OCaml, opam+opam modules or (because I guess I don't have an alternative) GNU make. (Note `make test` uses Python but it is not critical to the build.) Required opam modules should be documented in [build.md](build.md).
+- Nothing critical to the build should ever depend on anything but OCaml, opam+opam modules or (because I guess I don't have an alternative) GNU make. (Note `make test` uses Python, and `make manpage` uses the Ruby-based `ronn` tool, but neither of these are critical to the build.) Required opam modules should be documented in [build.md](build.md).
+
+- If you alter [manpage.md](manpage.md), please update the publication date (obnoxiously, inlined in the Makefile) and re-run `make manpage`.
 
 - Please write as many comments as you sensibly can. I seriously think a good ratio of lines of comments:lines of code is 1:1.  A good use for comments is explaining the code's *intent*; we can probably understand *what* the code is doing just by reading it, but are less certain to understand *why*.
 
