@@ -73,9 +73,12 @@ Options:|})
         ),  {|When executing, set all runtime trace type options|});
     ]
 
-    in Arg.parse args targetParse usage
+    in Arg.parse args targetParse usage;
 
-    ; match !targets, run.printVersion, run.printMachineVersion with
-        | [],false,false -> Arg.usage args usage; exit 1
-        | t,_,_  -> run.targets <- List.rev t
+    (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
+    if run.printMachineVersion then print_endline version else
+    if run.printVersion then print_endline fullVersion else
+    match !targets with
+        | [] -> Arg.usage args usage; exit 1 (* No targets! *)
+        | t  -> run.targets <- List.rev t
 
