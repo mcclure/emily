@@ -1,24 +1,29 @@
 (* Parse and validate command line arguments. *)
 
 let version = "0.1b"
-let fullversion = ("Emily language interpreter: Version " ^ version)
-let machineVersion = [0,0,0]
+let fullVersion = ("Emily language interpreter: Version " ^ version)
 
 type executionTarget = Stdin | File of string | Literal of string
 
 type optionSpec = {
+    (* Execution args *)
     mutable targets : executionTarget list;
-    mutable disassemble : bool;
-    mutable disassembleVerbose : bool;
     mutable stepMacro : bool;
     mutable trace : bool;
     mutable trackObjects : bool;
     mutable traceSet : bool;
+
+    (* Things to do instead of execution *)
+    mutable disassemble : bool;
+    mutable disassembleVerbose : bool;
+    mutable printVersion : bool;
+    mutable printMachineVersion : bool;
 }
 
 let run = {
     targets=[];
-    disassemble=false; disassembleVerbose=false; stepMacro=false; trace=false; trackObjects=false; traceSet = false;
+    stepMacro=false; trace=false; trackObjects=false; traceSet = false;
+    disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
 }
 
 let () =
@@ -27,7 +32,7 @@ let () =
 
     let targetParse t = targets := File t :: !targets in
 
-    let usage = (fullversion ^ {|
+    let usage = (fullVersion ^ {|
 
 Sample usage:
     emily filename.em    # Execute program
@@ -35,6 +40,8 @@ Sample usage:
     emily -e "println 3" # Execute from command line
 
 Options:|})
+
+    in let versionSpec key = (key, Arg.Unit(fun () -> run.printVersion <- true), {|Print interpreter version|})
 
     in let args = [
         ("-", Arg.Unit(fun () -> (* Arg's parser means the magic - argument must be passed in this way. *)
@@ -46,6 +53,11 @@ Options:|})
         ("-e", Arg.String(fun f ->
             targets := Literal f :: !targets
         ), "Execute code inline");
+
+        versionSpec "-v";
+        versionSpec "--version";
+
+        ("--machine-version", Arg.Unit(fun () -> run.printMachineVersion <- true), {|Print interpreter version (machine-readable-- number only)|});
 
         (* For supporting Emily development itself *)
         ("--debug-dis",   Arg.Unit(fun () -> run.disassemble <- true),        {|Print "disassembled" code and exit|});
@@ -63,7 +75,7 @@ Options:|})
 
     in Arg.parse args targetParse usage
 
-    ; match !targets with
-        | [] -> Arg.usage args usage; exit 1
-        | t  -> run.targets <- List.rev t
+    ; match !targets, run.printVersion, run.printMachineVersion with
+        | [],false,false -> Arg.usage args usage; exit 1
+        | t,_,_  -> run.targets <- List.rev t
 
