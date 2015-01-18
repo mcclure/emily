@@ -1,4 +1,4 @@
-This last year I've been working on a programming language. Around April, I sat down and I wrote out a [list of all the things I want out of a programming language](http://msm.runhello.com/p/928). Nothing that exists right now felt satisfying. So I decided to make my own. I've named this language Emily, and as of today I have a [finished "version 0.1" release that you can download and run](https://bitbucket.org/runhello/emily/wiki/Home). This version is **very** primitive in certain ways, but you can write a program in it and I think it demonstrates where the language is going.
+This last year I've been working on a programming language. Around April, I sat down and I wrote out a [list of all the things I want out of a language](http://msm.runhello.com/p/928). Nothing that exists right now felt satisfying. So I decided to make my own. I've named this language Emily, and as of today I have a [finished "version 0.1" release that you can download and run](https://bitbucket.org/runhello/emily/wiki/Home). This version is **very** primitive in certain ways, but you can write a program in it and I think it demonstrates where the language is going.
 
 In this file:
 
@@ -201,4 +201,8 @@ These are all Big Ideas though, and the ideas the language **already** has could
 
 ## Downloading and running Emily
 
-As mentioned, Emily is available [from a BitBucket page](https://bitbucket.org/runhello/emily), but not yet in any other form. You will need to compile it yourself; it's written in Objective Caml, so you'll need to install that first. For instructions, see [build.md](build.md).
+As mentioned, Emily is available [from a BitBucket page](https://bitbucket.org/runhello/emily) (or, if you can't use Mercurial, its [GitHub mirror](https://github.com/mcclure/emily), but not yet in any other form. You will need to compile it yourself; it's written in Objective Caml, so you'll need to install that first. For instructions, see [build.md](build.md). By the time you read this, there may also be install packages; see [emilylang.org](http://emilylang.org).
+
+### What's "BitBucket"?
+
+If you're not familiar with BitBucket or Github, go to the [Downloads page on BitBucket](https://bitbucket.org/runhello/emily/downloads), click the "Branches" tab, and to the right of the word "stable" click "zip". This will download a zip file of the most recent stable release.

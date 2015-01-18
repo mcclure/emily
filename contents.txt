@@ -3,6 +3,9 @@ Repository contents
 Makefile
     Project makefile
 
+LICENSE.md
+    Project licensing and contributor information
+
 contents.txt
     This file
 
@@ -13,14 +16,14 @@ develop/regression.py
     Unit testing script
 
 doc/
-    Language, build etc documentation. I recommend starting with "build.md"
+    Language, build etc documentation. I recommend starting with "build.md" or "intro.md"
     Files are in Markdown, I recommend the Markdown Preview plugin for Chrome
 
 package/
     After build, executable will go here
 
 resources/
-    Static files to be incorporated during build
+    Static files to be incorporated into package during build
 
 sample/
     Example Emily scripts (double as unit tests)
