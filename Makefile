@@ -1,3 +1,7 @@
+PREFIX := /usr/local
+bindir = $(PREFIX)/bin
+mandir = $(PREFIX)/share/man/man1
+
 .PHONY: all
 all: package/emily package/emily.1
 
@@ -40,3 +44,12 @@ manpage:
 clean:
 	ocamlbuild -clean
 	rm -f _tags package/emily
+
+.PHONY: install install-makedirs
+install-makedirs:
+	install -d $(DESTDIR)$(bindir)
+	install -d $(DESTDIR)$(mandir)
+
+install: install-makedirs
+	install package/emily $(bindir)
+	install resources/emily.1 $(mandir)
