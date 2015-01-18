@@ -28,13 +28,13 @@ As the language author, it is my job to make it hard for you to do something wro
 
 ## "Anything a code generator can do", in-language
 
-There should be some concept of the language 
+The language should be dynamic enough that if you ever feel tempted to write a code generator, it's actually easier to use some language-built-in facility.
 
 ### One language
 
 As opposed to one language for code, plus one language for templates, plus one language for macros, plus one language for type definitions, plus one language for build scripts...
 
-Many languages, when they need a sub-language for controlling the behavior of some particular quirky thing, define something new and
+Many languages, when they need a sub-language for controlling the behavior of some particular quirky thing, define something new with its own syntax. Although macros do create the possibilities of DSLs, this should be avoided to the greatest extent possible. At the least, any "little languages" should just be sugar for the main language, so you can fall back to the main language if you need.
 
 ### Define objects by their behavior, not their nature
 
@@ -75,3 +75,5 @@ C++ has a design rule like this, but gets it backward; it ensures you never have
 ## Deployability is all-important
 
 ## No magic
+
+## No super cow powers

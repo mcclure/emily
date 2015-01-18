@@ -8,7 +8,7 @@ So far, this is all pretty much standard for a language developed in the last te
 
 In Emily, as I've said, everything is "the same thing", functions or objects or whatever you want to call them. Because there are closures and higher-order functions, I can construct functions at runtime. Because classes are just objects that act as prototypes, I can construct classes at runtime. I can interchange objects and functions. It therefore follows to me that I should be able to make types at runtime, and I should be able to interchange them with functions. A type is a set; I should be able to make a predicate that defines that set. In other words I should have some syntax like `^x [x > 3]` that creates a type "all variables x where `x > 3` is true". Similarly, since Emily has no "syntax" for just about anything (everything is a function application), type-annotating should also be some kind of function call (i.e. a runtime check, which potentially fails and that the optimizer knows how to remove when it's provably unnecessary). `int` is somehow interchangeable with a function that returns true if its argument is an integer, etc.
 
-Functional languages offer something really cool called "pattern matching", where you can pass a value into a meat grinder that switches on either value or certain kinds of types. Like, this is legal Ocaml code:
+Functional languages offer something really cool called "pattern matching", where you can pass a value into a meat grinder that switches on either value or certain kinds of types. Like, this is legal OCaml code:
 
     let rec factorial = function
         | 0 -> 1
@@ -22,4 +22,4 @@ In other words, the function result is "1 if the value is 0, multiply by factori
         ^x where x < 0 = fail "Positive numbers only"
     ]
 
-That's awful code (no tail recursion! `:(`)
+That's awful code (no tail recursion! `:(`) but you get the idea. Here the "where x > 0" is basically just another key. This would mean I could guard up a function guard, or something like OCaml `match`, by just adding fields to an object-- and the objects still have a prototype chain, so I could build up a `match` one piece at a time by inheritance.
