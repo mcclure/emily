@@ -40,16 +40,18 @@ manpage:
 	               --organization="http://emilylang.org" \
 	               doc/manpage.1.md > resources/emily.1
 
-# Clean target
-clean:
-	ocamlbuild -clean
-	rm -f _tags package/emily
-
+# Install target
 .PHONY: install install-makedirs
 install-makedirs:
 	install -d $(DESTDIR)$(bindir)
 	install -d $(DESTDIR)$(mandir)
 
-install: install-makedirs
+install: install-makedirs all
 	install package/emily $(bindir)
-	install resources/emily.1 $(mandir)
+	install package/emily.1 $(mandir)
+
+# Clean target
+.PHONY: clean
+clean:
+	ocamlbuild -clean
+	rm -f _tags package/emily
