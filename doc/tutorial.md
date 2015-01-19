@@ -5,6 +5,9 @@ This is a quick overview of how to write programs in the Emily programming langu
 
 If you just want an explanation of what Emily is, see [intro.md](intro.md). If you want exhaustive documentation of the language, see [manual.md](manual.md).
 
+Table of Contents:
+[TOC]
+
 # For starters
 
 ## A really simple program
@@ -318,6 +321,91 @@ This prints:
 
 Calling `append` on an object sets the key `count` to `append`'s argument, and then increments `count`; `each` takes a function as argument, and invokes it on all numeric keys from `0` up to `count`.
 
-# Why any of this?
+# So what is this good for?
 
-TODO
+Up until now, I've been describing to you a language which looks like a lot of languages you've seen before, with a few quirks. Why these quirks? Why use this language?
+
+Emily is **simpler** than other programming languages, in certain ways. My goal in designing it was to reduce the number of basic concepts that a programming language is built on. Fewer concepts winds up meaning that the concepts that are left are more versatile, and you can use this versatility in some really neat ways.
+
+## Everything is a function
+
+Something you might have noticed: Both passing an argument to a function, and looking up a key on an object, is done by writing one after the other. What is the difference between a function and an object?
+
+The answer is: Objects **are** functions. A function in Emily is a map from one value to another (which maybe has some sort of side-effect when it evaluates). Objects are one way of mapping things, closures (code functions made with `^`) are another, but the language doesn't know the difference between them and doesn't care. You can interchange objects and functions. For example an object can inherit from a function:
+
+    sensor = [
+        parent = println
+    ]
+
+    sensor.testValue
+
+This code prints `testValue`, because when the language doesn't find `.testValue` in `sensor` it looks `.testValue` up in `sensor`'s parent, which happens to be the println function. This is not an example of something you would actually ever do. But...
+
+## Everything you do is a function call
+
+When I say everything is a function call, I do mean everything. Operators, like `=` or `+`, are actually function calls in disguise; `a + b` is code for `a .plus b`, `a = b` is code for `scope.let .a b` (this will probably be named `set` in the next version). Objects like `[]` have that `.let` field built in when you make them, objects like `3` (numbers are objects) have a `.plus` field built in when you make them. Look at what happens if I replace `let`:
+
+    sensor = [
+        secrets = []              # This is the real object
+
+        # Catch attempts to read a field...
+        parent ^key = (
+            print "Read key " key ln               # Gossip
+            this.secrets key      # Then forward to secrets
+        )
+
+        # Catch attempts to write a field...
+        let ^key ^value = (
+            print "Set key "  key " to " value ln
+            this.secrets key = value   # Forward to secrets
+        )
+    ]
+
+    sensor.testValue = 5 + 10
+
+    println: sensor.testValue
+
+`sensor` acts like any other object, but it gossips about everything you do to it. The above code prints:
+
+    Set key testValue to 15.
+    Read key testValue
+    15.
+
+It's not unusual to find a language which allows attribute getter/setters, but doing so here is unusually straightforward because you're using the normal language machinery, not some kind of special construct.
+
+## Make your own flow control
+
+I mentioned earlier that `if` and `while` are "higher-order functions". This means having to write `^`s a bunch (at least until I figure out a better syntax...), but there's a distinct advantage to this: It means writing your own flow control operators is easy. Perl and Ruby have an `until` in addition to `while`; if an Emily user wanted an `until`, they could add it by writing one function:
+
+    until ^condition ^block = \
+        while ^(!( do condition )) block
+
+    x = 5
+    until ^(x < 0) ^(println x; x = x - 1)
+
+Or if we wanted to be all fancypants functional programmer, we could do this with currying:
+
+    compose ^a ^b ^c = a (b c)
+    until = compose while (compose not)
+
+A thing to notice: `until` is a function, but we constructed it without actually using a `^`. If functions are values, it starts to feel attractive to make functions by performing operations on those values rather than writing out the code. (Although maybe taking it **this** far is a little pointless.)
+
+## Currying objects
+
+If we're thinking of objects as functions, we can think of field accesses as similar to currying-- `x.functionName argument` applies a method, and `x.functionName` is like partially applying that method.
+
+    # Take the `each` method from an object,
+    # and print each value with a filter function applied.
+    printFiltered ^each ^function = each ^value(println: function value)
+
+    # Make the list 1 2 3
+    x = [ this.append 1; this.append 2; this.append 3 ]
+
+    # Prints 4 5 6
+    printFiltered (x.each) (3.plus)
+
+The interesting thing here is that `x.each` and `3.plus` "remember" their targets; `3.plus` constructs a little standalone function that adds 3 to any number.
+
+## What is Emily?
+
+Emily is an attempt to get the power and flexibility of functional programming languages-- things like ML, with things like higher-order functions and user-defined operators-- while retaining the abilities and ease of use of a dynamic object-oriented language. It does this by modeling all operations as chains of function applications, approximating traditional programming language operators as macros that construct those applications, and adding some builtins that support OO style.

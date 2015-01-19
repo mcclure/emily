@@ -46,6 +46,7 @@ sample/scope.closure.2.em
 sample/scope.closure.3.em
 sample/curry.em
 sample/curry.2.em
+sample/curry.compose.em
 sample/return.em
 sample/return.2.em
 sample/return.3.em
@@ -68,6 +69,7 @@ sample/obj.this.super.em
 sample/obj.rethis.em
 sample/obj.rethis.2.em
 sample/obj.rethis.3.em
+sample/set.this.em
 
 sample/tern.em
 sample/tern.2.em

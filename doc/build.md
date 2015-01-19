@@ -52,7 +52,7 @@ To build, this should be sufficient (assuming everything above is installed:
 
 The build product will be left in the "package" directory. To install it to a standard location, run `make install`.
 
-### I'm on Windows
+### I'm on Windows...
 
 Okay! The bundled `Makefile` is not going to work for you. Luckily, the `Makefile` is just a thin wrapper on a tool called `ocamlbuild`, which in theory works on Windows and is installed along with the standard OCaml distribution. You will need to follow the `ocamlbuild` instructions to build the file `src/main.native` with ocamlfind enabled. Let me know if it works!
 

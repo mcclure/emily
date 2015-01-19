@@ -3,7 +3,7 @@
 
 timeMachine ^ = (           # Function takes no arguments
     goBackward = return     # Store return in a variable. Yes, really.
-    return 1                # Return.
+    return 1                # Return. This line only runs once.
 )
 
 counter = do timeMachine    # The return value of "do TimeMachine" is 1, right?
