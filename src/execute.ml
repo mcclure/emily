@@ -338,3 +338,45 @@ let execute code =
         let initialFrame = executeNext initialScope contents.Token.items code.Token.at
         in executeStep @@ [initialFrame] (* then place it as the start of the stack. *)
     | _ -> () (* Execute a constant value-- no effect *)
+
+let isIndented s =
+  if (String.length s) == 0 then false
+  else match (String.get s 0) with
+       | '\t' -> true
+       | ' ' -> true
+       | _ -> false
+
+let isContinued s =
+  let len = String.length s in
+  if len == 0 then false else (String.get s (len - 1)) == '\\'
+
+let repl =
+  let scope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
+  let line = ref "" in
+  let lines = ref [] in
+  (* line := input_line stdin; *)
+  (* lines := !line :: []; *)
+  try
+      while true do
+        line := input_line stdin;
+        lines := !line :: !lines;
+        while (isContinued !line) do
+          line := input_line stdin;
+          lines := !line :: !lines;
+        done;
+    
+        let xdata = (String.concat "\n" (List.rev !lines)) in
+        let code = (Tokenize.tokenize_string Token.Cmdline xdata) in
+
+        (match code.Token.contents with
+          | Token.Group contents ->
+             let frame = executeNext scope contents.Token.items code.Token.at in
+             executeStep @@ [frame]
+          | _ -> ()
+        );
+
+        flush stdout;
+        lines := [];
+      done;
+    with End_of_file ->
+      print_string "bye!\n"

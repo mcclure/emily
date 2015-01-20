@@ -3,7 +3,7 @@
 let version = "0.1"
 let fullVersion = ("Emily language interpreter: Version " ^ version)
 
-type executionTarget = Stdin | File of string | Literal of string
+type executionTarget = Stdin | File of string | Literal of string | Repl
 
 type optionSpec = {
     (* Execution args *)
@@ -38,6 +38,7 @@ Sample usage:
     emily filename.em    # Execute program
     emily -              # Execute from stdin
     emily -e "println 3" # Execute from command line
+    emily -r             # Execute REPL
 
 Options:|})
 
@@ -53,6 +54,10 @@ Options:|})
         ("-e", Arg.String(fun f ->
             targets := Literal f :: !targets
         ), "Execute code inline");
+
+        ("-r", Arg.Unit(fun f ->
+            targets := Repl :: !targets
+        ), "Execute REPL");
 
         versionSpec "-v";
         versionSpec "--version";
