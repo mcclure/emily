@@ -350,12 +350,30 @@ let isContinued s =
   let len = String.length s in
   if len == 0 then false else (String.get s (len - 1)) == '\\'
 
-let repl =
+let repl targets =
   let scope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
   let line = ref "" in
   let lines = ref [] in
   (* line := input_line stdin; *)
   (* lines := !line :: []; *)
+
+  let runCode code =
+    (match code.Token.contents with
+     | Token.Group contents ->
+        let frame = executeNext scope contents.Token.items code.Token.at in
+        executeStep @@ [frame]
+     | _ -> ()) in
+
+  let runFile f =
+    runCode (Tokenize.tokenize_channel (Token.File f) (open_in f)) in
+
+  let runTarget t =
+    match t with
+      | Options.File f -> runFile f
+      | _ -> () in
+
+  List.iter runTarget targets;
+
   try
       while true do
         line := input_line stdin;
