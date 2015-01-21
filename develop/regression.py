@@ -35,12 +35,13 @@ help += "-t [filename.txt] # Check all paths listed in file\n"
 help += "-a          # Check all paths listed in standard " + stdfile + "\n"
 help += "-A          # Also check all paths listed in std " + badfile + "\n"
 help += "-v          # Print all output\n"
+help += "-e [path to emily] # Use specific emily interpreter"
 help += "--untested  # Check repo hygiene-- list all tests in sample/ not tested"
 
 parser = optparse.OptionParser(usage=help)
 for a in ["a", "A", "v", "-untested"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
-for a in ["f", "t"]: # Long args with arguments
+for a in ["f", "t", "e"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
 
 (options, cmds) = parser.parse_args()
@@ -85,7 +86,9 @@ if flag("untested"):
             print path
     sys.exit(0)
 
-stdcall = ["./package/emily"]
+stdcall = ["emily"]
+if flag("e"):
+    stdcall = flag("e")
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)

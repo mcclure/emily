@@ -27,10 +27,10 @@ _tags:
 # Non-essential: Shortcuts for regression test script
 .PHONY: test
 test:
-	./develop/regression.py -a
+	./develop/regression.py -a -e ./package/emily
 .PHONY: test-all
 test-all:
-	./develop/regression.py -A
+	./develop/regression.py -A -e ./package/emily
 
 # Non-essential: Generate man page.
 .PHONY: manpage
