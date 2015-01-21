@@ -100,7 +100,7 @@ let repl targets =
   try
     (* as long as the user hasn't sent EOF (Control-D), read input *)
     while true do
-      try
+      (try
         (* draw a prompt, and read one line of input *)
         promptAndReadLine ">>> ";
 
@@ -112,6 +112,7 @@ let repl targets =
       with Sys.Break ->
         (* control-C should clear the line, draw a new prompt *)
         print_endline "";
+        lines := []);
 
       (* empty lines, since they have all been executed *)
       lines := [];
