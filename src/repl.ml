@@ -24,9 +24,7 @@ Right now, the REPL doesn't produce any output itself, so
 users must use functions like "println" to inspect values
 and see the result of function calls.
 
-Control-D (EOF) exits the REPL.
-
-*)
+Control-D (EOF) exits the REPL. *)
 let repl targets =
 
   (* this is our global mutable REPL scope *)
@@ -58,8 +56,8 @@ let repl targets =
   (* run all file targets -- skip all other targets *)
   let runTargetFiles t =
     match t with
-      | Options.File f -> runFile f
-      | _ -> () in
+    | Options.File f -> runFile f
+    | _ -> () in
 
   (* run the given string *)
   let runString data =
@@ -69,9 +67,11 @@ let repl targets =
   let runInput () =
     runString (String.concat "\n" (List.rev !lines)) in
 
+  (* load built-in emaily functions needed by REPL *)
   let runEmilyReplFunctions () =
     runString emilyReplFunctions in
 
+  (* load any files provided by the user, before launching REPL *)
   let runUserFiles () =
     List.iter runTargetFiles targets in
 
@@ -86,8 +86,8 @@ let repl targets =
     with Failure e ->
       print_endline e;
 
-    (* flush stdout so any output is immediately visible *)
-    flush stdout in
+      (* flush stdout so any output is immediately visible *)
+      flush stdout in
 
   (* first, run emily's built-in repl functions *)
   runEmilyReplFunctions ();
@@ -95,24 +95,24 @@ let repl targets =
   (* next, run any files provided as arguments *)
   runUserFiles ();
 
+  (* Intercept Control-C so it doesn't kill the REPL. *)
   Sys.catch_break true;
 
   try
     (* as long as the user hasn't sent EOF (Control-D), read input *)
     while true do
       (try
-        (* draw a prompt, and read one line of input *)
-        promptAndReadLine ">>> ";
+          (* draw a prompt, and read one line of input *)
+          promptAndReadLine ">>> ";
 
-        (* handle the user's input appropriately *)
-        match !line with
-        | "quit()" -> raise End_of_file (* temporary hack *)
-        | _ -> handleCode ();
+          (* handle the user's input appropriately *)
+          match !line with
+          | "quit()" -> raise End_of_file (* temporary hack *)
+          | _ -> handleCode ()
 
-      with Sys.Break ->
-        (* control-C should clear the line, draw a new prompt *)
-        print_endline "";
-        lines := []);
+        with Sys.Break ->
+          (* control-C should clear the line, draw a new prompt *)
+          print_endline "");
 
       (* empty lines, since they have all been executed *)
       lines := [];
