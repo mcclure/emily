@@ -95,21 +95,28 @@ let repl targets =
   (* next, run any files provided as arguments *)
   runUserFiles ();
 
+  Sys.catch_break true;
+
   try
     (* as long as the user hasn't sent EOF (Control-D), read input *)
     while true do
+      try
+        (* draw a prompt, and read one line of input *)
+        promptAndReadLine ">>> ";
 
-      (* draw a prompt, and read one line of input *)
-      promptAndReadLine ">>> ";
+        (* handle the user's input appropriately *)
+        match !line with
+        | "quit()" -> raise End_of_file (* temporary hack *)
+        | _ -> handleCode ();
 
-      (* handle the user's input appropriately *)
-      match !line with
-      | "quit()" -> raise End_of_file (* temporary hack *)
-      | _ -> handleCode ();
+      with Sys.Break ->
+        (* control-C should clear the line, draw a new prompt *)
+        print_endline "";
 
       (* empty lines, since they have all been executed *)
       lines := [];
     done;
 
   with End_of_file ->
+    (* time to exit the REPL *)
     print_endline "bye!"
