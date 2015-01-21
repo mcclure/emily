@@ -1,7 +1,7 @@
 (* predefined Emily code used by the REPL *)
 let emilyReplFunctions = "
 help = ^( println \"put a helpful message here\" )
-quit = ^( 999.quit ) # failsafe way to quit emily
+quit = ^( println \"quit() called\" )
 
 println \"emily v0.1 repl\"
 println \"help() for help, quit() to quit\"
@@ -81,7 +81,10 @@ let repl targets =
     while (isContinued !line) do promptAndReadLine "..> " done;
 
     (* now run the accumulated lines *)
-    runInput ();
+    try
+      runInput ()
+    with Failure e ->
+      print_endline e;
 
     (* flush stdout so any output is immediately visible *)
     flush stdout in
