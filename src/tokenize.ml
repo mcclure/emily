@@ -161,7 +161,8 @@ let tokenize name buf : Token.token =
 
             (* Reader instructions.
                TODO: A more general system for reader instructions; allow tab after \version *)
-            | "\\version 0.1" -> escape true; skip() (* Ignore to end of line, don't consume *)
+            | "\\version 0.1"  -> escape true; skip() (* Ignore to end of line, don't consume *)
+            | "\\version 0.2b" -> escape true; skip() (* Ignore to end of line, don't consume *)
             | '\\' -> escape false; skip()           (* Ignore to end of line and consume it *)
 
             (* Ignore whitespace *)
