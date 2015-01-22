@@ -23,6 +23,11 @@ import subprocess
 import optparse
 import re
 
+def projectRelative( filename ):
+    print (filename)
+    return os.path.normpath(os.path.join(prjroot, filename))
+
+prjroot = os.path.join( os.path.dirname(__file__), ".." )
 stddir  = "sample"
 stdfile = "sample/regression.txt"
 badfile = "sample/regression-known-bad.txt"
@@ -32,16 +37,17 @@ help += "\n"
 help += "Accepted arguments:\n"
 help += "-f [filename.em]  # Check single file\n"
 help += "-t [filename.txt] # Check all paths listed in file\n"
+help += "-r [path]         # Set the project root\n"
 help += "-a          # Check all paths listed in standard " + stdfile + "\n"
 help += "-A          # Also check all paths listed in std " + badfile + "\n"
 help += "-v          # Print all output\n"
-help += "-e [path to emily] # Use specific emily interpreter"
+help += "-s          # Use system emily interpreter\n"
 help += "--untested  # Check repo hygiene-- list all tests in sample/ not tested"
 
 parser = optparse.OptionParser(usage=help)
-for a in ["a", "A", "v", "-untested"]: # Single letter args, flags
+for a in ["a", "A", "v", "s", "-untested"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
-for a in ["f", "t", "e"]: # Long args with arguments
+for a in ["f", "t", "r"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
 
 (options, cmds) = parser.parse_args()
@@ -57,11 +63,14 @@ if cmds:
 indices = []
 files = []
 
+if flag("r"):
+    prjroot = flag("r")[0]
+
 if flag("a") or flag("A"):
-    indices += [stdfile]
+    indices += [projectRelative(stdfile)]
 
 if flag("A"):
-    indices += [badfile]
+    indices += [projectRelative(badfile)]
 
 indices += flag("t")
 
@@ -72,7 +81,7 @@ for filename in indices:
             line = indexcommentp.sub("", line)
             line = line.rstrip()
             if line:
-                files += [line]
+                files += [projectRelative(line)]
 
 files += flag("f")
 
@@ -80,15 +89,15 @@ if not files:
     parser.error("No files specified")
 
 if flag("untested"):
-    for filename in os.listdir("sample"):
-        path = os.path.join(stddir, filename)
+    for filename in os.listdir(projectRelative(stddir)):
+        path = os.path.join(projectRelative(stddir), filename)
         if not (path.endswith(".txt") or path in files):
             print path
     sys.exit(0)
 
-stdcall = ["emily"]
-if flag("e"):
-    stdcall = flag("e")
+stdcall = [projectRelative("package/emily")]
+if flag("s"):
+    stdcall = ["emily"]
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)
