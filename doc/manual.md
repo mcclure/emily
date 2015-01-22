@@ -310,7 +310,7 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
 *Treated as a macro:*
 
-    a b ! c d e
+    a b ~ c d e
 
 *...becomes*
 
@@ -438,7 +438,7 @@ Splitter for `.plus`. Intended for mathematical addition or something like it.
 
 **Usage:** *[statement 1]* `-` *[statement 2]*
 
-Splitter for `.minus`. Intended for mathematical subtraction or something like it.
+Splitter for `.minus`. Intended for mathematical addition or something like it.
 
 ### *
 
