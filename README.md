@@ -1,4 +1,4 @@
-# Emily programming language, version 0.1
+# Emily programming language, version 0.1, documentation update 1
 
 If you are reading this file on GitHub or Mercurial: Please click the "Wiki" button to the side of the page.
 

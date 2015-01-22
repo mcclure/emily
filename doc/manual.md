@@ -1,4 +1,4 @@
-**Emily programming language, version 0.1**
+**Emily programming language, version 0.1, documentation update 1**
 **Reference manual**
 
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
