@@ -28,7 +28,6 @@ let () =
     setAtomTest "lte"    ( <= );
     setAtomTest "gt"     ( >  );
     setAtomTest "gte"    ( >= );
-    setAtomTest "eq"     ( =  );
 
     (* FIXME: The user can't make these yet. Should negate take an argument? *)
     setValue "negate" (Value.BuiltinUnaryMethodValue(fun x ->
