@@ -16,3 +16,4 @@ let () =
     setAtomFn "and" (fun v -> ValueUtil.boolCast false);
     setAtomFn "or"  (fun v -> ValueUtil.boolCast (match v with Value.Null -> false | _ -> true ));
     setAtomFn "xor" (fun v -> ValueUtil.boolCast (match v with Value.Null -> false | _ -> true ));
+    setAtomFn "eq"  (fun v -> ValueUtil.boolCast (match v with Value.Null -> true | _ -> false ));
