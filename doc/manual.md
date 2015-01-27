@@ -16,6 +16,8 @@ Differences between this manual and the current state of the repository ("TODO: 
 - `&&` / `||` now short-circuit.
 - `and`, `or, `xor` need documentation.
 - `? :`, several other operators are claimed to use the "global" and not scope forms of `tern` etc; this is not true
+- `.and`, `.or` no longer exist.
+- `.eq` now works on everything.
 
 # Execution model
 

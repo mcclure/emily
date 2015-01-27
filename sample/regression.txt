@@ -29,6 +29,7 @@ sample/statement.em
 sample/math.em
 sample/bool.em
 sample/bool.2.em
+sample/equal.em
 
 sample/set.em
 sample/set.2.em

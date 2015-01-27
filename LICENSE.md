@@ -26,7 +26,7 @@ To comply with the license, simply include the above block of text in some acces
 
 * Tyler Bindon <<martica@martica.org>>
 
-    Tools and documentation improvements
+    Tools, documentation and functional improvements
 
 * David Madore <<http://http://www.madore.org/~david/>>
 
