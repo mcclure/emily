@@ -54,4 +54,4 @@ install: install-makedirs all
 .PHONY: clean
 clean:
 	ocamlbuild -clean
-	rm -f _tags package/emily
+	rm -f _tags package/emily package/emily.1
