@@ -47,8 +47,8 @@ install-makedirs:
 	install -d $(DESTDIR)$(mandir)
 
 install: install-makedirs all
-	install package/emily $(bindir)
-	install package/emily.1 $(mandir)
+	install package/emily $(DESTDIR)$(bindir)
+	install package/emily.1 $(DESTDIR)$(mandir)
 
 # Clean target
 .PHONY: clean
