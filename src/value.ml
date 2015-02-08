@@ -31,18 +31,27 @@ and closureValue = {
 }
 
 and value =
+    (* "Primitive" values *)
     | Null
     | True
     | FloatValue of float
     | StringValue of string
     | AtomValue   of string
+
+    (* Hack types for builtins *)
     | BuiltinFunctionValue          of (value -> value) (* function argument = result *)
     | BuiltinUnaryMethodValue       of (value -> value) (* function self = result *)
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
+
+    (* Complex user-created values *)
     | ClosureValue of closureValue
     | TableValue of tableValue
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
     | ContinuationValue of executeStack * Token.codePosition
+
+    (* Package support *)
+(*  | PackageValue of value list *)
+(*  | PackageDirectory of string *)
 
 and tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)

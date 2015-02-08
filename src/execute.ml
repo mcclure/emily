@@ -330,11 +330,11 @@ and apply stack this a b =
 (* --- MAIN LOOP ENTRY POINT --- *)
 
 (* Execute and return nothing. *)
-let execute code =
+let execute ?(kind=Value.WithLet) code =
     match code.Token.contents with
     | Token.Group contents ->
         (* Make a new blank frame with the given code sequence and an empty scope, *)
-        let initialScope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
+        let initialScope = scopeInheriting kind BuiltinScope.scopePrototype in
         let initialFrame = executeNext initialScope contents.Token.items code.Token.at
         in executeStep @@ [initialFrame] (* then place it as the start of the stack. *)
     | _ -> () (* Execute a constant value-- no effect *)
