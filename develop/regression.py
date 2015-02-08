@@ -24,7 +24,6 @@ import optparse
 import re
 
 def projectRelative( filename ):
-    print (filename)
     return os.path.normpath(os.path.join(prjroot, filename))
 
 prjroot = os.path.join( os.path.dirname(__file__), ".." )
