@@ -92,6 +92,8 @@ let superKeyString = "super"
 let superKey = AtomValue superKeyString
 let returnKeyString = "return"
 let returnKey = AtomValue returnKeyString
+let packageKeyString = "package"
+let packageKey = AtomValue packageKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value

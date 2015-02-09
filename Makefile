@@ -2,11 +2,14 @@ PREFIX := /usr/local
 bindir = $(PREFIX)/bin
 mandir = $(PREFIX)/share/man/man1
 
+# Replace "native" with "byte" for debug build
+BUILDTYPE=native
+
 .PHONY: all
 all: package/emily package/emily.1
 
 # Move final executable in place.
-package/emily: _build/src/main.native
+package/emily: _build/src/main.$(BUILDTYPE)
 	mkdir -p $(@D)
 	cp $< $@
 
@@ -16,9 +19,9 @@ package/emily.1: resources/emily.1
 	cp $< $@
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
-.PHONY: _build/src/main.native
-_build/src/main.native: _tags
-	ocamlbuild -no-links -use-ocamlfind src/main.native
+.PHONY: _build/src/main.$(BUILDTYPE)
+_build/src/main.$(BUILDTYPE): _tags
+	ocamlbuild -no-links -use-ocamlfind src/main.$(BUILDTYPE)
 
 # Non-essential: This prevents ocamlbuild from emitting unhelpful "hints"
 _tags:
