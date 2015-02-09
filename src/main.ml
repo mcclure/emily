@@ -10,5 +10,5 @@ let () =
         (*  *)
         if Options.(run.disassemble) then print_endline (Pretty.dumpCodeTreeTerse buf) else
         if Options.(run.disassembleVerbose) then print_endline (Pretty.dumpCodeTreeDense buf) else
-        Execute.execute buf
+        Loader.executeProgram buf
     in List.iter processOne Options.(run.targets)
