@@ -94,7 +94,7 @@ if flag("untested"):
             print path
     sys.exit(0)
 
-stdcall = [projectRelative("package/emily")]
+stdcall = [projectRelative("install/bin/emily")]
 if flag("s"):
     stdcall = ["emily"]
 

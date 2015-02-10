@@ -26,7 +26,7 @@ let rec loadPackage path = if Sys.is_directory path then
         let buf = Tokenize.tokenize_channel (Token.File path) (open_in path)
         in executePackage buf
 
-let packageRepo = loadPackage @@ Filename.concat exePath "package"
+let packageRepo = loadPackage @@ List.fold_left Filename.concat exePath [".."; "lib"; "emily"; Options.version]
 
 let executeProgram buf =
     let scope = basicScope () in

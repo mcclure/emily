@@ -1,3 +1,4 @@
+VERSION = 0.2b
 PREFIX := /usr/local
 bindir = $(PREFIX)/bin
 mandir = $(PREFIX)/share/man/man1
@@ -6,17 +7,21 @@ mandir = $(PREFIX)/share/man/man1
 BUILDTYPE=native
 
 .PHONY: all
-all: package/emily package/emily.1
+all: install/bin/emily install/man/emily.1 install/lib/emily/$(VERSION)
 
 # Move final executable in place.
-package/emily: _build/src/main.$(BUILDTYPE)
+install/bin/emily: _build/src/main.$(BUILDTYPE)
 	mkdir -p $(@D)
 	cp $< $@
 
 # Move manpage in place
-package/emily.1: resources/emily.1
+install/man/emily.1: resources/emily.1
 	mkdir -p $(@D)
 	cp $< $@
+
+# Move packages in place
+install/lib/emily/$(VERSION):
+	mkdir -p $@
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
 .PHONY: _build/src/main.$(BUILDTYPE)
@@ -41,7 +46,7 @@ manpage:
 	ronn -r --pipe --manual="Emily programming language" \
 	               --date="2015-01-15" \
 	               --organization="http://emilylang.org" \
-	               doc/manpage.1.md > resources/emily.1
+	               doc/manpage.1.md > install/man/emily.1
 
 # Install target
 .PHONY: install install-makedirs
@@ -50,11 +55,11 @@ install-makedirs:
 	install -d $(DESTDIR)$(mandir)
 
 install: install-makedirs all
-	install package/emily $(DESTDIR)$(bindir)
-	install package/emily.1 $(DESTDIR)$(mandir)
+	install install/bin/emily   $(DESTDIR)$(bindir)
+	install install/man/emily.1 $(DESTDIR)$(mandir)
 
 # Clean target
 .PHONY: clean
 clean:
 	ocamlbuild -clean
-	rm -f _tags package/emily package/emily.1
+	rm -f _tags install/bin/emily install/man/emily.1

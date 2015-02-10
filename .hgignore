@@ -1,5 +1,5 @@
 ^_tags
 ^_build/
-^package/
+^install/
 ^scratch/
 .DS_Store
