@@ -20,7 +20,8 @@ let executePackage buf =
 let rec loadPackage path = if Sys.is_directory path then
         let directoryTable = ValueUtil.tableBlank Value.NoSet in
         Array.iter (fun name ->
-            Value.tableSet directoryTable (nameAtom name) (loadPackage (Filename.concat path name))
+            ValueUtil.tableSetLazy directoryTable (nameAtom name)
+                (fun _ -> loadPackage (Filename.concat path name))
         ) (Sys.readdir path); Value.ObjectValue directoryTable
     else
         let buf = Tokenize.tokenize_channel (Token.File path) (open_in path)
