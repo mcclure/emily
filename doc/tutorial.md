@@ -1,4 +1,4 @@
-**Emily programming language, version 0.1**
+**Emily programming language, version 0.2b**
 **Tutorial**
 
 This is a quick overview of how to write programs in the Emily programming language. I assume you have written in some programming language before, I assume you know how to access your operating system's command line, and I assume you have [already installed the interpreter](build.md).

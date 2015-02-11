@@ -111,9 +111,10 @@ let rec process l =
 
 (* Support functions for macros *)
 
-let newFuture at f        = cloneGroup at [process f] (* Insert a forward-time group *)
-let newPast at p          = newFuture at (List.rev p)    (* Insert a reverse-time group *)
-let newFutureClosure at f = cloneClosure at [process f] (* Insert a forward-time group *)
+let newFuture at f        = cloneGroup at [process f]        (* Insert a forward-time group *)
+let newPast at p          = newFuture at (List.rev p)        (* Insert a reverse-time group *)
+let newFutureClosure at f = cloneClosure at [process f]      (* Insert a forward-time closure *)
+let newPastClosure at p   = newFutureClosure at (List.rev p) (* Insert a reverse-time closure *)
 
 (* A recurring pattern in the current macros is to insert a new single token
    into "the middle" of an established past and future *)
@@ -146,10 +147,9 @@ let makePrefixUnary wordString : macroFunction = (fun past at future ->
         | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
 )
 
-(* Given argument "op", make a macro to turn `a b … OP d e …` into `(op (a b …) (d e …)` *)
-(* Unused. TODO: Use this for a future "and" in the global namespace? *)
-let makeSplitterPrefix wordString : macroFunction = (fun past at future ->
-    [ cloneWord at wordString ; newPast at past ; newFuture at future ]
+(* Given argument "op", make a macro to turn `a b … OP d e …` into `(op ^(a b …) ^(d e …)` *)
+let makeShortCircuit wordString : macroFunction = (fun past at future ->
+    [ cloneWord at wordString ; newPastClosure at past ; newFutureClosure at future ]
 )
 
 let makeSplitterInvert atomString : macroFunction = (fun past at future ->
@@ -358,8 +358,8 @@ let builtinMacros = [
     R(65.), "!=", makeSplitterInvert "eq";
 
     (* Boolean *)
-    R(70.), "&&", makeSplitter "and";
-    R(75.), "||", makeSplitter "or";
+    R(70.), "&&", makeShortCircuit "and";
+    R(75.), "||", makeShortCircuit "or";
 
     (* Grouping *)
     L(90.), ":", applyRight;

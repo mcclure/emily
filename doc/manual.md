@@ -1,4 +1,4 @@
-**Emily programming language, version 0.1**
+**Emily programming language, version 0.2b
 **Reference manual**
 
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
@@ -8,6 +8,16 @@ Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedenc
 Table of contents:
 
 [TOC]
+
+# Known falsehoods
+
+Differences between this manual and the current state of the repository ("TODO: Document"):
+
+- `&&` / `||` now short-circuit.
+- `and`, `or, `xor` need documentation.
+- `? :`, several other operators are claimed to use the "global" and not scope forms of `tern` etc; this is not true
+- `.and`, `.or` no longer exist.
+- `.eq` now works on everything.
 
 # Execution model
 
@@ -310,7 +320,7 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
 *Treated as a macro:*
 
-    a b ~ c d e
+    a b ! c d e
 
 *...becomes*
 
@@ -438,7 +448,7 @@ Splitter for `.plus`. Intended for mathematical addition or something like it.
 
 **Usage:** *[statement 1]* `-` *[statement 2]*
 
-Splitter for `.minus`. Intended for mathematical addition or something like it.
+Splitter for `.minus`. Intended for mathematical subtraction or something like it.
 
 ### *
 
