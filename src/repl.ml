@@ -77,7 +77,7 @@ let repl targets =
     (* now run the accumulated lines *)
     try
       let result = runInput () in
-      print_endline (Value.display result);
+      print_endline (Pretty.replDisplay result);
       flush stdout;
       ()
     with Failure e ->
