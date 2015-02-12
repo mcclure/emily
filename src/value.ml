@@ -99,3 +99,20 @@ let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value
+
+(* create a string representation of this value *)
+(* TODO: quote strings? *)
+(* TODO: display objects/tables *)
+let display value = match value with
+  | Null -> "null"
+  | True -> "true"
+  | FloatValue n -> Printf.sprintf "%f" n
+  | StringValue s -> s
+  | AtomValue s -> s
+  | BuiltinFunctionValue f -> "<builtin-function>"
+  | BuiltinUnaryMethodValue f -> "<builtin-unary>"
+  | BuiltinMethodValue f -> "<builtin-method>"
+  | ClosureValue v -> "<closure>"
+  | TableValue v -> "<table>"
+  | ObjectValue v -> "<object>"
+  | ContinuationValue (st, pos) -> "<continuation>"

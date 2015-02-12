@@ -41,27 +41,21 @@ let repl targets =
     line := input_line stdin;
     lines := !line :: !lines in
 
-  (* run the provided tokenized code *)
-  let runCode code =
-    (match code.Token.contents with
-     | Token.Group contents ->
-        let frame = Execute.executeNext scope contents.Token.items code.Token.at in
-        Execute.executeStep @@ [frame]
-     | _ -> ()) in
-
   (* tokenize and execute the given file target *)
   let runFile f =
-    runCode (Tokenize.tokenize_channel (Token.File f) (open_in f)) in
+    let buf = (Tokenize.tokenize_channel (Token.File f) (open_in f)) in
+    Execute.execute scope buf in
 
   (* run all file targets -- skip all other targets *)
   let runTargetFiles t =
     match t with
-    | Options.File f -> runFile f
+    | Options.File f -> ignore @@ runFile f
     | _ -> () in
 
   (* run the given string *)
   let runString data =
-    runCode (Tokenize.tokenize_string Token.Cmdline data) in
+    let buf = Tokenize.tokenize_string Token.Cmdline data in
+    Execute.execute scope buf in
 
   (* run all lines of user input *)
   let runInput () =
@@ -82,7 +76,10 @@ let repl targets =
 
     (* now run the accumulated lines *)
     try
-      runInput ()
+      let result = runInput () in
+      print_endline (Value.display result);
+      flush stdout;
+      ()
     with Failure e ->
       print_endline e;
 
@@ -90,7 +87,7 @@ let repl targets =
       flush stdout in
 
   (* first, run emily's built-in repl functions *)
-  runEmilyReplFunctions ();
+  ignore @@ runEmilyReplFunctions ();
 
   (* next, run any files provided as arguments *)
   runUserFiles ();
