@@ -24,7 +24,6 @@ import optparse
 import re
 
 def projectRelative( filename ):
-    print (filename)
     return os.path.normpath(os.path.join(prjroot, filename))
 
 prjroot = os.path.join( os.path.dirname(__file__), ".." )
@@ -95,7 +94,7 @@ if flag("untested"):
             print path
     sys.exit(0)
 
-stdcall = [projectRelative("package/emily")]
+stdcall = [projectRelative("install/bin/emily")]
 if flag("s"):
     stdcall = ["emily"]
 

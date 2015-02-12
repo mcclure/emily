@@ -11,7 +11,7 @@ Run these commands:
     sudo add-apt-repository ppa:avsm/ppa
     sudo apt-get update
     sudo apt-get install opam
-    opam install ocamlfind sedlex containers
+    opam install ocamlfind sedlex containers fileutils
     sudo make install
 
 (The ppa steps are necessary in order to get OCaml 4.02.1, since as of this writing Ubuntu is still shipping 4.01.0.)
@@ -21,7 +21,7 @@ Run these commands:
 Run these commands:
 
     sudo brew install opam
-    opam install ocamlfind sedlex containers
+    opam install ocamlfind sedlex containers fileutils
     sudo make install
 
 ## Macports
@@ -29,7 +29,7 @@ Run these commands:
 Run these commands:
 
     sudo port install opam
-    opam install ocamlfind sedlex containers
+    opam install ocamlfind sedlex containers fileutils
     sudo make install
 
 # Building Emily by hand
@@ -38,11 +38,11 @@ Run these commands:
 
 In order to build this, you will need to install:
 
-- ocaml -- I use 4.02.1 installed via MacPorts
+- ocaml -- I use 4.02.1 installed via OS X "homebrew"
 - ocamlfind -- I use 1.5.5, installed via opam
 - sedlex -- I use 1.99.2, installed via opam
-- ppx_tools -- I use 0.99.2, installed via opam (Required by sedlex)
-- containers -- I use 0.4.1, installed via opam
+- containers -- I use 0.7, installed via opam
+- fileutils -- I use 0.4.4, installed via opam
 
 You should be able to just install ocaml and opam from your package manager, and then run `opam install ocamlfind sedlex containers`.
 

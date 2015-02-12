@@ -104,7 +104,7 @@ apply: (A pair of values has been identified; evaluate their application.)
 let rec executeStep stack =
     match stack with
         (* Unusual edge case: Asked to execute an empty file -- just return *)
-        | [] -> ()
+        | [] -> Value.Null
 
         (* Here some tail call optimization passes occur. We check for special stack patterns
            implying unnecessary space on the stack, then rewrite the stack to avoid them. *)
@@ -187,7 +187,7 @@ and returnTo stackTop av =
     (* Unpack the new stack. *)
     match stackTop with
         (* It's empty. We're returning from the final frame and can just exit. *)
-        | [] -> ()
+        | [] -> (match av with (v,_) -> v)
 
         (* Pull one frame off the stack so we can replace the register var and re-add it. *)
         | {Value.register=parentRegister; Value.code=parentCode; Value.scope=parentScope} :: pastReturnFrames ->
@@ -330,11 +330,6 @@ and apply stack this a b =
 (* --- MAIN LOOP ENTRY POINT --- *)
 
 (* Execute and return nothing. *)
-let execute code =
-    match code.Token.contents with
-    | Token.Group contents ->
-        (* Make a new blank frame with the given code sequence and an empty scope, *)
-        let initialScope = scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
-        let initialFrame = executeNext initialScope contents.Token.items code.Token.at
-        in executeStep @@ [initialFrame] (* then place it as the start of the stack. *)
-    | _ -> () (* Execute a constant value-- no effect *)
+let execute inScope code =
+    let initialFrame = executeNext inScope [[code]] code.Token.at
+    in executeStep @@ [initialFrame] (* then place it as the start of the stack. *)
