@@ -214,7 +214,7 @@ In the long term, for **all future versions of Emily**, the plan is that when th
 
 Ideally a program should always start with `\version`, and should select the oldest interface version which can run the code.
 
-### #
+### # 
 
 Comment. Everything from the # until a newline is ignored.
 
