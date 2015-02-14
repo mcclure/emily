@@ -755,7 +755,7 @@ This will print "Hello: 1 2". When it is run, `method` will be invoked on object
 
 ### Edge cases
 
-Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append("x")` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior — if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
+Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append("x")`. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior — if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
 
 This intuitive idea is achieved by each closure being in one of four states (language lawyer alert on the following):
 
