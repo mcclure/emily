@@ -1,84 +1,96 @@
 # Tests expected to pass.
 
-trivial.em
-parsetest.2.em
-parsetest.fail.3.em
-parsetest.unicode.em
-parsetest.unicode.fail.em
+# Parser/tokenizer
+test/parse/trivial.em
+test/parse/tokenTypes.em
+test/parse/fail/unclosedQuote.em
+test/parse/unicode/whitespace.em
+test/parse/unicode/fail/identifier.em
 
-print.em
-escape.em
-unicode.em
-backslash.em
-backslash.fail.em
-backslash.fail.2.em
+# String literals/printing
+test/string/print.em
+test/string/escape.em
+test/string/unicode.em
 
-macro.em
-macro.2.em
-macro.3.em
-macro.4.em
-macro.5.em
-macro.math.em
-macro.scope.em
-macro.fail.em
-macro.fail.2.em
-macro.fail.3.em
-macro.fail.4.em
+# Reader
+test/backslash/basic.em
+test/backslash/fail/version.em
+test/backslash/fail/eof.em
 
-statement.em
-math.em
-bool.em
-bool.2.em
-equal.em
+# Macros
+test/macro/math/order.em
+test/macro/group.em
+test/macro/bool.em
+test/macro/tern.em
+test/macro/assign.em
+test/macro/math/basic.em
+test/macro/nonlocal.em
+test/macro/fail/unknown.em
+test/macro/fail/ternOpen.em
+test/macro/fail/ternNest.em
+test/macro/fail/assignPath.em
 
-set.em
-set.2.em
-set.curry.em
-set.curry.fail.em
-has.em
-has.2.em
-scope.em
-scope.fallthrough.em
-scope.unscoped.em
-scope.parent.em
-scope.parent.2.em
-closure.em
-scope.closure.em
-scope.closure.2.em
-scope.closure.3.em
-curry.em
-curry.2.em
-curry.compose.em
-return.em
-return.2.em
-return.3.em
+# Operators
+test/math/statement.em
+test/math/basic.em
+test/math/bool.em
+test/macro/boolGroup.em
+test/math/equal.em
 
-obj.em
-obj.2.em
-obj.3.em
-obj.current.em
-obj.current.2.em
-obj.this.em
-obj.this.2.em
-obj.this.3.em
-obj.this.4.em
-obj.this.5.em
-obj.this.6.em
-obj.this.7.em
-obj.this.8.em
-obj.this.9.em
-obj.this.super.em
-obj.rethis.em
-obj.rethis.2.em
-obj.rethis.3.em
-set.this.em
+# Variables and scopes
+test/set/basic.em
+test/set/return.em
+test/set/curry.em
+test/set/fail/curry.em
+test/set/has.em
+test/set/fail/has.em
+test/set/scope/scoped.em
+test/set/scope/fallthrough.em
+test/set/scope/unscoped.em
+test/set/scope/parent.em
+test/set/scope/setParent.em
+test/closure/apply.em
+test/closure/scope/binding.em
+test/closure/scope/unscoped.em
+test/closure/scope/scoped.em
+test/closure/curry/basic.em
+test/closure/curry/effects.em
+example/until.em
+test/closure/return/basic.em
+test/closure/return/goto.em
+test/closure/return/implicit.em
 
-tern.em
-tern.2.em
-loop.em
-loop.2.em
-fibo.em
-builtin.em
-builtin.obj.em
+# Objects
+test/obj/literal/basic.em
+test/obj/literal/scope.em
+test/obj/late.em
+test/obj/literal/current.em
+test/obj/literal/currentInherit.em
+test/obj/this/basic.em
+test/obj/inherit/field.em
+test/obj/inherit/set.em
+test/obj/inherit/method.em
+test/obj/this/shadow.em
+test/obj/literal/this.em
+test/obj/this/let.em
+test/obj/this/letReversed.em
+test/obj/this/indirect.em
+test/obj/inherit/super.em
+test/obj/inherit/rethis.em
+test/obj/inherit/edgeCases.em
+example/multipleInheritance.em
+example/sensor.em
 
-ski.2.em
+# Flow control
+test/flow/tern.em
+test/flow/recurse.em
+test/flow/loop.em
+test/flow/loopFancy.em
+test/flow/fibo.em
+
+# Builtins
+test/builtin/scope.em
+test/builtin/obj.em
+
+# Stress test
+test/ski/stars.em

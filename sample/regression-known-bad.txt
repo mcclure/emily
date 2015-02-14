@@ -4,13 +4,13 @@
 # None!
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-set.shadow.em
-set.shadow.2.em
+test/closure/scope/boundLet.em   # No defined behavior
+test/closure/scope/boundSet.em
 
 # FAILURES -- BUGS, FIX ASAP
-parsetest.fail.em      # Unclosed left-paren fallaciously allowed
-parsetest.fail.2.em    # Mismatched right-paren fallaciously allowed
-parsetest.unicode.2.em # Unicode identifiers not in yet
+test/parse/fail/unclosed.em      # Unclosed left-paren fallaciously allowed
+test/parse/fail/misclosed.em     # Mismatched right-paren fallaciously allowed
+test/parse/unicode/identifier.em # Unicode identifiers not in yet
 
 # "Expected" failures due to not-yet-implemented features
 # None.

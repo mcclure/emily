@@ -1,4 +1,4 @@
-# Non-simple tests of boolean/logic operators
+# Order of operation tests of boolean/logic operators
 # Expect:
 # <true>
 # <true>

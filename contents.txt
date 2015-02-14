@@ -26,7 +26,10 @@ resources/
     Static files to be incorporated into package during build
 
 sample/
-    Example Emily scripts (double as unit tests)
+    Example Emily scripts (including automated tests)
+
+sample/example
+    Example Emily scripts (from manual, for humans)
 
 src/
     All source code

@@ -88,13 +88,20 @@ for filename in flag("f"):
 
 reassign = {}
 
+if not pairs:
+    parser.error("No files given, refusing to run.")
+    sys.exit(1)
+
 for pair in pairs:
     a,b = pair
+    action = "\"" + a + "\" to \"" + b + "\""
     try:
+        if flag("v"):
+            print "Moving " + action
         move(a,b)
-        reassign[a] = [b]
+        reassign[a] = b
     except subprocess.CalledProcessError:
-        print "FAIL: Couldn't move \"" + a + "\" to \"" + b + "\""
+        print "FAIL: Couldn't move " + action
 
 for replacePath in (["regression.txt", "regression-known-bad.txt"] + flag("r")):
     try:
