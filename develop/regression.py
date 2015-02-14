@@ -27,9 +27,9 @@ def projectRelative( filename ):
     return os.path.normpath(os.path.join(prjroot, filename))
 
 prjroot = os.path.join( os.path.dirname(__file__), ".." )
-stddir  = "sample"
-stdfile = "sample/regression.txt"
-badfile = "sample/regression-known-bad.txt"
+stddir  = "sample/test"
+stdfile = "sample/test/regression.txt"
+badfile = "sample/test/regression-known-bad.txt"
 
 help  = "%prog -a\n"
 help += "\n"
@@ -38,10 +38,10 @@ help += "-f [filename.em]  # Check single file\n"
 help += "-t [filename.txt] # Check all paths listed in file\n"
 help += "-r [path]         # Set the project root\n"
 help += "-a          # Check all paths listed in standard " + stdfile + "\n"
-help += "-A          # Also check all paths listed in std " + badfile + "\n"
+help += "-A          # Also check paths listed in " + badfile + "\n"
 help += "-v          # Print all output\n"
 help += "-s          # Use system emily interpreter\n"
-help += "--untested  # Check repo hygiene-- list all tests in sample/ not tested"
+help += "--untested  # Check repo hygiene-- list tests in sample/test not tested"
 
 parser = optparse.OptionParser(usage=help)
 for a in ["a", "A", "v", "s", "-untested"]: # Single letter args, flags
@@ -89,10 +89,14 @@ if not files:
     parser.error("No files specified")
 
 if flag("untested"):
-    for filename in os.listdir(projectRelative(stddir)):
-        path = os.path.join(projectRelative(stddir), filename)
-        if not (path.endswith(".txt") or path in files):
-            print path
+    def checkTested(path): # Checks a directory tree rooted here
+        if os.path.isdir(path): # If directory
+            for filename in os.listdir(path): # Recurse
+                filepath = os.path.join(path, filename)
+                checkTested(filepath)
+        elif not (path.endswith(".txt") or path in files):
+            print path # If a normal file, just check it
+    checkTested(projectRelative(stddir)) # Check stddir tree
     sys.exit(0)
 
 stdcall = [projectRelative("install/bin/emily")]
