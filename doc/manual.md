@@ -682,10 +682,10 @@ Everything in Emily "is a function", so what we usually think of as "a function"
 
 Closures primarily consist of a group (`()`, `{}` or `[]`) full of code, but they also carry around several other pieces of information:
 
-    - A list of argument names.
-    - The scope in which it was defined.
-    - Whether or not it will create a `return`.
-    - Whether and how to create object context (`current`, `this` and `super`). See "About objects" below.
+- A list of argument names.
+- The scope in which it was defined.
+- Whether or not it will create a `return`.
+- Whether and how to create object context (`current`, `this` and `super`). See "About objects" below.
 
 These four things are determined by how the closure was created.
 
