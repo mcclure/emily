@@ -4,13 +4,13 @@
 # None!
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
-sample/set.shadow.em
-sample/set.shadow.2.em
+set.shadow.em
+set.shadow.2.em
 
 # FAILURES -- BUGS, FIX ASAP
-sample/parsetest.fail.em      # Unclosed left-paren fallaciously allowed
-sample/parsetest.fail.2.em    # Mismatched right-paren fallaciously allowed
-sample/parsetest.unicode.2.em # Unicode identifiers not in yet
+parsetest.fail.em      # Unclosed left-paren fallaciously allowed
+parsetest.fail.2.em    # Mismatched right-paren fallaciously allowed
+parsetest.unicode.2.em # Unicode identifiers not in yet
 
 # "Expected" failures due to not-yet-implemented features
 # None.

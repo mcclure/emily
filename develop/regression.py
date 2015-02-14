@@ -75,12 +75,13 @@ indices += flag("t")
 
 indexcommentp = re.compile(r'#.+$', re.S) # Allow comments in .txt file
 for filename in indices:
+    dirname = os.path.dirname(filename)
     with open(filename) as f:
         for line in f.readlines():
             line = indexcommentp.sub("", line)
             line = line.rstrip()
             if line:
-                files += [projectRelative(line)]
+                files += [projectRelative(os.path.join(dirname, line))]
 
 files += flag("f")
 
