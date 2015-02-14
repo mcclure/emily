@@ -152,7 +152,7 @@ You can also put multiple statements, (i.e. multiple lines) inside of a `()` or 
         x = 3
         x + 5
     )
-This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations — where you want to do some calculation inside of a expression — `{ }` is a group which acts like `( )` but a new scope is created inside of it. So you can say:
+This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations — where you want to do some calculation inside of a expression — `{ }` is a group which acts just like `( )` except that a new scope is created inside of it. So you can say:
 
     x = 3
     println {
@@ -161,7 +161,7 @@ This prints `8`. This code is ugly though: it assigns `x` in the middle of evalu
     }
     println x
 
-And, well, honestly this is not great code either, but the `x` assigned inside the `{ }` will be a different `x` than the one outside the `{ }`. This code prints a `5` and then a 3`.
+And, well, honestly this is not great code either, but the `x` assigned inside the `{ }` will be a different `x` than the one outside the `{ }`. This code prints a `5` and then a `3`.
 
 ## "Currying"
 
@@ -181,12 +181,14 @@ This isn't what you wanted, so we need the `( )`. Writing `( )` gets annoying al
 
 `:` wraps the remainder of the statement after it in parenthesis, so this is like saying `println (numbers.one)`.
 
-Why require the `( )` (or the `:`) in the first place, though? Well, some of this syntax might change in a later version. But the idea is that Emily expressions are meant to be "curried". Emily arguments are all single-argument. Wait, wait, you're saying, but I need functions that take multiple arguments. Well, you can build multiple-argument functions on top of single-argument ones. One is to pass the argument list as an object:
+Why require the `( )` (or the `:`) in the first place, though? Well, some of this syntax might change in a later version. But the idea is that Emily expressions are meant to be "curried". Emily functions are all single-argument. Wait, wait, you're saying, but I need functions that take multiple arguments. Well, you can build multiple-argument functions on top of single-argument ones. One way is to pass the argument list as an object:
 
     printRecord ^record = \
         print (record.name) ": " (record.numberOfArms) " arms\n"
 
     printRecord [name = "Sarah"; numberOfArms = 3]
+
+(`print` is just like `println`, but doesn't add a newline at the end.)
 
 Another way is to sort of fold functions inside each other:
 
