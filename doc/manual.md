@@ -25,7 +25,7 @@ Differences between this manual and the current state of the repository ("TODO: 
 
 Emily is based on what I'm calling "c-expressions", for "curried expression"; this is a minimal way of writing code, modeled after the way prefix functions are executed in an ML language.
 
-All values in Emily are modeled as unary functions-- in other words, a function which takes one argument and returns one argument. Because some of these values don't "behave" like functions once they've received that argument, this might be a little misleading; a better way to look at it may be that everything in Emily can be "applied", which means taking one value in and passing one value out. The way you apply two values together in code is to simply write them one after the other. If you write:
+All values in Emily are modeled as unary functions — in other words, a function which takes one argument and returns one argument. Because some of these values don't "behave" like functions once they've received that argument, this might be a little misleading; a better way to look at it may be that everything in Emily can be "applied", which means taking one value in and passing one value out. The way you apply two values together in code is to simply write them one after the other. If you write:
 
     a b
 
@@ -75,7 +75,7 @@ Remember: these different kinds of values only differ in terms of which argument
 
 An Emily program is a series of statements ("lines of code" separated by ; or newline). A statement in an Emily program is a series of "tokens". In source code on disk, the following kinds of tokens exist:
 
-- Words: An identifier-- any ASCII letter a-z A-Z, followed by any sequence of ASCII letters a-z A-Z and numbers 0-9. Underscore is not allowed.)
+- Words: An identifier — any ASCII letter a-z A-Z, followed by any sequence of ASCII letters a-z A-Z and numbers 0-9. Underscore is not allowed.)
 - Numbers: Any numbers 0-9, optionally followed by one period and more numbers 0-9.
 - Strings: Open and close quotes " " and everything between them. Within the quotes, the escape characters `\n`, `\\`, and `\"` will be recognized.
 - Unscoped groups: `(` ... `)`
@@ -129,7 +129,7 @@ This is only important to know if you are writing macros (not possible in Emily 
 In the table below, operators higher in the table are evaluated first. If a phase is marked LTR in the Order column, symbols in that phase are evaluated from left to right. If a phase is marked RTL, they are evaluated from right to left.
 
     Phase   | Order | Symbol
-    --------|-------|----------
+     — — — —| — — —-| — — — — —
     Reader  | LTR   | \
             |       | \version
             |       | #
@@ -160,7 +160,7 @@ In the table below, operators higher in the table are evaluated first. If a phas
             |       | !
     20      | RTL   | `
 
-(This table can be different from conventional "precedence" because all the macros do different things when they execute-- for example the `.` macro adheres directly to the item to its right, whereas the `+` macro creates groups out of its entire left and right sides and adheres directly to neither.)
+(This table can be different from conventional "precedence" because all the macros do different things when they execute — for example the `.` macro adheres directly to the item to its right, whereas the `+` macro creates groups out of its entire left and right sides and adheres directly to neither.)
 
 ## Operator precedence
 
@@ -169,7 +169,7 @@ If you just ignore all this "macro" stuff and consider the symbols in Emily as n
 In the table below, higher items are "higher precedence" (bind tighter). Left-associative operators "bind to the left" (prefer to group left in the absence of clarifying parenthesis).
 
     Precedence | Associativity | Operator
-    -----------|---------------|-------------
+     — — — — —-| — — — — — — —-| — — — — — —-
     1          | Right         | \version
     2          | Right         | .
     3          | Right         | ^
@@ -262,7 +262,7 @@ Atom constructor. Captures the token directly to the right of the `.`; if it is 
 
 Closure literal. Captures to the right zero or more word tokens, and one group token. If non-word tokens are found before the group, or the group is not found, this is a failure and the program will terminate without running. Evaluates to a user closure which has: the given words as bound arguments; the enclosing statement's scope as context scope; and the given group as its code.
 
-Redundant ^s are allowed-- `^a b (a)` does the same thing as `^a ^b (a)`. Imagine the currying is actually multiple wrapped closures, if you like.
+Redundant ^s are allowed — `^a b (a)` does the same thing as `^a ^b (a)`. Imagine the currying is actually multiple wrapped closures, if you like.
 
 For more information on closure values, see "About functions -> user closures" below.
 
@@ -678,7 +678,7 @@ Notice something very alarming: In 0.1 this is a method on number. It is not pre
 
 # About user closures
 
-Everything in Emily "is a function", so what we usually think of as "a function"-- a block of reusable code you define-- in Emily is just one particular kind of function, called a "closure". Closures are created with the ^ operator; if you see a ^, you know you're making a closure.
+Everything in Emily "is a function", so what we usually think of as "a function" — a block of reusable code you define — in Emily is just one particular kind of function, called a "closure". Closures are created with the ^ operator; if you see a ^, you know you're making a closure.
 
 Closures primarily consist of a group (`()`, `{}` or `[]`) full of code, but they also carry around several other pieces of information:
 
@@ -693,8 +693,7 @@ In order to execute a closure, it must be given as many arguments as it has defi
 
 If a closure has zero arguments, you still have to give it an argument to execute it, but the argument will be discarded. A handy value for this purpose is `null` — since `()` is shorthand for `null`, the familiar-looking syntax `object.method()` will work. You can also use `do`*`function`* as defined above.
 
-
-When a closure executes, its code executes in a special scope with the enclosing scope as parent; this new scope is pre-populated with whichever of `return`, `current`, `this` and `super` are appropriate, then with all arguments. The behavior of assignment-- in other words, `set`, `let` and `=`-- is determined by the kind of group. In the case of an unscoped group (`^()`) they will "fall through" and occur directly in the enclosing scope. In the case of a scoped group (`^{}`) they will exist in a new scope, created just for the function application, which is a child of the enclosing scope. (`^[]` is not allowed.)
+When a closure executes, its code executes in a special scope with the enclosing scope as parent; this new scope is pre-populated with whichever of `return`, `current`, `this` and `super` are appropriate, then with all arguments. The behavior of assignment — in other words, `set`, `let` and `=` — is determined by the kind of group. In the case of an unscoped group (`^()`) they will "fall through" and occur directly in the enclosing scope. In the case of a scoped group (`^{}`) they will exist in a new scope, created just for the function application, which is a child of the enclosing scope. (`^[]` is not allowed.)
 
 TODO: Explain the behavior of set and let on an argument variable.
 
@@ -737,7 +736,7 @@ There are two ways to set values on an object: `let` and `set`. **You should not
 
 There is one more wrinkle.
 
-In languages where objects can act as "containers" for functions, we often want to have those functions be "methods" on the object-- aware of and able to operate on the object they were fetched from. In Emily, if a function is defined "inside" of an object (if it is assigned inside of the object literal group) it becomes a "method" and when it is executed it will have three special variables defined in its scope: `this`, `current` and `super`. `this` is the object that the method was invoked on. `current` is the object that the method was originally defined as part of; it can be different if the method was inherited from a parent object. (You will usually want to use `this` and ignore `current`.) A method invoked on `super` will be fetched from a parent object, then executed with the `this` of the invoked object. So for example:
+In languages where objects can act as "containers" for functions, we often want to have those functions be "methods" on the object — aware of and able to operate on the object they were fetched from. In Emily, if a function is defined "inside" of an object (if it is assigned inside of the object literal group) it becomes a "method" and when it is executed it will have three special variables defined in its scope: `this`, `current` and `super`. `this` is the object that the method was invoked on. `current` is the object that the method was originally defined as part of; it can be different if the method was inherited from a parent object. (You will usually want to use `this` and ignore `current`.) A method invoked on `super` will be fetched from a parent object, then executed with the `this` of the invoked object. So for example:
 
     object1 = [
         field = 1;
@@ -756,13 +755,12 @@ This will print "Hello: 1 2". When it is run, `method` will be invoked on object
 
 ### Edge cases
 
-
-Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append("x")` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior-- if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
+Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append("x")` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior — if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
 
 This intuitive idea is achieved by each closure being in one of four states (language lawyer alert on the following):
 
 - The closure is created in "blank" state; it has no `this` or `current`, and if the closure is called those variables will not be set.
-- If a "blank" closure is stored as part of an **object literal** definition-- that is, if it is assigned to a field between a `[` and `]`-- it will upgrade to "method" state. In "method" state, if it is pulled out of an object (either directly, or through the `.parent` chain), "this" and "current" will be set appropriately.
+- If a "blank" closure is stored as part of an **object literal** definition — that is, if it is assigned to a field between a `[` and `]` — it will upgrade to "method" state. In "method" state, if it is pulled out of an object (either directly, or through the `.parent` chain), "this" and "current" will be set appropriately.
 - If a "method" closure is ever stored in a **user object** at a time that is **not** defining an object literal, it will be moved to "frozen" state. The `this` and `current` from the moment the closure was frozen will be remembered and afterward not ever be updated.
 - Similarly, if a "blank" closure is ever stored in a **user object**, it enters "never" state, which means that it is frozen in a state of never accepting a `this` or `current`. (Any `this` or `current` captured from the enclosing scope will of course be visible.)
 
