@@ -152,6 +152,7 @@ You can also put multiple statements, (i.e. multiple lines) inside of a `()` or 
         x = 3
         x + 5
     )
+
 This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations — where you want to do some calculation inside of a expression — `{ }` is a group which acts just like `( )` except that a new scope is created inside of it. So you can say:
 
     x = 3
@@ -345,6 +346,7 @@ The answer is: Objects **are** functions. A function in Emily is a map from one 
 This code prints `testValue`, because when the language doesn't find `.testValue` in `sensor` it looks `.testValue` up in `sensor`'s parent, which happens to be the println function. This is not an example of something you would actually ever do. But...
 
 ## Everything you do is a function call
+
 When I say everything is a function call, I do mean everything. Operators, like `=` or `+`, are actually function calls in disguise: `a + b` is code for `a .plus b`, and `a = b` is code for `SCOPE.let .a b` (this will probably be named `set` in the next version). Objects like `[]` have that `.let` field built in when you make them, objects like `3` (numbers are objects) have a `.plus` field built in when you make them. Look at what happens if I replace `let`:
 
     sensor = [
