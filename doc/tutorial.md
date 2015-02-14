@@ -192,14 +192,14 @@ Why require the `( )` (or the `:`) in the first place, though? Well, some of thi
 
 Another way is to sort of fold functions inside each other:
 
-    description ^name ^species ^arms = \
+    describe ^name ^species ^arms = \
         print name " is a " species " with " arms " arms\n"
 
-    description "Natalie" "centaur" 2
+    describe "Natalie" "centaur" 2
 
-So, you're thinking, "description" is just a function with 3 arguments, and you apply the function by writing them one after the other? And sure, you can think of it that way, but what's actually happening is that each `^` is creating a function that returns a function inside of it. Remember how `print` is basically a machine that you feed something into, and it spits out a copy of itself for you to feed the next thing into? This is why I'm able to write those long chained `print` statements like in the last example. Well, `description` is like a machine that spits out another machine that spits out **another** machine that spits out a description of your friend Natalie. Once you're thinking about it this way, you can do something neat: You can take one of these intermediate machines and make a copy.
+So, you're thinking, "describe" is just a function with 3 arguments, and you apply the function by writing them one after the other? And sure, you can think of it that way, but what's actually happening is that each `^` is creating a function that returns a function inside of it. Remember how `print` is basically a machine that you feed something into, and it spits out a copy of itself for you to feed the next thing into? This is why I'm able to write those long chained `print` statements like in the last example. Well, `describe` is like a machine that spits out another machine that spits out **another** machine that spits out a description of your friend Natalie. Once you're thinking about it this way, you can do something neat: You can take one of these intermediate machines and make a copy.
 
-    natalieGenerator = description "Natalie" "centaur"
+    natalieGenerator = describe "Natalie" "centaur"
     natalieGenerator 3
     natalieGenerator 4
     natalieGenerator 5
@@ -251,17 +251,17 @@ So Emily has "objects". Can it do object-oriented programming? The answer is yes
 
     apple = [
         color = "red"
-        describe ^ = println "It is " (this.color)
+        describe ^ = print "It is " (this.color) "\n"
     ]
 
     do: apple.describe
 
-This prints "`It is red`". You'll notice I did something new here — I defined `description` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
+This prints "`It is red`". You'll notice I did something new here — I defined `describe` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
 
 Emily objects have inheritance, although they do not have classes. Instead, they use "prototypes", which is just a fancy way of saying that objects can inherit from other objects.
 
     fruit = [
-        describe ^ = println "It is " (this.color)
+        describe ^ = print "It is " (this.color) "\n"
     ]
 
     lime = [
@@ -271,7 +271,7 @@ Emily objects have inheritance, although they do not have classes. Instead, they
 
     do: lime.describe
 
-This prints "`It is green`". What happens here is that `lime` does not have a `description` field, but it does have a `parent`, and the field named `parent` is special. When you check `lime.description`, if it does not find `.description`, it checks the parent, and returns it from there. Because `description` is not just a normal function but a method, when you call `banana.description` the interpreter knows to set `this` to be equal to `banana`, not `fruit`. (The `fruit` base prototype doesn't even have a color, so if you say `do: fruit.description`, you'll just get an error.) `fruit` here is just another object, but it's **acting like** a class.
+This prints "`It is green`". What happens here is that `lime` does not have a `describe` field, but it does have a `parent`, and the field named `parent` is special. When you check `lime.describe`, if it does not find `.describe`, it checks the parent, and returns it from there. Because `describe` is not just a normal function but a method, when you call `lime.describe` the interpreter knows to set `this` to be equal to `lime`, not `fruit`. (The `fruit` base prototype doesn't even have a color, so if you say `do: fruit.describe`, you'll just get an error.) `fruit` here is just another object, but it's **acting like** a class.
 
 If an object needs to send a message to its parent, it should use the special `super` variable to do that:
 
@@ -301,7 +301,7 @@ This prints
     It has seeds
     It's crispy, like it's been fried
 
-Each call to `super` calls the function in the parent. Wait, couldn't you have also just said `do: this.parent.describe`, instead of using `super`? Well, that's legal, but then the special-ness that makes `this` work would break; if you'd said `this.parent.describe`, you'd have gotten a function that was a method of `banana`, not a method of `plantain`, and the description would have said "It is yellow". `super` makes sure the special method rewiring still works.
+Each call to `super` calls the function in the parent. Wait, couldn't you have also just said `do: this.parent.describe`, instead of using `super`? Well, that's legal, but then the special-ness that makes `this` work would break; if you'd said `this.parent.describe`, you'd have gotten a function that was a method of `banana`, not a method of `plantain`, and the describe would have said "It is yellow". `super` makes sure the special method rewiring still works.
 
 ### Array builtins
 
