@@ -320,7 +320,7 @@ This prints:
     one
     onetwothree
 
-Calling `append` on an object looks up the numeric value of the object's `count` field (or creates it with value `0` if this is the first time something's been appended to the object), creates a new field with that number as the key and `append`'s argument as the value, and then increments `count`.
+Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with that number as the key and `append`'s argument as the value, and then increments the value of the `count` field.
 
 `each` takes a function as argument, and invokes it on all numeric keys from `0` up to `count`.
 
