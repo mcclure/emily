@@ -95,9 +95,9 @@ And we could have not bothered with the variable at all:
 
     println ( ( ^number (number * 2) ) 4 )
 
-That might be written a bit confusing! But this applies an "anonymous" function which doubles its arguments to the number 4, then prints the result. This code prints `8`.
+That might be a bit confusing! But this applies an "anonymous" function which doubles its arguments to the number 4, then prints the result. This code prints `8`.
 
-`^`, whereever you see it in Emily, just means "make a function here". I call the functions that are made with ^ "closures". I'll explain why later.
+`^`, wherever you see it in Emily, just means "make a function here". I call the functions that are made with ^ "closures". I'll explain why later.
 
 ## Making objects
 
@@ -149,11 +149,10 @@ If you want to do the opposite and break a single statement across multiple line
 You can also put multiple statements, (i.e. multiple lines) inside of a `()` or a `[]`. I call these parenthetical-type things "groups". If you put multiple lines in a `( )`, the group evaluates to the value of the final nonempty statement.
 
     println (
-        x = 3;
+        x = 3
         x + 5
     )
-
-This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations-- where you want to do some calculation inside of a expression-- `{ }` is a group which acts like `( )` but a new scope is created inside of it. So you can say:
+This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations — where you want to do some calculation inside of a expression — `{ }` is a group which acts like `( )` but a new scope is created inside of it. So you can say:
 
     x = 3
     println {
@@ -222,13 +221,13 @@ The "currying" trick is a little academic, but it's an example of what kinds of 
 
 In most languages, things like `if` or `while` are magic-- `if` in C snarfs up "something surrounded by a parenthesis" and "something surrounded by curly braces" and then decides whether to execute the curly brace code or not. There's no magic in Emily. There's just functions. `if` is a function. It takes an argument, checks if it's true (meaning: not `null`), and if it's true it executes its next argument as a function.
 
-You might be saying now: I don't **care** about all this functional programming currying stuff! I just want to write an if statement. And that's fine, you shouldn't have to get wrapped up in the theory. Just what you need to know is that things like `if` and `while` are not magic, and any statement gets executed exactly when and where you wrote it unless there's that `^` to say "not yet". So if you're using `if` or `while`, you **do** need to put in a `^`. Oh, right, there's also a `while`:
+You might be saying now: I don't **care** about all this functional programming currying stuff! I just want to write an if statement. And that's fine, you shouldn't have to get wrapped up in the theory. What you do need to know is that things like `if` and `while` are not magic, and any statement gets executed exactly when and where you wrote it unless there's that `^` to say "not yet". So if you're using `if` or `while`, you **do** need to put in a `^`. Oh, right, there's also a `while`:
 
     # Print the numbers 1 2 3 4
     x = 1
     while ^(x < 5) ^( println x ; x = x + 1 )
 
-`while` needs `^` on both of its parentheticals-- the `(x < 5)` gets run again and again at each pass of the loop, so it needs that "not yet".
+`while` needs `^` on both of its parentheticals — the `(x < 5)` gets run again and again at each pass of the loop, so it needs that "not yet".
 
 By the way, you don't **need** to use `if` or `while` at all, because there's recursion:
 
@@ -246,7 +245,7 @@ Emily uses a trick from functional programming that isn't worth explaining here 
 
 One more concept I want to throw at you, and then I'll try to explain why this stuff works the way it does.
 
-So Emily has "objects". Can it do object-oriented programming? The answer is yes-- if you assign a function to a field inside of an object declaration, it becomes a "method" and gains access to special `this` and `super` variables:
+So Emily has "objects". Can it do object-oriented programming? The answer is yes — if you assign a function to a field inside of an object declaration, it becomes a "method" and gains access to special `this` and `super` variables:
 
     apple = [
         color = "red"
@@ -255,7 +254,7 @@ So Emily has "objects". Can it do object-oriented programming? The answer is yes
 
     do: apple.describe
 
-This prints "`It is red`". You'll notice I did something new here-- I defined `description` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
+This prints "`It is red`". You'll notice I did something new here — I defined `description` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
 
 Emily objects have inheritance, although they do not have classes. Instead, they use "prototypes", which is just a fancy way of saying that objects can inherit from other objects.
 
@@ -329,7 +328,7 @@ Emily is **simpler** than other programming languages, in certain ways. My goal 
 
 ## Everything is a function
 
-Something you might have noticed: Both passing an argument to a function, and looking up a key on an object, is done by writing one after the other. What is the difference between a function and an object?
+Something you might have noticed: Passing an argument to a function and looking up a key on an object are both done by writing one after the other. What is the difference between a function and an object?
 
 The answer is: Objects **are** functions. A function in Emily is a map from one value to another (which maybe has some sort of side-effect when it evaluates). Objects are one way of mapping things, closures (code functions made with `^`) are another, but the language doesn't know the difference between them and doesn't care. You can interchange objects and functions. For example an object can inherit from a function:
 
@@ -342,8 +341,7 @@ The answer is: Objects **are** functions. A function in Emily is a map from one 
 This code prints `testValue`, because when the language doesn't find `.testValue` in `sensor` it looks `.testValue` up in `sensor`'s parent, which happens to be the println function. This is not an example of something you would actually ever do. But...
 
 ## Everything you do is a function call
-
-When I say everything is a function call, I do mean everything. Operators, like `=` or `+`, are actually function calls in disguise; `a + b` is code for `a .plus b`, `a = b` is code for `scope.let .a b` (this will probably be named `set` in the next version). Objects like `[]` have that `.let` field built in when you make them, objects like `3` (numbers are objects) have a `.plus` field built in when you make them. Look at what happens if I replace `let`:
+When I say everything is a function call, I do mean everything. Operators, like `=` or `+`, are actually function calls in disguise: `a + b` is code for `a .plus b`, and `a = b` is code for `SCOPE.let .a b` (this will probably be named `set` in the next version). Objects like `[]` have that `.let` field built in when you make them, objects like `3` (numbers are objects) have a `.plus` field built in when you make them. Look at what happens if I replace `let`:
 
     sensor = [
         secrets = []              # This is the real object
@@ -371,7 +369,7 @@ When I say everything is a function call, I do mean everything. Operators, like 
     Read key testValue
     15.
 
-It's not unusual to find a language which allows attribute getter/setters, but doing so here is unusually straightforward because you're using the normal language machinery, not some kind of special construct.
+It's not unusual to find a language which allows attribute getters and setters, but doing so here is unusually straightforward because you're using the normal language machinery, not some kind of special construct.
 
 ## Make your own flow control
 
@@ -392,7 +390,7 @@ A thing to notice: `until` is a function, but we constructed it without actually
 
 ## Currying objects
 
-If we're thinking of objects as functions, we can think of field accesses as similar to currying-- `x.functionName argument` applies a method, and `x.functionName` is like partially applying that method.
+If we're thinking of objects as functions, we can think of field accesses as similar to currying — `x.functionName argument` applies a method, and `x.functionName` is like partially applying that method.
 
     # Take the `each` method from an object,
     # and print each value with a filter function applied.
@@ -408,4 +406,4 @@ The interesting thing here is that `x.each` and `3.plus` "remember" their target
 
 ## What is Emily?
 
-Emily is an attempt to get the power and flexibility of functional programming languages-- things like ML, with things like higher-order functions and user-defined operators-- while retaining the abilities and ease of use of a dynamic object-oriented language. It does this by modeling all operations as chains of function applications, approximating traditional programming language operators as macros that construct those applications, and adding some builtins that support OO style.
+Emily is an attempt to get the power and flexibility of functional programming languages — things like ML, with things like higher-order functions and user-defined operators — while retaining the abilities and ease of use of a dynamic object-oriented language. It does this by modeling all operations as chains of function applications, approximating traditional programming language operators as macros that construct those applications, and adding some builtins that support OO style.
