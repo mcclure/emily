@@ -316,7 +316,7 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
 **Usage:** `!` *[token]*
 
-"Not". Captures one token to the right and evaluates to that token as argument to the `not` function (see below). `not` is ALWAYS the standard `not` function, not whatever `not` is in the current scope.
+"Not". Captures one token to the right and evaluates to the application of the `not` function (see below) to that token. `not` is ALWAYS the standard `not` function, not whatever `not` is in the current scope.
 
 *Treated as a macro:*
 
