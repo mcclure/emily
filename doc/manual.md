@@ -614,7 +614,7 @@ Iterates over an object which has been used as a numeric-index array. Starting w
 
 ## Number
 
-For all number members taking arguments, the argument must be another number. If it is not, this is a failure and the program halts on evaluation.
+For all number methods taking arguments, the argument must be another number. If it is not, this is a failure and the program halts on evaluation.
 
 ### negate
 
@@ -730,7 +730,7 @@ There are two ways to set values on an object: `let` and `set`. **You should not
 
 `.set` will set a key which already exists; if it does not exist, it will attempt to set it on the parent. (If it gets all the way to the end of the prototype chain and has not found a object which has a match for that key, this is a failure and the program will halt.)
 
-`let` and `set` take two curried arguments, a key and a value. To use `let` to set the variable `a` to 3, for example, this would be `let .a 3` for a scope variable or `object.let .a 3` for a object member.
+`let` and `set` take two curried arguments, a key and a value. To use `let` to set the variable `a` to 3, for example, this would be `let .a 3` for a scope variable or `object.let .a 3` for a object key.
 
 ## Object-oriented programming
 
