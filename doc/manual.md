@@ -1,4 +1,4 @@
-**Emily programming language, version 0.2b
+**Emily programming language, version 0.2b**
 **Reference manual**
 
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
@@ -29,7 +29,7 @@ All values in Emily are modeled as unary functions-- in other words, a function 
 
     a b
 
-You are "applying" a to b. This expression evaluates to a value, which is the result giving b as an argument to a.
+You are "applying" a to b. This expression evaluates to a value, which is the result of giving b as an argument to a.
 
 All expressions evaluate to values, which means expressions can be chained. If you write:
 
@@ -45,7 +45,7 @@ The special paired characters `( )`, `{ }` and `[ ]` in an expression create a "
 
 The value `1 .plus` is being applied to the value `(2 .plus 3)`.
 
-In code samples or examples below, you may see things that look like "operators" as you know them from other languages, things like `=` or `+`. These are technically fake. Before a c-expression is interpreted, a set of "macros" are applied which remove all symbols. Each macro rewrites a valid c-expression containing a symbol to a valid c-expression without that symbol. Macros exist so that things like order of operations, or syntax "binding" to nearby tokens, can happen while still preserving the idea that at core everything is application of arguments on unary functions. The user generally should not have to think about this fine distinction, but should be aware that (1) any expression in Emily **could** be written as nothing but values and grouping parenthesis, and (2) any operator (such as `+`) that works with a builtin **could** also work with a user-defined object that responds to the corresponding atom (for `+` this is `.plus`).
+In code samples or examples below, you may see things that look like "operators" as you know them from other languages, things like `=` or `+`. These are technically fake. Before a c-expression is interpreted, a set of "macros" are applied which remove all symbols. Each macro rewrites a valid c-expression containing a symbol to a valid c-expression without that symbol. Macros exist so that things like order of operations, or syntax "binding" to nearby tokens, can happen while still preserving the idea that at core everything is application of unary functions to arguments. The user generally should not have to think about this fine distinction, but should be aware that (1) any expression in Emily **could** be written as nothing but values and grouping parentheses, and (2) any operator (such as `+`) that works with a builtin **could** also work with a user-defined object that responds to the corresponding atom (for `+` this is `.plus`).
 
 The c-expressions are homoiconic for the AST in the current Emily interpreter, if that means anything to you.
 
@@ -67,13 +67,13 @@ In addition, there are builtin closures, "scope objects", and continuations (`re
 
 "Numbers" are double-precision floats.
 
-There is a `true` but is no "false"; `null` is used as the "false" value. Library functions which must evaluate true vs falsehood, like `if`, treat any non-null value as true.
+There is a `true` but is no "false"; `null` is used as the "false" value. Library functions which must evaluate the truth values of expressions, like `if`, treat any non-`null` value as true.
 
 Remember: these different kinds of values only differ in terms of which arguments they will accept (without failing) when applied as functions.
 
 ## Token types
 
-An Emily program is a series of statements ("lines of code" separated by ; or newline). A statement in an Emily program is a series of "token"s. In a written program on disk, the following kinds of tokens exist:
+An Emily program is a series of statements ("lines of code" separated by ; or newline). A statement in an Emily program is a series of "tokens". In source code on disk, the following kinds of tokens exist:
 
 - Words: An identifier-- any ASCII letter a-z A-Z, followed by any sequence of ASCII letters a-z A-Z and numbers 0-9. Underscore is not allowed.)
 - Numbers: Any numbers 0-9, optionally followed by one period and more numbers 0-9.
@@ -89,7 +89,7 @@ After macro processing, all Symbols will be eliminated and two new types of toke
 
 ## Scopes
 
-Each statement is executed in context of a "scope". This is an invisible, inaccessible object that the interpreter knows about. Any word token, at evaluation time, will be converted to a atom token and the scope object will be applied to it. In other words, the expression
+Each statement is executed in the context of a "scope". This is an invisible, inaccessible object that the interpreter knows about. Any word token, at evaluation time, will be converted to an atom token and the scope object will be applied to it. In other words, the expression
 
     a
 
@@ -101,7 +101,7 @@ Scopes in Emily are objects, which means they can have parents via object inheri
 
 ## Sequencing
 
-All Emily values are functions; this means they map one value to one value, and evaluating the map may optionally have a side effect. The order evaluations (and thus, potentially, side effects) occur in is precise.
+All Emily values are functions; this means they map one value to one value, and evaluating the map may optionally have a side effect. The order in which evaluations (and thus, potentially, side effects) occur is precise.
 
 Consider a program as a list of statements. Statements are separated by semicolons or newlines. The statements are executed one after the other.
 
@@ -126,7 +126,7 @@ An "empty" statement (i.e., two semicolons or two newlines with only whitespace 
 
 This is only important to know if you are writing macros (not possible in Emily 0.1). If you are writing code, you probably actually want the "operator precedence" table in the section below.
 
-In the table below, operators higher in the table are "evaluated" first. If a symbol is LTR, symbols of that phase to the left are evaluated before symbols of that phase to the right.
+In the table below, operators higher in the table are evaluated first. If a phase is marked LTR in the Order column, symbols in that phase are evaluated from left to right. If a phase is marked RTL, they are evaluated from right to left.
 
     Phase   | Order | Symbol
     --------|-------|----------
@@ -157,7 +157,7 @@ In the table below, operators higher in the table are "evaluated" first. If a sy
     40      | RTL   | *
             |       | /
     30      | RTL   | ~
-            | RTL   | !
+            |       | !
     20      | RTL   | `
 
 (This table can be different from conventional "precedence" because all the macros do different things when they execute-- for example the `.` macro adheres directly to the item to its right, whereas the `+` macro creates groups out of its entire left and right sides and adheres directly to neither.)
@@ -226,7 +226,7 @@ Statement separator. So is non-escaped newline.
 
 **Usage:** `(` *[any number of statements]* `)`
 
-Unscoped group. Executes all statements between the parenthesis, in context of the enclosing statement's scope. The group evaluates to the value of the final nonempty statement.
+Unscoped group. Executes all statements between the parenthesis, in the context of the enclosing statement's scope. The group evaluates to the value of the final nonempty statement.
 
 `()` with nothing in between evaluates to `null`.
 
@@ -234,9 +234,9 @@ Unscoped group. Executes all statements between the parenthesis, in context of t
 
 **Usage:** `{` *[any number of statements]* `}`
 
-Scoped group. Creates a new scope object which is a child of the enclosing statement's scope (new `has`, `set` and `let`). Executes all statements between the braces in context of this new scope.
+Scoped group. Creates a new scope object which is a child of the enclosing statement's scope (new `has`, `set` and `let`). Executes all statements between the braces in the context of this new scope.
 
-Like with unscoped groups, the group evaluates to the value of the final nonempty statement and `{}` with nothing in between evaluates to `null`.
+As with unscoped groups, the group evaluates to the value of the final nonempty statement and `{}` with nothing in between evaluates to `null`.
 
 ### [ ]
 
@@ -270,7 +270,7 @@ For more information on closure values, see "About functions -> user closures" b
 
 **Usage:** `^!` *[optional: any number of words]* *[group]*
 
-Exactly the same as `^`, but when the there will not be a "return" created in the execution scope. You probably don't ever actually want this.
+Exactly the same as `^`, but a "return" will not be created in the execution scope. You probably don't ever actually want this.
 
 ### :
 
@@ -288,7 +288,7 @@ Apply right: Captures the entire rest of the statement to the right of the `:`, 
 
 **Usage:** *[statement condition]* `?` *[statement 1]* `:` *[statement 2]*
 
-Ternary operator. Captures the entire statement and splits it in three. At run time, *[statement condition]* is evaluated, if it is true (non-null), *[statement 1]* will be evaluated and its value returned; otherwise, *[statement 2]* will be evaluated and its value returned. *[statement 1]* cannot contain a question mark as a token, *[statement 2]* can. (To be explicit: `a?(b?c:d):e` is allowed, `a?b:c?d:e` is allowed, `a?b?c:d:e` is not.) Any of the three statements may be blank, in which case the value for that statement will be null.
+Ternary operator. Captures the entire statement and splits it in three. At run time, *[statement condition]* is evaluated. If it is true (non-`null`), *[statement 1]* will be evaluated and its value returned; otherwise, *[statement 2]* will be evaluated and its value returned. *[statement 1]* cannot contain a question mark as a token, *[statement 2]* can. (To be explicit: `a?(b?c:d):e` is allowed, `a?b:c?d:e` is allowed, `a?b?c:d:e` is not.) Any of the three statements may be blank, in which case the value for that statement will be null.
 
 *Treated as a macro:*
 
@@ -316,7 +316,7 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
 **Usage:** `!` *[token]*
 
-"Not". Captures one token to the right and evaluates to that token applied as argument to the `not` function (see below). `not` is ALWAYS the standard `not` function, not whatever `not` is in the current scope.
+"Not". Captures one token to the right and evaluates to that token as argument to the `not` function (see below). `not` is ALWAYS the standard `not` function, not whatever `not` is in the current scope.
 
 *Treated as a macro:*
 
@@ -330,7 +330,7 @@ Negation. Captures one token to the right and evaluates to that token with `.neg
 
 **Usage:** `` ` `` *[token]* *[token]*
 
-Backtick is the "apply pair" operator. It captures two tokens to the right, and replaces the tokens with an unscoped group comparing the tokens. Useful for performing a quick application in the middle of a long expression (remember, `cos a.b` in this language is evaluated like `((cos a) b)`, not `(cos (a (b)))`).
+Backtick is the "apply pair" operator. It captures two tokens to the right, and replaces the tokens with an unscoped group containing the tokens. Useful for performing a quick application in the middle of a long expression (remember, `cos a.b` in this language is evaluated like `((cos a) b)`, not `(cos (a (b)))`).
 
 *Treated as a macro:*
 
@@ -352,11 +352,11 @@ Backtick is the "apply pair" operator. It captures two tokens to the right, and 
 
 `=` is the most complicated operator, and its behavior is based on trying to do "what you expect". It defines a new key on some object somewhere and sets its value. If a single token appears to the left of the `=`, this is a key on the scope object. If a multi-token expression is to the left of the `=`, the rightmost token is used as a key on the expression defined by the other tokens.
 
-If a `^` appears to the left of the `=`, everything to the right of `^` is argument bindings for a closure. In other words `x ^ = 3` is equivalent to `x = ^ (3)` and `x ^b c = 4` is equivalent to `x = ^ b c (4)`. Like with normal `^`, multiple `^`s are allowed.
+If a `^` appears to the left of the `=`, all tokens to the right of `^` and the left of `=` are argument bindings for a closure, and the tokens to the right of `=` are the code group for the closure. In other words `x ^ = 3` is equivalent to `x = ^ (3)` and `x ^b c = 4` is equivalent to `x = ^ b c (4)`. Like with normal `^`, multiple `^`s are allowed.
 
-If the first token to the left is `nonlocal`, this is a special flag to `=` that rather than defining a new key, it should set on an existing key, setting the key on a parent if necessary, and failing if the existing key is not found. This for example makes it possible to set a variable in a parent scope, similar to the `nonlocal` directive in Python.
+If the first token on the left is `nonlocal`, this is a special flag to `=` that rather than defining a new key, it should set an existing key, setting the key on a parent if necessary, and failing if the existing key is not found. This for example makes it possible to set a variable in a parent scope, similar to the `nonlocal` directive in Python.
 
-`=` currently can set fields on objects, but can't implicitly make new ones; `a.b = 4` is only legal if `a` is already an existing table. `a = []; a.b = 4` is legal.
+`=` can currently set fields on objects, but can't implicitly make new objects; `a.b = 4` is only legal if `a` is already an existing table. `a = []; a.b = 4` is legal.
 
 `=` cannot set a non-word key on a scope object. In other words, `4 = 5` is an error.
 
@@ -468,7 +468,7 @@ A set of builtin functions and other values are available on the various built-i
 
 In each of the following sections, the documented fields are in the base prototype for the section's type. The value `3` has "integer" as its base prototype, so any methods in the integer base prototype will be usable on `3`. For an explanation of prototypes, see "About objects" below.
 
-Remember for scopes, a field lookup is done by just writing a word, like `not`; for other kind of objects, the field lookup requires a `.`, like `3.negate`.
+Remember that for scopes, a field lookup is done by just writing a word, like `not`; for other kind of objects, the field lookup requires a `.`, like `3.negate`.
 
 For anything below, a reference to "the target" means whatever object the field lookup was performed on, i.e., `3` in the case of `3.negate`.
 
@@ -486,25 +486,25 @@ Note: Even `null` responds to this.
 
 ### Common: Objects and values
 
-These methods are used for boolean logic and are present in common for all values which are not scopes.Because of the short-circuiting program described under `&&` above, they will not exist in future versions.
+These methods are used for boolean logic and are present in common for all values which are not scopes. Because of the short-circuiting problem described under `||` above, they will not exist in future versions.
 
 #### and
 
 **Usage:** `and` *[arg 1]*
 
-Returns `true` if both the target and *[arg 1]* are true (not null)
+Returns `true` if both the target and *[arg 1]* are true (not `null`)
 
 #### or
 
 **Usage:** `or` *[arg 1]*
 
-Returns `true` if either the target and *[arg 1]* are true (not null)
+Returns `true` if either the target and *[arg 1]* are true (not `null`)
 
 #### xor
 
 **Usage:** `xor` *[arg 1]*
 
-Returns `true` if exactly one of the target and *[arg 1]* are true (not null)
+Returns `true` if exactly one of the target and *[arg 1]* are true (not `null`)
 
 ### Common: Scopes and objects
 
@@ -566,7 +566,7 @@ Takes a value assumed to be a zero-argument closure, executes it by passing null
 
 *[arg 2]* is assumed to be a zero-argument closure, *[arg 1]* is anything.
 
-If *[arg 1]* is true (non-null) executes *[arg 2]* by passing null as an argument.
+If *[arg 1]* is true (not `null`), executes *[arg 2]* by passing `null` as an argument.
 
 ### while
 
@@ -580,15 +580,17 @@ Takes two arguments, both assumed to be zero-argument closures. Repeatedly execu
 
 Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
 
-### `nullfn`
+### nullfn
 
-Slightly arcane, takes an argument, ignores it and returns null.
+**Usage:** `nullfn` *[arg]*
+
+Slightly arcane. Takes an argument, ignores it, and returns `null`.
 
 ### tern
 
 **Usage:** `tern` *[arg 1]* *[arg 2]* *[arg 3]*
 
-Slightly arcane, the underlying implementation for `?:`. if *[arg 1]* is true (non-null) this executes *[arg 2]* by passing null as an argument, otherwise executes *[arg 3]* by passing null as an argument.
+Slightly arcane. This is the underlying implementation for `?:`. If *[arg 1]* is true (not `null`) this executes *[arg 2]* by passing `null` as an argument, otherwise executes *[arg 3]* by passing `null` as an argument.
 
 ### thisTransplant, thisInit, thisFreeze, thisUpdate
 
@@ -602,19 +604,19 @@ In other words, user objects, created with `[` ... `]`.
 
 **Usage:** `append` *[arg 1]*
 
-Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming "0" if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`.
+Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming `0` if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`.
 
 ### each
 
 **Usage:** `each` *[arg 1]*
 
-Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, invokes *[arg 1]* for each *n* which the object possesses as a key (testing with `.has`) until one is not present, then stops.
+Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, applies *[arg 1]* to the value of each consecutive field *n* that the object possesses (testing with `.has`) until one is not present, then stops. Returns `null`.
 
 ## Number
 
 For all number members taking arguments, the argument must be another number. If it is not, this is a failure and the program halts on evaluation.
 
-### `negate`
+### negate
 
 Returns the target times -1.
 
@@ -634,7 +636,7 @@ Subtracts *[arg 1]* from the target and returns the result.
 
 **Usage:** `times` *[arg 1]*
 
-Multiples *[arg 1]* with the target and returns the result.
+Multiples *[arg 1]* by the target and returns the result.
 
 ### divide
 
@@ -678,26 +680,27 @@ Notice something very alarming: In 0.1 this is a method on number. It is not pre
 
 Everything in Emily "is a function", so what we usually think of as "a function"-- a block of reusable code you define-- in Emily is just one particular kind of function, called a "closure". Closures are created with the ^ operator; if you see a ^, you know you're making a closure.
 
-Closures consist of a group (`()`, `{}` or `[]`) full of code, but they carry around several pieces of information with them:
+Closures primarily consist of a group (`()`, `{}` or `[]`) full of code, but they also carry around several other pieces of information:
 
     - A list of argument names.
     - The scope in which it was defined.
-    - Each closure knows whether or not to create `return`.
-    - Each closure knows whether and how to create object context (`current`, `this` and `super`). See "about objects" below.
+    - Whether or not it will create a `return`.
+    - Whether and how to create object context (`current`, `this` and `super`). See "About objects" below.
 
-These four things are determined by how the scope was created.
+These four things are determined by how the closure was created.
 
-In order to execute a closure, it must be given as many arguments as it has defined. The arguments are "curried", so if a function has two arguments then calling it with an argument returns a function which if called with an argument returns the closure's result. You can save the partially-applied function and reuse it.
+In order to execute a closure, it must be given as many arguments as it has defined. The arguments are "curried", so if a function has two arguments, calling it with an argument returns a function which if called with an argument returns the closure's result. You can save the partially-applied function and reuse it.
 
-If a closure has zero arguments, you still have to give it an argument to execute it, just the argument will be discarded. A handy value for this purpose is `null`, which since `()` is a shorthand for `null` means the familiar-looking syntax `object.method()` will work. You can also use `do function` as defined above.
+If a closure has zero arguments, you still have to give it an argument to execute it, but the argument will be discarded. A handy value for this purpose is `null` — since `()` is shorthand for `null`, the familiar-looking syntax `object.method()` will work. You can also use `do`*`function`* as defined above.
 
-When a closure executes, its code executes in a special scope with the enclosing scope as parent; this new scope is pre-populated with whichever of `return`, `current`, `this` and `super` are appropriate, then with all arguments. The behavior of assignment-- in other words, `set`, `let` and `=`-- is determined by the kind of group. In the case of an unscoped group (`^()`) they will "fall through" and occur directly in the enclosing scope. In the case of a scoped group (`^{}`) will exist in a new scope, created just for the function application, which is a child of the enclosing scope. (`^[]` is not allowed.)
+
+When a closure executes, its code executes in a special scope with the enclosing scope as parent; this new scope is pre-populated with whichever of `return`, `current`, `this` and `super` are appropriate, then with all arguments. The behavior of assignment-- in other words, `set`, `let` and `=`-- is determined by the kind of group. In the case of an unscoped group (`^()`) they will "fall through" and occur directly in the enclosing scope. In the case of a scoped group (`^{}`) they will exist in a new scope, created just for the function application, which is a child of the enclosing scope. (`^[]` is not allowed.)
 
 TODO: Explain the behavior of set and let on an argument variable.
 
 ## return
 
-`return` is populated into the scope each time a function executes. It behaves the same way as `return` in other languages; putting a value after "return" causes the function to immediately terminate and its call site evaluate to the returned value. There is one way `return` differs from other languages: `return` is not a keyword, but rather is just a name given to a function, a special function called a "continuation" which when called causes program execution to jump somewhere else. Because `return` is thus a value like any other, the value of `return` can be stored in a variable and can even outlive the function call itself. This can lead to a sort of time travel:
+`return` is populated into the scope each time a function executes. It behaves the same way as `return` in other languages; putting a value after "return" causes the function to immediately terminate and its call site to evaluate to the returned value. There is one way `return` differs from other languages: `return` is not a keyword, but rather is just a name given to a function, a special function called a "continuation" which when called causes program execution to jump somewhere else. Because `return` is thus a value like any other, the value of `return` can be stored in a variable and can even outlive the function call itself. This can lead to a sort of time travel:
 
     savedReturn = null
     value = do ^(
@@ -714,7 +717,7 @@ Continuations are basically the functional-programming equivalent of GOTO.
 
 Functions are maps from value to value. A closure, in Emily, is a function which is expressed as a series of lines of code, and the mapping is defined by that value. A special kind of function is the object, which another language might call a dictionary, which is a map from a finite set of keys to a finite set of values. A lookup on an object is generally non-mutating.
 
-Object creation is done with a group wrapped by the `[` ... `]` symbols. Like `{ }`, `[ ]` creates a new scope. The difference is that `{ }` returns the value from the final line and discards its scope, whereas `[ ]` discards its final line and returns the scope.In other words, by making assignments inside a `[ ]` you are building up an object, and then at the end of the `[ ]` this object is returned.
+Object creation is done with a group wrapped by the `[` ... `]` symbols. Like `{ }`, `[ ]` creates a new scope. The difference is that `{ }` returns the value from the final line and discards its scope, whereas `[ ]` discards its final line and returns the scope. In other words, by making assignments inside a `[ ]` you are building up an object, and then at the end of the `[ ]` this object is returned.
 
 Objects have a "parent". This is what some languages call a "prototype". If a key is requested on an object, and the object does not have a value for that key, it will check the parent (which is literally the field `parent`). If the parent doesn't have it, it will then check *its* parent, and so on. If an object is reached in this chain with no parent and the key still has not been matched, this is a failure and the program will halt.
 
@@ -722,7 +725,7 @@ Because objects are interchangeable with other functions, the parent can be a a 
 
 ## Assignments
 
-There are two ways to set values on an object: `let` and `set`. **You should not directly use `.set` and `.let`.** You should use `=` which is a shorthand for `let` and `nonlocal` `=` which is a shorthand for `set`; see `=` above. However, if you are in a situation you need to call the functions directly, here is how they work:
+There are two ways to set values on an object: `let` and `set`. **You should not directly use `.set` and `.let`.** You should use `=`, which is a shorthand for `let` and `nonlocal` `=` which is a shorthand for `set`; see `=` above. However, if you are in a situation in which you need to call the functions directly, here is how they work:
 
 `.let` will directly set a key, creating a new key->value pair if necessary.
 
@@ -753,12 +756,13 @@ This will print "Hello: 1 2". When it is run, `method` will be invoked on object
 
 ### Edge cases
 
-Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append "x"` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior-- if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
+
+Think about the method invocation `array3.append("x")`. Consider what happens if you say just `array3.append`. Persisting with the model that everything in this language is a function, partial `array3.append` application should be like a "curried" version of the operation `array3 .append("x")` on the `array` function. We should be able to save `array3.append`, and use it later, and saving it should not change its behavior-- if we store `array3.append` in a variable, or in an object, and later invoke it, it should still have its effect on `array3` and not some other object.
 
 This intuitive idea is achieved by each closure being in one of four states (language lawyer alert on the following):
 
 - The closure is created in "blank" state; it has no `this` or `current`, and if the closure is called those variables will not be set.
-- If a "blank" closure is stored as part of an **object literal** definition-- that is, if it is assigned to a field between a `[` and `]`-- it will upgrade to "method" state. In "method" state, if it is pulled out of an object (either directly, or through the `.parent` chain) the "this" and "current" will be set appropriately.
+- If a "blank" closure is stored as part of an **object literal** definition-- that is, if it is assigned to a field between a `[` and `]`-- it will upgrade to "method" state. In "method" state, if it is pulled out of an object (either directly, or through the `.parent` chain), "this" and "current" will be set appropriately.
 - If a "method" closure is ever stored in a **user object** at a time that is **not** defining an object literal, it will be moved to "frozen" state. The `this` and `current` from the moment the closure was frozen will be remembered and afterward not ever be updated.
 - Similarly, if a "blank" closure is ever stored in a **user object**, it enters "never" state, which means that it is frozen in a state of never accepting a `this` or `current`. (Any `this` or `current` captured from the enclosing scope will of course be visible.)
 
@@ -775,7 +779,7 @@ A design goal of Emily is that anything the language interpreter can do, a third
 - `thisInit` *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, converts it to "frozen".
 - thisUpdate *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, leaves `current` unaltered and updates `this` to *[object]*.
 
-In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me these are useful.
+In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me that these are useful.
 
 # Miscellania
 
