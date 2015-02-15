@@ -60,35 +60,9 @@ let repl targets =
         | Options.File f -> ignore @@ runFile f
         | _ -> () in
 
-    (* Run the given string *)
-    let runString data =
-        let buf = Tokenize.tokenizeString Token.Cmdline data in
-        Execute.execute scope buf in
-
-    (* Run all lines of user input *)
-    let runInput () =
-        runString (String.concat "\n" (List.rev !lines)) in
-
     (* Road any files provided by the user, before launching REPL *)
     let runUserFiles () =
         List.iter runTargetFiles targets in
-
-    (* The user is entering code -- read it all and then run it *)
-    let handleCode () =
-        (* Keep reading lines if continued with \ *)
-        while (isContinued !line) do promptAndReadLine "..> " done;
-
-        (* Now run the accumulated lines *)
-        try
-            let result = runInput () in
-            print_endline (Pretty.replDisplay result true);
-            flush stdout;
-            ()
-        with Failure e ->
-            print_endline e;
-
-            (* Flush stdout so any output is immediately visible *)
-            flush stdout in
 
     (* First, run emily's built-in repl functions *)
     print_endline (replHelpString ^ "\n");
@@ -101,21 +75,43 @@ let repl targets =
 
     try
         (* As long as the user hasn't sent EOF (Control-D), read input *)
-        while true do
+        let rec proceed () =
             (try
-                (* Draw a prompt, and read one line of input *)
-                promptAndReadLine ">>> ";
+                (* Print a prompt, take a line of text, push to "lines" stack *)
+                promptAndReadLine (match !lines with [] -> ">>> " | _ -> "..> ");
 
-                (* Handle the user's input appropriately *)
-                handleCode ()
+                (* Turn the line stack into a "program" *)
+                let combinedString = (String.concat "\n" (List.rev !lines)) in
+                (* Attempt to tokenize string-- special-case an incomplete program *)
+                let bufOption = (try
+                    Some (Tokenize.tokenizeString Token.Cmdline combinedString)
+                with
+                    Token.CompilationError(Token.IncompleteError,_,_) -> None)
+                in match bufOption with
+                    (* Successfully tokenized a full program *)
+                    | Some buf ->
+                        (* Execute it *)
+                        let result = Execute.execute scope buf in
+                        print_endline (Pretty.replDisplay result true)
+                    (* Re-print the prompt and continue taking lines *)
+                    | _ -> proceed()
 
             with Sys.Break ->
                 (* Control-C should clear the line, draw a new prompt *)
-                print_endline "");
+                print_endline ""
+            | Token.CompilationError e ->
+                print_endline @@ Token.errorString e
+            | Failure e ->
+                print_endline e
+            );
 
-            (* Empty lines, since they have all been executed *)
+            (* Flush stdout so any output is immediately visible *)
+            flush stdout;
+
+            (* Empty lines, since they have all been executed, and repeat *)
             lines := [];
-        done;
+            proceed();
+        in proceed()
 
     with End_of_file ->
         (* Time to exit the REPL *)
