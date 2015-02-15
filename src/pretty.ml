@@ -44,7 +44,7 @@ let dumpCodeTreeDense token =
 
 (* --- Value printers --- *)
 
-(* escape string according to emily's rules *)
+(* Re-escape string according to the Emily reader's rules *)
 let escapeString s =
     let sb = Buffer.create (String.length s + 2) in
     let escapeChar c = match c with

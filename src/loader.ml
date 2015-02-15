@@ -27,13 +27,16 @@ let knownFilter source = match source with
     | Source x -> Some x
     | _ -> failwith "Internal error: Package loader attempted to load a file as if it were a directory"
 
-let scopeWithLoaders packageRoot project directory =
+let tableWithLoaders packageRoot project directory =
     let scope = ValueUtil.tableInheriting Value.WithLet BuiltinScope.scopePrototype in
     let prepareScope = Value.tableSetOption scope in
     prepareScope Value.packageKey   packageRoot;
     prepareScope Value.projectKey   project;
     prepareScope Value.directoryKey directory;
-    Value.TableValue scope
+    scope
+
+let scopeWithLoaders packageRoot project directory =
+    Value.TableValue(tableWithLoaders packageRoot project directory)
 
 let executePackage packageRoot project directory buf =
     let scope = scopeWithLoaders packageRoot project directory in

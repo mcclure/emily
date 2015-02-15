@@ -1,34 +1,39 @@
-(* predefined Emily code used by the REPL *)
-let emilyReplFunctions = "
-help = ^( println \"put a helpful message here\" )
-quit = ^( println \"quit() called\" )
+(* This file contains an routine that runs an emily repl off stdin. Once entered, it runs until quit. *)
+(* In future, this could possibly be moved into its own standalone executable. *)
 
-println \"emily v0.1 repl\"
-println \"help() for help, quit() to quit\"
-println \"have fun!\"
-"
+(* predefined Emily code used by the REPL *)
+let replHelpString = Options.fullVersion^{|, interactive mode
+Type "help" for help, "quit" to quit|}
 
 (* Check if the string 's' ends with a backslash. *)
+(* FIXME: This is inadequate, the tokenizer should report this itself. *)
 let isContinued s =
     let n = String.length s in
     n > 0 && (String.get s (n - 1)) == '\\'
 
 (* Runs the REPL.
 
-This is the high-level method that Main uses to run the REPL.
+This is the high-level methodLoader.loadLocation Loader.Cwd that Main uses to run the REPL.
 It needs to set up a global scope to use, then execute the
 files provided as arguments (if any) and then start reading
 input from the user.
 
-Right now, the REPL doesn't produce any output itself, so
-users must use functions like "println" to inspect values
-and see the result of function calls.
-
-Control-D (EOF) exits the REPL. *)
+Control-D (EOF) exits the REPL, as does the plain string quit(). *)
 let repl targets =
 
     (* this is our global mutable REPL scope *)
-    let scope = Execute.scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
+    let scope = (
+        let project = Loader.loadLocation Loader.Cwd in
+        let table = Loader.tableWithLoaders (Some Loader.packageRepo) (Some project) (Some project) in
+        Value.tableSetString table "help" (Value.BuiltinUnaryMethodValue (fun _ ->
+            print_endline replHelpString;
+            raise Sys.Break (* Stop executing code. Is this too aggressive? *)
+        ));
+        Value.tableSetString table "quit" (Value.BuiltinUnaryMethodValue (fun _ ->
+            raise End_of_file (* ANY attempt to read the "quit" variable quits immediately *)
+        ));
+        Value.TableValue table
+    ) in
 
     (* line and lines are used to read and execute user input *)
     let line = ref "" in
@@ -61,10 +66,6 @@ let repl targets =
     let runInput () =
         runString (String.concat "\n" (List.rev !lines)) in
 
-    (* load built-in emaily functions needed by REPL *)
-    let runEmilyReplFunctions () =
-        runString emilyReplFunctions in
-
     (* load any files provided by the user, before launching REPL *)
     let runUserFiles () =
         List.iter runTargetFiles targets in
@@ -87,7 +88,7 @@ let repl targets =
             flush stdout in
 
     (* first, run emily's built-in repl functions *)
-    ignore @@ runEmilyReplFunctions ();
+    print_endline (replHelpString ^ "\n");
 
     (* next, run any files provided as arguments *)
     runUserFiles ();
@@ -103,9 +104,7 @@ let repl targets =
                 promptAndReadLine ">>> ";
 
                 (* handle the user's input appropriately *)
-                match !line with
-                | "quit()" -> raise End_of_file (* temporary hack *)
-                | _ -> handleCode ()
+                handleCode ()
 
             with Sys.Break ->
                 (* control-C should clear the line, draw a new prompt *)
@@ -117,4 +116,4 @@ let repl targets =
 
     with End_of_file ->
         (* time to exit the REPL *)
-        print_endline "bye!"
+        print_endline "Done"
