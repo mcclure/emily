@@ -80,7 +80,7 @@ let repl targets =
         (* now run the accumulated lines *)
         try
             let result = runInput () in
-            print_endline (Pretty.replDisplay result);
+            print_endline (Pretty.replDisplay result true);
             flush stdout;
             ()
         with Failure e ->
