@@ -128,7 +128,7 @@ And this will print `three`. This is actually not any different from what we wer
 
 This will print `2`.
 
-Above we see `=` being used both to set the values of variables, and to set the values of keys on objects. There is a trick: `=` is doing the same thing in both cases. Every line of code has a "scope object", which holds all its variables. When you write an identifier by itself, like `numbers`, what you are doing is looking up the key `.numbers` on the scope object; `numbers.a` is the same as saying `SCOPE.numbers.a`, if you could somehow get a reference to the scope.
+Above we see `=` being used both to set the values of variables, and to set the values of keys on objects. There is a trick: `=` is doing the same thing in both cases. Every line of code has a "scope object", which holds all its variables. When you write an identifier by itself, like `numbers`, what you are doing is looking up the key `.numbers` on the scope object; `numbers.a` is the same as saying `(SCOPE).numbers.a`, if you could somehow get a reference to the scope.
 
 # Fancier stuff
 
