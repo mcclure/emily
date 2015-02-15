@@ -113,7 +113,10 @@ let dumpValueForUser v =
         | Value.AtomValue s -> s
         | _ -> dumpValue v
 
-(* the following "display" methods are used by the REPL. *)
+(* --- repl.ml helper printers --- *)
+
+(* FIXME: Can all these various display functions be condensed at all? *)
+(* Also, shouldn't more of this be exposed to code? *)
 
 (* display numbers: 4.0 -> "4", 4.1 -> "4.1", etc. *)
 let displayNumber n =
@@ -123,18 +126,16 @@ let displayNumber n =
     | '.' -> String.sub s 0 (n - 1)
     | _ -> s
 
-(* should the REPL should show a key/value pair? if not hide it. *)
-(* FIXME: hiding .!id=0 for now *)
+(* Should the REPL should show a key/value pair? if not hide it. *)
 let shouldShowItem (k, v) =
     match k with
     | Value.AtomValue s ->
          (match s with
          | "parent" | "set" | "has" | "let" -> false
-         | "!id" -> (match v with | Value.FloatValue n -> n <> 0.0 | _ -> true)
          | _ -> true)
     | _ -> true
 
-(* sort items in objects/tables by key name *)
+(* Sort items in objects/tables by key name *)
 let sortItems (k1, v1) (k2, v2) =
     match (k1, k2) with
     | (Value.AtomValue s1, Value.AtomValue s2) -> String.compare s1 s2
@@ -144,19 +145,18 @@ let sortItems (k1, v1) (k2, v2) =
        if n1 < n2 then -1 else if n1 > n2 then 1 else 0
     | _ -> 0
 
-(* display the key atom *)
-(* special-cased to avoid using a dot, since defns don't use them *)
+(* Display the key atom -- special-cased to avoid using a dot, since defns don't use them *)
 let displayKey k =
     match k with
     | Value.AtomValue s -> s
     | Value.FloatValue n -> "<" ^ displayNumber(n) ^ ">"
     | _ -> "<error>"
 
-(* (optionally) truncate a string and append a suffix *)
+(* (Optionally) truncate a string and append a suffix *)
 let truncate s limitAt reduceTo suffix =
     if (String.length s) > limitAt then (String.sub s 0 reduceTo) ^ suffix else s
 
-(* provide a compact view of tables/objects for the REPL *)
+(* Provide a compact view of tables/objects for the REPL *)
 let rec displayTable t =
     let items = List.sort sortItems (CCHashtbl.to_list t) in
     let ordered = List.filter shouldShowItem items in
@@ -166,7 +166,7 @@ let rec displayTable t =
         | toks -> "[" ^ (String.concat "; " toks) ^ "; ...]" in
     truncate out 74 72 "...]"
 
-(* create a string representation of a value for the REPL *)
+(* Create a string representation of a value for the REPL *)
 and replDisplay value recurse =
     match value with
         | Value.Null -> "null"

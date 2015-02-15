@@ -24,7 +24,11 @@ To comply with the license, simply include the above block of text in some acces
 
     Build and packaging improvements
 
-* David Madore <<http://http://www.madore.org/~david/>>
+* Erik Osheim <<d_m@plastic-idolatry.com>>
+
+	REPL implementation
+
+* David Madore <<http://www.madore.org/~david/>>
 
     Code samples `ski/count.em`, `ski/fibo.em` and `ski/stars.em` are based on files from the Unlambda 2.0 distribution; they are used with permission (quote from email when asked about the source programs: "I release them in the Public Domain.")
 
