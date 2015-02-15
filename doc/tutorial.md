@@ -128,7 +128,7 @@ And this will print `three`. This is actually not any different from what we wer
 
 This will print `2`.
 
-Above we see `=` being used both to set the values of variables, and to set the values of keys on objects. There is a trick: `=` is doing the same thing in both cases. Every line of code has a "scope object", which holds all its variables. When you write an identifier by itself, like `numbers`, what you are doing is looking up the key `.numbers` on the scope object; `numbers.a` is the same as saying `SCOPE.numbers.a`, if you could somehow get a reference to the scope.
+Above we see `=` being used both to set the values of variables, and to set the values of keys on objects. There is a trick: `=` is doing the same thing in both cases. Every line of code has a "scope object", which holds all its variables. When you write an identifier by itself, like `numbers`, what you are doing is looking up the key `.numbers` on the scope object; `numbers.a` is the same as saying `(SCOPE).numbers.a`, if you could somehow get a reference to the scope.
 
 # Fancier stuff
 
@@ -258,7 +258,7 @@ So Emily has "objects". Can it do object-oriented programming? The answer is yes
 
     do: apple.describe
 
-This prints "`It is red`". You'll notice I did something new here-- I defined `describe` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
+This prints "`It is red`". You'll notice I did something new here-- I defined `describe` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which applies a function to the argument `null`).
 
 Emily objects have inheritance, although they do not have classes. Instead, they use "prototypes", which is just a fancy way of saying that objects can inherit from other objects.
 
@@ -322,7 +322,7 @@ This prints:
     one
     onetwothree
 
-Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile takes a function as argument, and invokes it on all numeric keys from `0` up to `count`.
+Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile, takes a function as argument, and applies it to all numeric keys from `0` up to `count`.
 
 # So what is this good for?
 
