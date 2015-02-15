@@ -8,30 +8,66 @@ let readlink path = FileUtil.readlink path
 let bootPath = readlink @@ Sys.getcwd()
 let exePath  = readlink @@
     Filename.concat (Sys.getcwd()) (Filename.dirname @@ Array.get Sys.argv 0)
+let packageRootPath = List.fold_left Filename.concat exePath [".."; "lib"; "emily"; Options.version]
 
-let basicScope kind =
-    Execute.scopeInheriting Value.WithLet BuiltinScope.scopePrototype
+type loaderSource =
+    | NoSource
+    | SelfSource
+    | Source of Value.value
 
-let executePackage buf =
-    let scope = basicScope () in
+type loadLocation =
+    | Cwd
+    | Path of string
+
+let selfFilter self source = match source with SelfSource -> Source self | _ -> source
+
+(* FIXME: Should the error state be allowed? *)
+let knownFilter source = match source with
+    | NoSource -> None
+    | Source x -> Some x
+    | _ -> failwith "Internal error: Package loader attempted to load a file as if it were a directory"
+
+let scopeWithLoaders packageRoot project directory =
+    let scope = ValueUtil.tableInheriting Value.WithLet BuiltinScope.scopePrototype in
+    let prepareScope = Value.tableSetOption scope in
+    prepareScope Value.packageKey   packageRoot;
+    prepareScope Value.projectKey   project;
+    prepareScope Value.directoryKey directory;
+    Value.TableValue scope
+
+let executePackage packageRoot project directory buf =
+    let scope = scopeWithLoaders packageRoot project directory in
     ignore @@ Execute.execute scope buf;
     scope
 
-let rec loadPackage path = if Sys.is_directory path then
+let rec loadPackage packageSource projectSource directory path =
+    if Sys.is_directory path then
         let directoryTable = ValueUtil.tableBlank Value.NoSet in
+        let directoryObject = Value.ObjectValue directoryTable in
+        let directoryFilter = selfFilter directoryObject in
+        let proceed = loadPackage (directoryFilter packageSource) (directoryFilter projectSource) (Some directoryObject) in
         Array.iter (fun name ->
             ValueUtil.tableSetLazy directoryTable (nameAtom name)
-                (fun _ -> loadPackage (Filename.concat path name))
-        ) (Sys.readdir path); Value.ObjectValue directoryTable
+                (fun _ -> proceed (Filename.concat path name))
+        ) (Sys.readdir path); directoryObject
     else
         let buf = Tokenize.tokenize_channel (Token.File path) (open_in path)
-        in executePackage buf
+        in executePackage (knownFilter packageSource) (knownFilter projectSource) directory buf
 
-let packageRepo = loadPackage @@ List.fold_left Filename.concat exePath [".."; "lib"; "emily"; Options.version]
+let packageRepo = loadPackage SelfSource NoSource None packageRootPath
 
-let executeProgram buf =
-    let scope = basicScope () in
-    (match scope with Value.TableValue table | Value.ObjectValue table ->
-        Value.tableSet table Value.packageKey packageRepo
-        | _ -> Execute.internalFail() );
+let executeProgram project buf =
+    let scope = scopeWithLoaders (Some packageRepo) project project in
+    Execute.execute scope buf
+
+let loadLocation location =
+    let projectPath = match location with Cwd -> bootPath | Path str -> str in
+    loadPackage (Source packageRepo) SelfSource None projectPath
+
+let locationAround path =
+    Path (Filename.dirname path)
+
+let executeProgramFrom location buf =
+    let project = loadLocation location in
+    let scope = scopeWithLoaders (Some packageRepo) (Some project) (Some project) in
     Execute.execute scope buf
