@@ -198,7 +198,7 @@ let snippet source str =
     try
         unwrap @@ tokenizeString source str    
     with
-        Token.CompilationError _ as e -> failwith @@
+        Token.CompilationError e -> failwith @@
             "Internal error: Interpreter-internal code is invalid:" ^
             (Token.errorString e)
 

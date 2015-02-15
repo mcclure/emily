@@ -83,13 +83,10 @@ type tokenFailureKind =
     | InvalidError
     | MacroError
 
-exception CompilationError of tokenFailureKind * codePosition * string
+exception CompilationError of (tokenFailureKind * codePosition * string)
 
 let incompleteAt at mesg = raise (CompilationError(IncompleteError, at, mesg))
 let failAt at mesg = raise (CompilationError(InvalidError, at, mesg))
 let failToken at = failAt at.at
-let errorString = function CompilationError ( _, at, mesg ) ->
-    "Fatal error: " ^
-    mesg ^ " " ^
-    (positionString at)
-    | _ -> failwith "Internal error while constructing error. Yeesh."
+let errorString = function ( _, at, mesg ) ->
+    "Fatal error: " ^ mesg ^ " " ^ (positionString at)

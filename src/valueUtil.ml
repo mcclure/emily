@@ -21,7 +21,8 @@ let snippetClosure argCount exec =
 
 (* For debugging, call this after creating a hashtable set to become a Value *)
 let sealTable t =
-    if Options.(run.trackObjects) then idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator)
+    if Options.(run.trackObjects) then
+        (idGenerator := !idGenerator +. 1.0; tableSet t idKey (FloatValue !idGenerator))
 
 (* Same as calling tableBlank TrueBlank. We need a separate version because
    tableBlank relies on some of the functions that require tableTrueBlank
