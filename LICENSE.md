@@ -26,11 +26,11 @@ To comply with the license, simply include the above block of text in some acces
 
 * David Madore <<http://http://www.madore.org/~david/>>
 
-    Code samples `ski.2.em`, `ski.3.em` and `ski.macro.em` are based on files from the Unlambda 2.0 distribution; they are used with permission (quote from email when asked about the source programs: "I release them in the Public Domain.")
+    Code samples `ski/count.em`, `ski/fibo.em` and `ski/stars.em` are based on files from the Unlambda 2.0 distribution; they are used with permission (quote from email when asked about the source programs: "I release them in the Public Domain.")
 
 * Tyler Bindon <<martica@martica.org>>
 
-    Tools and documentation improvements
+    Tools, documentation and functional improvements
 
 * Jake Eakle <<jseakle@gmail.com>>
 

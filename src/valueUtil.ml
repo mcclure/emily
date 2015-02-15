@@ -235,3 +235,12 @@ let stackString stack =
     in stackStringImpl stack "Stack:"
 
 let rawMisapplyStack stack a b = failwith @@ (misapplyString a b) ^ "\n" ^ (stackString stack)
+
+let makeLazy table key func =
+    let lock _ = (* Later maybe pass on this to func? *)
+        let result = func () in
+            ( tableSet table key result ; result )
+    in BuiltinUnaryMethodValue ( lock )
+
+let tableSetLazy table key func =
+    tableSet table key (makeLazy table key func)

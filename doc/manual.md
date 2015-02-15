@@ -1,4 +1,4 @@
-**Emily programming language, version 0.1, documentation update 2**  
+**Emily programming language, version 0.2b**  
 **Reference manual**
 
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
@@ -8,6 +8,16 @@ Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedenc
 Table of contents:
 
 [TOC]
+
+# Known falsehoods
+
+Differences between this manual and the current state of the repository ("TODO: Document"):
+
+- `&&` / `||` now short-circuit.
+- `and`, `or, `xor` need documentation.
+- `.and`, `.or` no longer exist.
+- `.eq` now works on everything.
+- `package`/`project`/`directory`
 
 # Execution model
 

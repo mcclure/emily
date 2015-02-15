@@ -1,6 +1,6 @@
 (* Parse and validate command line arguments. *)
 
-let version = "0.1"
+let version = "0.2b"
 let fullVersion = ("Emily language interpreter: Version " ^ version)
 
 type executionTarget = Stdin | File of string | Literal of string
@@ -8,6 +8,7 @@ type executionTarget = Stdin | File of string | Literal of string
 type optionSpec = {
     (* Execution args *)
     mutable targets : executionTarget list;
+    mutable repl : bool;
     mutable stepMacro : bool;
     mutable trace : bool;
     mutable trackObjects : bool;
@@ -22,6 +23,7 @@ type optionSpec = {
 
 let run = {
     targets=[];
+    repl=false;
     stepMacro=false; trace=false; trackObjects=false; traceSet = false;
     disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
 }
@@ -38,6 +40,7 @@ Sample usage:
     emily filename.em    # Execute program
     emily -              # Execute from stdin
     emily -e "println 3" # Execute from command line
+    emily -i             # Run in interactive mode (REPL)
 
 Options:|})
 
@@ -53,6 +56,11 @@ Options:|})
         ("-e", Arg.String(fun f ->
             targets := Literal f :: !targets
         ), "Execute code inline");
+
+        ("-i", Arg.Unit(fun f ->
+            run.repl <- true
+            (*targets := Repl :: !targets*)
+        ), "Enter interactive mode (REPL)");
 
         versionSpec "-v";
         versionSpec "--version";
@@ -78,7 +86,7 @@ Options:|})
     (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
     if run.printMachineVersion then print_endline version else
     if run.printVersion then print_endline fullVersion else
-    match !targets with
+      run.targets <- List.rev !targets;
+    if (run.repl) then () else match run.targets with
         | [] -> Arg.usage args usage; exit 1 (* No targets! *)
-        | t  -> run.targets <- List.rev t
-
+        | _  -> ()

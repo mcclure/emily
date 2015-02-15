@@ -23,24 +23,30 @@ import subprocess
 import optparse
 import re
 
-stddir  = "sample"
-stdfile = "sample/regression.txt"
-badfile = "sample/regression-known-bad.txt"
+def projectRelative( filename ):
+    return os.path.normpath(os.path.join(prjroot, filename))
+
+prjroot = os.path.join( os.path.dirname(__file__), ".." )
+stddir  = "sample/test"
+stdfile = "sample/test/regression.txt"
+badfile = "sample/test/regression-known-bad.txt"
 
 help  = "%prog -a\n"
 help += "\n"
 help += "Accepted arguments:\n"
 help += "-f [filename.em]  # Check single file\n"
 help += "-t [filename.txt] # Check all paths listed in file\n"
+help += "-r [path]         # Set the project root\n"
 help += "-a          # Check all paths listed in standard " + stdfile + "\n"
-help += "-A          # Also check all paths listed in std " + badfile + "\n"
+help += "-A          # Also check paths listed in " + badfile + "\n"
 help += "-v          # Print all output\n"
-help += "--untested  # Check repo hygiene-- list all tests in sample/ not tested"
+help += "-s          # Use system emily interpreter\n"
+help += "--untested  # Check repo hygiene-- list tests in sample/test not tested"
 
 parser = optparse.OptionParser(usage=help)
-for a in ["a", "A", "v", "-untested"]: # Single letter args, flags
+for a in ["a", "A", "v", "s", "-untested"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
-for a in ["f", "t"]: # Long args with arguments
+for a in ["f", "t", "r"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
 
 (options, cmds) = parser.parse_args()
@@ -56,22 +62,26 @@ if cmds:
 indices = []
 files = []
 
+if flag("r"):
+    prjroot = flag("r")[0]
+
 if flag("a") or flag("A"):
-    indices += [stdfile]
+    indices += [projectRelative(stdfile)]
 
 if flag("A"):
-    indices += [badfile]
+    indices += [projectRelative(badfile)]
 
 indices += flag("t")
 
 indexcommentp = re.compile(r'#.+$', re.S) # Allow comments in .txt file
 for filename in indices:
+    dirname = os.path.dirname(filename)
     with open(filename) as f:
         for line in f.readlines():
             line = indexcommentp.sub("", line)
             line = line.rstrip()
             if line:
-                files += [line]
+                files += [projectRelative(os.path.join(dirname, line))]
 
 files += flag("f")
 
@@ -79,13 +89,19 @@ if not files:
     parser.error("No files specified")
 
 if flag("untested"):
-    for filename in os.listdir("sample"):
-        path = os.path.join(stddir, filename)
-        if not (path.endswith(".txt") or path in files):
-            print path
+    def checkTested(path): # Checks a directory tree rooted here
+        if os.path.isdir(path): # If directory
+            for filename in os.listdir(path): # Recurse
+                filepath = os.path.join(path, filename)
+                checkTested(filepath)
+        elif not (path.endswith(".txt") or path in files):
+            print path # If a normal file, just check it
+    checkTested(projectRelative(stddir)) # Check stddir tree
     sys.exit(0)
 
-stdcall = ["./package/emily"]
+stdcall = [projectRelative("install/bin/emily")]
+if flag("s"):
+    stdcall = ["emily"]
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)

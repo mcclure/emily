@@ -19,14 +19,17 @@ doc/
     Language, build etc documentation. I recommend starting with "build.md" or "intro.md"
     Files are in Markdown, I recommend the Markdown Preview plugin for Chrome
 
-package/
+install/
     After build, executable will go here
 
 resources/
     Static files to be incorporated into package during build
 
 sample/
-    Example Emily scripts (double as unit tests)
+    Example Emily scripts (including automated tests)
+
+sample/example
+    Example Emily scripts (from manual, for humans)
 
 src/
     All source code
