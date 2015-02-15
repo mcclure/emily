@@ -322,7 +322,7 @@ This prints:
     one
     onetwothree
 
-Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile takes a function as argument, and applies it to all numeric keys from `0` up to `count`.
+Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile, takes a function as argument, and applies it to all numeric keys from `0` up to `count`.
 
 # So what is this good for?
 
