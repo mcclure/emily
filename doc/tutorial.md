@@ -258,7 +258,7 @@ So Emily has "objects". Can it do object-oriented programming? The answer is yes
 
     do: apple.describe
 
-This prints "`It is red`". You'll notice I did something new here-- I defined `describe` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
+This prints "`It is red`". You'll notice I did something new here-- I defined `describe` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which applies a function to the argument `null`).
 
 Emily objects have inheritance, although they do not have classes. Instead, they use "prototypes", which is just a fancy way of saying that objects can inherit from other objects.
 
@@ -322,7 +322,7 @@ This prints:
     one
     onetwothree
 
-Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile takes a function as argument, and invokes it on all numeric keys from `0` up to `count`.
+Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile takes a function as argument, and applies it to all numeric keys from `0` up to `count`.
 
 # So what is this good for?
 
