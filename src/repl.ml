@@ -64,6 +64,20 @@ let repl targets =
     let runUserFiles () =
         List.iter runTargetFiles targets in
 
+    let rec promptAndReadBuffer () = (
+        (* Print a prompt, take a line of text, push to "lines" stack *)
+        promptAndReadLine (match !lines with [] -> ">>> " | _ -> "..> ");
+
+        (* Turn the line stack into a "program" *)
+        let combinedString = (String.concat "\n" (List.rev !lines)) in
+
+        try
+            (* Attempt to parse the program and return an AST. *)
+            Tokenize.tokenizeString Token.Cmdline combinedString
+        with
+            (* The program is invalid, but could be valid with more text. Read another line. *)
+            Token.CompilationError(Token.IncompleteError,_,_) -> promptAndReadBuffer() ) in
+
     (* First, run emily's built-in repl functions *)
     print_endline (replHelpString ^ "\n");
 
@@ -75,26 +89,16 @@ let repl targets =
 
     try
         (* As long as the user hasn't sent EOF (Control-D), read input *)
-        let rec proceed () =
+        while true do
             (try
-                (* Print a prompt, take a line of text, push to "lines" stack *)
-                promptAndReadLine (match !lines with [] -> ">>> " | _ -> "..> ");
+                (* Read a full program (throws if program invalid) *)
+                let buf = promptAndReadBuffer() in
 
-                (* Turn the line stack into a "program" *)
-                let combinedString = (String.concat "\n" (List.rev !lines)) in
-                (* Attempt to tokenize string-- special-case an incomplete program *)
-                let bufOption = (try
-                    Some (Tokenize.tokenizeString Token.Cmdline combinedString)
-                with
-                    Token.CompilationError(Token.IncompleteError,_,_) -> None)
-                in match bufOption with
-                    (* Successfully tokenized a full program *)
-                    | Some buf ->
-                        (* Execute it *)
-                        let result = Execute.execute scope buf in
-                        print_endline (Pretty.replDisplay result true)
-                    (* Re-print the prompt and continue taking lines *)
-                    | _ -> proceed()
+                (* Evaluate program in repl-shared scope *)
+                let result = Execute.execute scope buf in
+
+                (* Pretty-print final result *)
+                print_endline (Pretty.replDisplay result true)
 
             with Sys.Break ->
                 (* Control-C should clear the line, draw a new prompt *)
@@ -110,8 +114,7 @@ let repl targets =
 
             (* Empty lines, since they have all been executed, and repeat *)
             lines := [];
-            proceed();
-        in proceed()
+        done
 
     with End_of_file ->
         (* Time to exit the REPL *)
