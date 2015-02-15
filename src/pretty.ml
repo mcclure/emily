@@ -44,8 +44,20 @@ let dumpCodeTreeDense token =
 
 (* --- Value printers --- *)
 
+(* escape string according to emily's rules *)
+let escapeString s =
+    let sb = Buffer.create (String.length s + 2) in
+    let escapeChar c = match c with
+        | '"' | '\\' -> Buffer.add_char sb '\\'; Buffer.add_char sb c
+        | '\n' -> Buffer.add_string sb "\\n"
+        | _ -> Buffer.add_char sb c in
+    Buffer.add_char sb '"';
+    String.iter escapeChar s;
+    Buffer.add_char sb '"';
+    Buffer.contents sb
+
 let angleWrap s = "<" ^ s ^ ">"
-let quoteWrap s = "\"" ^ s ^ "\""
+
 let idStringForTable t =
     match Value.tableGet t Value.idKey with
         | None -> "UNKNOWN"
@@ -60,7 +72,7 @@ let dumpValueTreeGeneral wrapper v =
         | Value.Null -> "<null>"
         | Value.True -> "<true>"
         | Value.FloatValue v -> string_of_float v
-        | Value.StringValue s -> quoteWrap s
+        | Value.StringValue s -> escapeString s
         | Value.AtomValue s -> "." ^ s
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>"
@@ -99,3 +111,12 @@ let dumpValueForUser v =
         | Value.StringValue s -> s
         | Value.AtomValue s -> s
         | _ -> dumpValue v
+
+(* create a string representation of this value *)
+(* TODO: display objects/tables *)
+let replDisplay value = match value with
+    | Value.Null -> "null"
+    | Value.True -> "true"
+    | Value.StringValue s -> escapeString s
+    | Value.AtomValue s -> "." ^ s
+    | _ -> dumpValueForUser value
