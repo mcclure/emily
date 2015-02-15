@@ -17,6 +17,7 @@ Differences between this manual and the current state of the repository ("TODO: 
 - `and`, `or, `xor` need documentation.
 - `.and`, `.or` no longer exist.
 - `.eq` now works on everything.
+- `package`/`project`/`directory`
 
 # Execution model
 

@@ -31,7 +31,7 @@
 
 ## About branching and versions
 
-Note: **don't stress about this** if you're submitting code, just pull request and I'll clean it up myself. But:
+Note: **Don't stress about this** if you're submitting code, just pull request and I'll clean it up myself. But:
 
 - This repository has multiple development branches. In the Mercurial version of the repository (and anywhere in this document I say "branch"), "branches" refers to a commit marked by a bookmark and its ancestors. I do not use the `hg branch` functionality of Mercurial at all (although some `hg branch`es have been unintentionally introduced to the repository history by BitBucket pull requests). In Git the branches are just branches.
 
@@ -39,7 +39,7 @@ Note: **don't stress about this** if you're submitting code, just pull request a
 
 - For each minor version, a "family" branch exists; for example, `family-0.1` refers to the most recent 0.1.x update, `family-0.2` refers to the most recent 0.2.x update, and so on. Family branches may exist for as-yet unreleased or incomplete versions.
 
-- Each release has a code version number. The code version number should be reflected accurately in all docs which contain a version number at all, as well as in the `options.ml` source file. If commits are made on a version which has not been released, the version number should end with a "b", like `0.2b`, in both the docs and the code.
+- Each release has a code version number. The code version number should be reflected accurately in all docs which contain a version number at all, as well as in the `options.ml` source file, as well as the Makefile. If commits are made on a version which has not been released, the version number should end with a "b", like `0.2b`, in both the docs and the code.
 
 - If changes are made to the documentation without any changes being made to the code, there may be a "documentation update". For example, after version 0.1 was released, there was a "version 0.1 documentation update 1". The code version number (i.e., in `options.ml`) remains the same for documentation releases.
 
