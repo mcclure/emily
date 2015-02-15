@@ -54,7 +54,7 @@ let rec loadPackage packageSource projectSource directory path =
                 (fun _ -> proceed (Filename.concat path name))
         ) (Sys.readdir path); directoryObject
     else
-        let buf = Tokenize.tokenize_channel (Token.File path) (open_in path)
+        let buf = Tokenize.tokenizeChannel (Token.File path) (open_in path)
         in executePackage (knownFilter packageSource) (knownFilter projectSource) directory buf
 
 let packageRepo = loadPackage SelfSource NoSource None packageRootPath

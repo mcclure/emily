@@ -25,10 +25,12 @@ let repl targets =
     let scope = (
         let project = Loader.loadLocation Loader.Cwd in
         let table = Loader.tableWithLoaders (Some Loader.packageRepo) (Some project) (Some project) in
+        (* This function will be run if the user evaluates the symbol "help" *)
         Value.tableSetString table "help" (Value.BuiltinUnaryMethodValue (fun _ ->
             print_endline replHelpString;
             raise Sys.Break (* Stop executing code. Is this too aggressive? *)
         ));
+        (* This function will be run if the user evaluates the symbol "quit" *)
         Value.tableSetString table "quit" (Value.BuiltinUnaryMethodValue (fun _ ->
             raise End_of_file (* ANY attempt to read the "quit" variable quits immediately *)
         ));
@@ -48,7 +50,7 @@ let repl targets =
 
     (* tokenize and execute the given file target *)
     let runFile f =
-        let buf = (Tokenize.tokenize_channel (Token.File f) (open_in f)) in
+        let buf = (Tokenize.tokenizeChannel (Token.File f) (open_in f)) in
         Execute.execute scope buf in
 
     (* run all file targets -- skip all other targets *)
@@ -59,7 +61,7 @@ let repl targets =
 
     (* run the given string *)
     let runString data =
-        let buf = Tokenize.tokenize_string Token.Cmdline data in
+        let buf = Tokenize.tokenizeString Token.Cmdline data in
         Execute.execute scope buf in
 
     (* run all lines of user input *)

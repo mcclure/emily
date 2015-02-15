@@ -78,6 +78,18 @@ let makeGroup position closure kind items =
 let clone token contents = makeToken token.at contents
 let cloneGroup token closure kind items = makeGroup token.at closure kind items
 
-let failAt at mesg = failwith(Printf.sprintf "%s %s" mesg (positionString at))
-let failAtPair at mesg at2 mesg2 = failwith(Printf.sprintf "%s %s %s %s" mesg (positionString at) mesg2 (positionString at2))
+type tokenFailureKind =
+    | IncompleteError
+    | InvalidError
+    | MacroError
+
+exception CompilationError of tokenFailureKind * codePosition * string
+
+let incompleteAt at mesg = raise (CompilationError(IncompleteError, at, mesg))
+let failAt at mesg = raise (CompilationError(InvalidError, at, mesg))
 let failToken at = failAt at.at
+let errorString = function CompilationError ( _, at, mesg ) ->
+    "Fatal error: " ^
+    mesg ^ " " ^
+    (positionString at)
+    | _ -> failwith "Internal error while constructing error. Yeesh."

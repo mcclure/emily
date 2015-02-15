@@ -37,10 +37,11 @@ let () =
     let usage = (fullVersion ^ {|
 
 Sample usage:
-    emily filename.em    # Execute program
-    emily -              # Execute from stdin
-    emily -e "println 3" # Execute from command line
-    emily -i             # Run in interactive mode (REPL)
+    emily filename.em     # Execute program
+    emily -               # Execute from stdin
+    emily -e "println 3"  # Execute from command line
+    emily -i              # Run in interactive mode (REPL)
+    emily -i filename.em  # ...after executing this program
 
 Options:|})
 

@@ -1,5 +1,8 @@
 (* Macro processing *)
 
+let failAt at mesg = raise (Token.CompilationError(Token.MacroError, at, mesg))
+let failToken at = failAt at.Token.at
+
 (* Last thing we always do is make sure no symbols survive after macro processing. *)
 let verifySymbols l =
     List.iter (function
