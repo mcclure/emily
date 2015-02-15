@@ -84,14 +84,15 @@ let dumpValueTreeGeneral wrapper v =
         | Value.ObjectValue    _ -> wrapper "object" v
         | Value.ContinuationValue _ -> "<return>"
 
-let dumpValue v =
-    let simpleWrapper label obj = angleWrap label
-    in let labelWrapper label obj = match obj with
-        | Value.TableValue t | Value.ObjectValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
-        | _ -> angleWrap label
-    in let wrapper = if Options.(run.trackObjects) then labelWrapper else simpleWrapper
+let simpleWrapper label obj = angleWrap label
 
-    in dumpValueTreeGeneral wrapper v
+let labelWrapper label obj = match obj with
+    | Value.TableValue t | Value.ObjectValue t -> angleWrap @@ label ^ ":" ^ (idStringForTable t)
+    | _ -> angleWrap label
+
+let dumpValue v =
+    let wrapper = if Options.(run.trackObjects) then labelWrapper else simpleWrapper in
+    dumpValueTreeGeneral wrapper v
 
 (* FIXME: The formatting here is not even a little bit generalized. *)
 let dumpValueTable v =
@@ -112,11 +113,67 @@ let dumpValueForUser v =
         | Value.AtomValue s -> s
         | _ -> dumpValue v
 
-(* create a string representation of this value *)
-(* TODO: display objects/tables *)
-let replDisplay value = match value with
-    | Value.Null -> "null"
-    | Value.True -> "true"
-    | Value.StringValue s -> escapeString s
-    | Value.AtomValue s -> "." ^ s
-    | _ -> dumpValueForUser value
+(* the following "display" methods are used by the REPL. *)
+
+(* display numbers: 4.0 -> "4", 4.1 -> "4.1", etc. *)
+let displayNumber n =
+    let s = string_of_float n in
+    let n = String.length s in
+    match s.[n - 1] with
+    | '.' -> String.sub s 0 (n - 1)
+    | _ -> s
+
+(* should the REPL should show a key/value pair? if not hide it. *)
+(* FIXME: hiding .!id=0 for now *)
+let shouldShowItem (k, v) =
+    match k with
+    | Value.AtomValue s ->
+         (match s with
+         | "parent" | "set" | "has" | "let" -> false
+         | "!id" -> (match v with | Value.FloatValue n -> n <> 0.0 | _ -> true)
+         | _ -> true)
+    | _ -> true
+
+(* sort items in objects/tables by key name *)
+let sortItems (k1, v1) (k2, v2) =
+    match (k1, k2) with
+    | (Value.AtomValue s1, Value.AtomValue s2) -> String.compare s1 s2
+    | (Value.AtomValue _, _) -> 1
+    | (_, Value.AtomValue _) -> -1
+    | (Value.FloatValue n1, Value.FloatValue n2) ->
+       if n1 < n2 then -1 else if n1 > n2 then 1 else 0
+    | _ -> 0
+
+(* display the key atom *)
+(* special-cased to avoid using a dot, since defns don't use them *)
+let displayKey k =
+    match k with
+    | Value.AtomValue s -> s
+    | Value.FloatValue n -> "<" ^ displayNumber(n) ^ ">"
+    | _ -> "<error>"
+
+(* (optionally) truncate a string and append a suffix *)
+let truncate s limitAt reduceTo suffix =
+    if (String.length s) > limitAt then (String.sub s 0 reduceTo) ^ suffix else s
+
+(* provide a compact view of tables/objects for the REPL *)
+let rec displayTable t =
+    let items = List.sort sortItems (CCHashtbl.to_list t) in
+    let ordered = List.filter shouldShowItem items in
+    let f (k, v) = (displayKey k) ^ " = " ^ (replDisplay v false) in
+    let out = match (List.map f ordered) with
+        | [] -> "[...]"
+        | toks -> "[" ^ (String.concat "; " toks) ^ "; ...]" in
+    truncate out 74 72 "...]"
+
+(* create a string representation of a value for the REPL *)
+and replDisplay value recurse =
+    match value with
+        | Value.Null -> "null"
+        | Value.True -> "true"
+        | Value.FloatValue n -> displayNumber n
+        | Value.StringValue s -> escapeString s
+        | Value.AtomValue s -> "." ^ s
+        | Value.TableValue t | Value.ObjectValue t ->
+            if recurse then displayTable t else "<object>"
+        | _ -> dumpValueForUser value
