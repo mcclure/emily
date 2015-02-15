@@ -24,12 +24,16 @@ To comply with the license, simply include the above block of text in some acces
 
     Build and packaging improvements
 
+* David Madore <<http://http://www.madore.org/~david/>>
+
+    Code samples `ski.2.em`, `ski.3.em` and `ski.macro.em` are based on files from the Unlambda 2.0 distribution; they are used with permission (quote from email when asked about the source programs: "I release them in the Public Domain.")
+
 * Tyler Bindon <<martica@martica.org>>
 
     Tools and documentation improvements
 
-* David Madore <<http://http://www.madore.org/~david/>>
+* Jake Eakle <<jseakle@gmail.com>>
 
-    Code samples `ski.2.em`, `ski.3.em` and `ski.macro.em` are based on files from the Unlambda 2.0 distribution; they are used with permission (quote from email when asked about the source programs: "I release them in the Public Domain.")
+    Documentation improvements
 
 All authors retain the copyright to their own contributions.
