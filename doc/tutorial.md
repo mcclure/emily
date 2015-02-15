@@ -1,4 +1,4 @@
-**Emily programming language, version 0.2b**
+**Emily programming language, version 0.2b**  
 **Tutorial**
 
 This is a quick overview of how to write programs in the Emily programming language. I assume you have written in some programming language before, I assume you know how to access your operating system's command line, and I assume you have [already installed the interpreter](build.md).
@@ -6,6 +6,7 @@ This is a quick overview of how to write programs in the Emily programming langu
 If you just want an explanation of what Emily is, see [intro.md](intro.md). If you want exhaustive documentation of the language, see [manual.md](manual.md).
 
 Table of Contents:
+
 [TOC]
 
 # For starters
@@ -95,9 +96,9 @@ And we could have not bothered with the variable at all:
 
     println ( ( ^number (number * 2) ) 4 )
 
-That might be written a bit confusing! But this applies an "anonymous" function which doubles its arguments to the number 4, then prints the result. This code prints `8`.
+That might be a confusing way to write it! But this applies an "anonymous" function which doubles its arguments to the number 4, then prints the result. This code prints `8`.
 
-`^`, whereever you see it in Emily, just means "make a function here". I call the functions that are made with ^ "closures". I'll explain why later.
+`^`, wherever you see it in Emily, just means "make a function here". I call the functions that are made with ^ "closures". I'll explain why later.
 
 ## Making objects
 
@@ -149,11 +150,11 @@ If you want to do the opposite and break a single statement across multiple line
 You can also put multiple statements, (i.e. multiple lines) inside of a `()` or a `[]`. I call these parenthetical-type things "groups". If you put multiple lines in a `( )`, the group evaluates to the value of the final nonempty statement.
 
     println (
-        x = 3;
+        x = 3
         x + 5
     )
 
-This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations-- where you want to do some calculation inside of a expression-- `{ }` is a group which acts like `( )` but a new scope is created inside of it. So you can say:
+This prints `8`. This code is ugly though: it assigns `x` in the middle of evaluating an expression, and `x` endures after the parenthesis finishes. For these situations-- where you want to do some calculation inside of a expression-- `{ }` is a group which acts exactly like `( )` except that a new scope is created inside of it. So you can say:
 
     x = 3
     println {
@@ -162,7 +163,7 @@ This prints `8`. This code is ugly though: it assigns `x` in the middle of evalu
     }
     println x
 
-And, well, honestly this is not great code either, but the `x` assigned inside the `{ }` will be a different `x` than the one outside the `{ }`. This code prints a `5` and then a 3`.
+And, well, honestly this is not great code either, but the `x` assigned inside the `{ }` will be a different `x` than the one outside the `{ }`. This code prints a `5` and then a `3`.
 
 ## "Currying"
 
@@ -182,23 +183,25 @@ This isn't what you wanted, so we need the `( )`. Writing `( )` gets annoying al
 
 `:` wraps the remainder of the statement after it in parenthesis, so this is like saying `println (numbers.one)`.
 
-Why require the `( )` (or the `:`) in the first place, though? Well, some of this syntax might change in a later version. But the idea is that Emily expressions are meant to be "curried". Emily arguments are all single-argument. Wait, wait, you're saying, but I need functions that take multiple arguments. Well, you can build multiple-argument functions on top of single-argument ones. One is to pass the argument list as an object:
+Why require the `( )` (or the `:`) in the first place, though? Well, some of this syntax might change in a later version. But the idea is that Emily expressions are meant to be "curried". Emily functions are all single-argument. Wait, wait, you're saying, but I need functions that take multiple arguments. Well, you can build multiple-argument functions on top of single-argument ones. One way is to pass the argument list as an object:
 
     printRecord ^record = \
         print (record.name) ": " (record.numberOfArms) " arms\n"
 
     printRecord [name = "Sarah"; numberOfArms = 3]
 
-Another way is to sort of fold functions inside each other:
+(`print` is just like `println`, but doesn't add a newline at the end.)
 
-    description ^name ^species ^arms = \
+Another approach is to sort of fold functions inside each other. Emily has a special syntax for this:
+
+    describe ^name ^species ^arms = \
         print name " is a " species " with " arms " arms\n"
 
-    description "Natalie" "centaur" 2
+    describe "Natalie" "centaur" 2
 
-So, you're thinking, "description" is just a function with 3 arguments, and you apply the function by writing them one after the other? And sure, you can think of it that way, but what's actually happening is that each `^` is creating a function that returns a function inside of it. Remember how `print` is basically a machine that you feed something into, and it spits out a copy of itself for you to feed the next thing into? This is why I'm able to write those long chained `print` statements like in the last example. Well, `description` is like a machine that spits out another machine that spits out **another** machine that spits out a description of your friend Natalie. Once you're thinking about it this way, you can do something neat: You can take one of these intermediate machines and make a copy.
+So, you're probably thinking, "describe" is a function with 3 arguments, and you apply the function by writing the arguments one after the other? And sure, you can think of it that way, but from the language's perspective what's happening is that each `^` is creating a new function that returns a function inside of it. Remember how `print` is basically a machine that you feed one thing into, and it spits out a copy of itself for you to feed the next thing into? This is why I'm able to write those long chained `print` statements like in the last example. Well, `describe` is like a machine that spits out another machine that spits out **another** machine that spits out a description of your friend Natalie. Once you're thinking about it this way, you can do something neat: You can take one of these intermediate machines and make a copy.
 
-    natalieGenerator = description "Natalie" "centaur"
+    natalieGenerator = describe "Natalie" "centaur"
     natalieGenerator 3
     natalieGenerator 4
     natalieGenerator 5
@@ -222,7 +225,7 @@ The "currying" trick is a little academic, but it's an example of what kinds of 
 
 In most languages, things like `if` or `while` are magic-- `if` in C snarfs up "something surrounded by a parenthesis" and "something surrounded by curly braces" and then decides whether to execute the curly brace code or not. There's no magic in Emily. There's just functions. `if` is a function. It takes an argument, checks if it's true (meaning: not `null`), and if it's true it executes its next argument as a function.
 
-You might be saying now: I don't **care** about all this functional programming currying stuff! I just want to write an if statement. And that's fine, you shouldn't have to get wrapped up in the theory. Just what you need to know is that things like `if` and `while` are not magic, and any statement gets executed exactly when and where you wrote it unless there's that `^` to say "not yet". So if you're using `if` or `while`, you **do** need to put in a `^`. Oh, right, there's also a `while`:
+You might be saying now: I don't **care** about all this functional programming currying stuff! I just want to write an if statement. And that's fine, you shouldn't have to get wrapped up in the theory. What you do need to know is that things like `if` and `while` are not magic, and any statement gets executed exactly when and where you wrote it unless there's that `^` to say "not yet". So if you're using `if` or `while`, you **do** need to put in a `^`. Oh, right, there's also a `while`:
 
     # Print the numbers 1 2 3 4
     x = 1
@@ -250,17 +253,17 @@ So Emily has "objects". Can it do object-oriented programming? The answer is yes
 
     apple = [
         color = "red"
-        describe ^ = println "It is " (this.color)
+        describe ^ = print "It is " (this.color) ln    # ln is shorthand for "\n"
     ]
 
     do: apple.describe
 
-This prints "`It is red`". You'll notice I did something new here-- I defined `description` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
+This prints "`It is red`". You'll notice I did something new here-- I defined `describe` as a function with no arguments. If you do this, it actually becomes a one-argument function that throws its argument away. You can then execute the function later by passing it any value you like, or passing it to `do` (a builtin which invokes a function with the argument `null`).
 
 Emily objects have inheritance, although they do not have classes. Instead, they use "prototypes", which is just a fancy way of saying that objects can inherit from other objects.
 
     fruit = [
-        describe ^ = println "It is " (this.color)
+        describe ^ = print "It is " (this.color) ln
     ]
 
     lime = [
@@ -270,7 +273,7 @@ Emily objects have inheritance, although they do not have classes. Instead, they
 
     do: lime.describe
 
-This prints "`It is green`". What happens here is that `lime` does not have a `description` field, but it does have a `parent`, and the field named `parent` is special. When you check `lime.description`, if it does not find `.description`, it checks the parent, and returns it from there. Because `description` is not just a normal function but a method, when you call `banana.description` the interpreter knows to set `this` to be equal to `banana`, not `fruit`. (The `fruit` base prototype doesn't even have a color, so if you say `do: fruit.description`, you'll just get an error.) `fruit` here is just another object, but it's **acting like** a class.
+This prints "`It is green`". What happens here is that `lime` does not have a `describe` field, but it does have a `parent`, and the field named `parent` is special. When you check `lime.describe`, if it does not find `.describe`, it checks the parent, and returns it from there. Because `describe` is not just a normal function but a method, when you call `lime.describe` the interpreter knows to set `this` to be equal to `lime`, not `fruit`. (The `fruit` base prototype doesn't even have a color, so if you say `do: fruit.describe`, you'll just get an error.) `fruit` here is just another object, but it's **acting like** a class.
 
 If an object needs to send a message to its parent, it should use the special `super` variable to do that:
 
@@ -300,7 +303,7 @@ This prints
     It has seeds
     It's crispy, like it's been fried
 
-Each call to `super` calls the function in the parent. Wait, couldn't you have also just said `do: this.parent.describe`, instead of using `super`? Well, that's legal, but then the special-ness that makes `this` work would break; if you'd said `this.parent.describe`, you'd have gotten a function that was a method of `banana`, not a method of `plantain`, and the description would have said "It is yellow". `super` makes sure the special method rewiring still works.
+Each call to `super` calls the function in the parent. Wait, couldn't you have also just said `do: this.parent.describe`, instead of using `super`? Well, that's legal, but then the special-ness that makes `this` work would break; if you'd said `this.parent.describe`, you'd have gotten a function that was a method of `banana`, not a method of `plantain`, and the describe line would have said "It is yellow". `super` makes sure the special method rewiring still works.
 
 ### Array builtins
 
@@ -319,7 +322,7 @@ This prints:
     one
     onetwothree
 
-Calling `append` on an object sets the key `count` to `append`'s argument, and then increments `count`; `each` takes a function as argument, and invokes it on all numeric keys from `0` up to `count`.
+Calling `append` on an object looks up the numeric value of the `count` field (assuming `0` if this is the first time something's been appended to the object), creates a new field with the previous item count as the key and `append`'s argument as the value, and then increments the value of the `count` field. `each`, meanwhile takes a function as argument, and invokes it on all numeric keys from `0` up to `count`.
 
 # So what is this good for?
 
@@ -329,7 +332,7 @@ Emily is **simpler** than other programming languages, in certain ways. My goal 
 
 ## Everything is a function
 
-Something you might have noticed: Both passing an argument to a function, and looking up a key on an object, is done by writing one after the other. What is the difference between a function and an object?
+Something you might have noticed: Passing an argument to a function, and looking up a key on an object, are both done by writing one after the other. What is the difference between a function and an object?
 
 The answer is: Objects **are** functions. A function in Emily is a map from one value to another (which maybe has some sort of side-effect when it evaluates). Objects are one way of mapping things, closures (code functions made with `^`) are another, but the language doesn't know the difference between them and doesn't care. You can interchange objects and functions. For example an object can inherit from a function:
 
@@ -343,7 +346,7 @@ This code prints `testValue`, because when the language doesn't find `.testValue
 
 ## Everything you do is a function call
 
-When I say everything is a function call, I do mean everything. Operators, like `=` or `+`, are actually function calls in disguise; `a + b` is code for `a .plus b`, `a = b` is code for `scope.let .a b` (this will probably be named `set` in the next version). Objects like `[]` have that `.let` field built in when you make them, objects like `3` (numbers are objects) have a `.plus` field built in when you make them. Look at what happens if I replace `let`:
+When I say everything is a function call, I do mean everything. Operators, like `=` or `+`, are actually function calls in disguise: `a + b` is code for `a .plus b`, and `a = b` is code for `(SCOPE).let .a b` (this will probably be named `set` in the next version). Objects like `[]` have that `.let` field built in when you make them, objects like `3` (numbers are objects) have a `.plus` field built in when you make them. Look at what happens if I replace `let` for a particular object:
 
     sensor = [
         secrets = []              # This is the real object
@@ -371,7 +374,7 @@ When I say everything is a function call, I do mean everything. Operators, like 
     Read key testValue
     15.
 
-It's not unusual to find a language which allows attribute getter/setters, but doing so here is unusually straightforward because you're using the normal language machinery, not some kind of special construct.
+It's not unusual to find a language which allows attribute getters and setters, but using them here is unusually straightforward because you're using the normal language machinery, not some kind of special construct.
 
 ## Make your own flow control
 

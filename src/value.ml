@@ -94,8 +94,13 @@ let returnKeyString = "return"
 let returnKey = AtomValue returnKeyString
 let packageKeyString = "package"
 let packageKey = AtomValue packageKeyString
+let projectKeyString = "project"
+let projectKey = AtomValue projectKeyString
+let directoryKeyString = "directory"
+let directoryKey = AtomValue directoryKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value
+let tableSetOption table key value = match value with Some x -> tableSet table key x | _ -> ()

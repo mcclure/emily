@@ -40,7 +40,7 @@ Sample usage:
     emily filename.em    # Execute program
     emily -              # Execute from stdin
     emily -e "println 3" # Execute from command line
-    emily -i             # Execute REPL
+    emily -i             # Run in interactive mode (REPL)
 
 Options:|})
 
@@ -60,7 +60,7 @@ Options:|})
         ("-i", Arg.Unit(fun f ->
             run.repl <- true
             (*targets := Repl :: !targets*)
-        ), "Execute REPL");
+        ), "Enter interactive mode (REPL)");
 
         versionSpec "-v";
         versionSpec "--version";

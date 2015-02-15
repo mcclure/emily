@@ -4,6 +4,8 @@
 
 Here are some canned commands to build and install the `emily` executable plus the Emily man page. If you don't want to build yourself, there may be install packages on [emilylang.org](http://emilylang.org) by the time you read this.
 
+Before building anything, make sure that you are building the correct branch; if you are using Git, you should check out the `stable` branch, and if you are using Mercurial, you should update to the `stable` bookmark. (For an explanation of the other branches and why you might under some circumstances want to use them, see `style.md`.)
+
 ## Debian/Ubuntu
 
 Run these commands:

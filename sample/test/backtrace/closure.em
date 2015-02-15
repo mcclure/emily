@@ -11,4 +11,4 @@ b ^c = (
 
 b 6
 
-7 8
+7 8 # Line is unreachable, but pads out AST

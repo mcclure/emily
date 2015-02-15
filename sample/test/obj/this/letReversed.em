@@ -1,4 +1,4 @@
-# Test "let" on this (same as obj.this.7, but meth call order is reversed)
+# Test "let" on this (same as let.em, but meth call order is reversed)
 # Expect:
 # 4.
 # 3.

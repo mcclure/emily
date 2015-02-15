@@ -1,4 +1,6 @@
 # Basic math test with macros
+# Note: Same as math/basic test
+
 # Expect:
 # <true>
 # <null>
