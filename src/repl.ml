@@ -10,8 +10,8 @@ println \"have fun!\"
 
 (* Check if the string 's' ends with a backslash. *)
 let isContinued s =
-  let n = String.length s in
-  n > 0 && (String.get s (n - 1)) == '\\'
+    let n = String.length s in
+    n > 0 && (String.get s (n - 1)) == '\\'
 
 (* Runs the REPL.
 
@@ -27,94 +27,94 @@ and see the result of function calls.
 Control-D (EOF) exits the REPL. *)
 let repl targets =
 
-  (* this is our global mutable REPL scope *)
-  let scope = Execute.scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
+    (* this is our global mutable REPL scope *)
+    let scope = Execute.scopeInheriting Value.WithLet BuiltinScope.scopePrototype in
 
-  (* line and lines are used to read and execute user input *)
-  let line = ref "" in
-  let lines = ref [] in
+    (* line and lines are used to read and execute user input *)
+    let line = ref "" in
+    let lines = ref [] in
 
-  (* display a prompt, then read a line from the user *)
-  let promptAndReadLine s =
-    print_string s;
-    flush stdout;
-    line := input_line stdin;
-    lines := !line :: !lines in
+    (* display a prompt, then read a line from the user *)
+    let promptAndReadLine s =
+        print_string s;
+        flush stdout;
+        line := input_line stdin;
+        lines := !line :: !lines in
 
-  (* tokenize and execute the given file target *)
-  let runFile f =
-    let buf = (Tokenize.tokenize_channel (Token.File f) (open_in f)) in
-    Execute.execute scope buf in
+    (* tokenize and execute the given file target *)
+    let runFile f =
+        let buf = (Tokenize.tokenize_channel (Token.File f) (open_in f)) in
+        Execute.execute scope buf in
 
-  (* run all file targets -- skip all other targets *)
-  let runTargetFiles t =
-    match t with
-    | Options.File f -> ignore @@ runFile f
-    | _ -> () in
+    (* run all file targets -- skip all other targets *)
+    let runTargetFiles t =
+        match t with
+        | Options.File f -> ignore @@ runFile f
+        | _ -> () in
 
-  (* run the given string *)
-  let runString data =
-    let buf = Tokenize.tokenize_string Token.Cmdline data in
-    Execute.execute scope buf in
+    (* run the given string *)
+    let runString data =
+        let buf = Tokenize.tokenize_string Token.Cmdline data in
+        Execute.execute scope buf in
 
-  (* run all lines of user input *)
-  let runInput () =
-    runString (String.concat "\n" (List.rev !lines)) in
+    (* run all lines of user input *)
+    let runInput () =
+        runString (String.concat "\n" (List.rev !lines)) in
 
-  (* load built-in emaily functions needed by REPL *)
-  let runEmilyReplFunctions () =
-    runString emilyReplFunctions in
+    (* load built-in emaily functions needed by REPL *)
+    let runEmilyReplFunctions () =
+        runString emilyReplFunctions in
 
-  (* load any files provided by the user, before launching REPL *)
-  let runUserFiles () =
-    List.iter runTargetFiles targets in
+    (* load any files provided by the user, before launching REPL *)
+    let runUserFiles () =
+        List.iter runTargetFiles targets in
 
-  (* the user is entering code -- read it all and then run it *)
-  let handleCode () =
-    (* keep reading lines if continued with \ *)
-    while (isContinued !line) do promptAndReadLine "..> " done;
+    (* the user is entering code -- read it all and then run it *)
+    let handleCode () =
+        (* keep reading lines if continued with \ *)
+        while (isContinued !line) do promptAndReadLine "..> " done;
 
-    (* now run the accumulated lines *)
+        (* now run the accumulated lines *)
+        try
+            let result = runInput () in
+            print_endline (Pretty.replDisplay result);
+            flush stdout;
+            ()
+        with Failure e ->
+            print_endline e;
+
+            (* flush stdout so any output is immediately visible *)
+            flush stdout in
+
+    (* first, run emily's built-in repl functions *)
+    ignore @@ runEmilyReplFunctions ();
+
+    (* next, run any files provided as arguments *)
+    runUserFiles ();
+
+    (* Intercept Control-C so it doesn't kill the REPL. *)
+    Sys.catch_break true;
+
     try
-      let result = runInput () in
-      print_endline (Pretty.replDisplay result);
-      flush stdout;
-      ()
-    with Failure e ->
-      print_endline e;
+        (* as long as the user hasn't sent EOF (Control-D), read input *)
+        while true do
+            (try
+                (* draw a prompt, and read one line of input *)
+                promptAndReadLine ">>> ";
 
-      (* flush stdout so any output is immediately visible *)
-      flush stdout in
+                (* handle the user's input appropriately *)
+                match !line with
+                | "quit()" -> raise End_of_file (* temporary hack *)
+                | _ -> handleCode ()
 
-  (* first, run emily's built-in repl functions *)
-  ignore @@ runEmilyReplFunctions ();
+            with Sys.Break ->
+                (* control-C should clear the line, draw a new prompt *)
+                print_endline "");
 
-  (* next, run any files provided as arguments *)
-  runUserFiles ();
+            (* empty lines, since they have all been executed *)
+            lines := [];
+        done;
 
-  (* Intercept Control-C so it doesn't kill the REPL. *)
-  Sys.catch_break true;
-
-  try
-    (* as long as the user hasn't sent EOF (Control-D), read input *)
-    while true do
-      (try
-          (* draw a prompt, and read one line of input *)
-          promptAndReadLine ">>> ";
-
-          (* handle the user's input appropriately *)
-          match !line with
-          | "quit()" -> raise End_of_file (* temporary hack *)
-          | _ -> handleCode ()
-
-        with Sys.Break ->
-          (* control-C should clear the line, draw a new prompt *)
-          print_endline "");
-
-      (* empty lines, since they have all been executed *)
-      lines := [];
-    done;
-
-  with End_of_file ->
-    (* time to exit the REPL *)
-    print_endline "bye!"
+    with End_of_file ->
+        (* time to exit the REPL *)
+        print_endline "bye!"
