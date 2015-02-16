@@ -3,13 +3,16 @@
 
 (* Predefined Emily code used by the REPL *)
 let replHelpString = Options.fullVersion^{|, interactive mode
-Type "help" for help, "quit" to quit|}
+Type "help" for help, "quit" to quit
+Type "last" to get the previous line's value|}
 
 (* Check if the string 's' ends with a backslash. *)
 (* FIXME: This is inadequate, the tokenizer should report this itself. *)
 let isContinued s =
     let n = String.length s in
     n > 0 && (String.get s (n - 1)) == '\\'
+
+let lastKeyString = "last"
 
 (* Runs the REPL.
 
@@ -22,8 +25,8 @@ Control-D (EOF) exits the REPL, as does evaluating the word `quit`. *)
 
 let repl targets =
 
-    (* This is our global mutable REPL scope *)
-    let scope = (
+    (* This is our global mutable REPL scope. Prepopulate it with some stuff: *)
+    let scopeTable = (
         let project = Loader.loadLocation Loader.Cwd in
         let table = Loader.tableWithLoaders (Some Loader.packageRepo) (Some project) (Some project) in
         (* This function will be run if the user evaluates the symbol `help` *)
@@ -35,8 +38,10 @@ let repl targets =
         Value.tableSetString table "quit" (Value.BuiltinUnaryMethodValue (fun _ ->
             raise End_of_file (* ANY attempt to read the "quit" variable quits immediately *)
         ));
-        Value.TableValue table
+        Value.tableSetString table lastKeyString Value.Null;
+        table
     ) in
+    let scope = Value.TableValue scopeTable in
 
     (* Line and lines are used to read and execute user input *)
     let line = ref "" in
@@ -97,8 +102,11 @@ let repl targets =
                 (* Evaluate program in repl-shared scope *)
                 let result = Execute.execute scope buf in
 
+                (* Store final result for next time *)
+                Value.tableSetString scopeTable lastKeyString result;
+
                 (* Pretty-print final result *)
-                print_endline (Pretty.replDisplay result true)
+                print_endline @@ (Pretty.replDisplay result true)
 
             with Sys.Break ->
                 (* Control-C should clear the line, draw a new prompt *)
