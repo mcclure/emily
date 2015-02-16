@@ -13,6 +13,7 @@ type tokenizeState = {
 }
 
 type groupCloseToken = Eof | Char of string
+type groupCloseRecord = groupCloseToken*Token.codePosition
 
 let groupCloseHumanReadable kind = match kind with
     | Eof -> "end of file"
@@ -136,11 +137,13 @@ let tokenize name buf : Token.token =
         (* Helper: Given a string->tokenContents mapping, make the token, add it to the line and recurse *)
         let addSingle constructor = addToLineProceed(makeTokenHere(constructor(matchedLexemes()))) in
 
-        let groupCloseMakeFrom str = match str with
-            | "{" -> Char "}"
-            | "(" -> Char ")"
-            | "[" -> Char "]"
-            | _ -> parseFail "Internal failure: interpreter is confused about parenthesis"
+        let groupCloseMakeFrom str =
+            let char = match str with
+                | "{" -> "}"
+                | "(" -> ")"
+                | "[" -> "]"
+                | _ -> parseFail "Internal failure: interpreter is confused about parenthesis"
+            in (Char char, currentPosition())
 
         in let groupCloseUnderToken () = match matchedLexemes () with | "" -> Eof | s -> Char s
 
@@ -157,13 +160,22 @@ let tokenize name buf : Token.token =
             (* Ignore comments *)
             | '#', Star (Compl '\n') -> skip ()
 
-            (* Again: on ANY group-close symbol, we end the current group *)
+            (* On ANY group-close symbol, we end the current group *)
             | closePattern -> (
+                (* However, we have to check to make sure that the symbol matches *)
                 let candidateClose = groupCloseUnderToken() in
+                (* The expected group close comes packed with the position of the opening symbol *)
+                let groupClose,groupCloseAt = groupClose in
+                (* This is a matching close *)
                 if candidateClose = groupClose then closeGroup ()
+                (* This is not a matching close *)
                 else match candidateClose with
-                    | Eof -> incompleteFail @@ "Did not find matching "^(groupCloseHumanReadable groupClose)^" anywhere before end of file"
-                    | _ ->   parseFail @@ "Expected closing "^(groupCloseHumanReadable groupClose)^" but instead found "^(groupCloseHumanReadable candidateClose)
+                    (* No close before EOF: Failure is positioned at the opening symbol *)
+                    | Eof -> Token.incompleteAt groupCloseAt
+                        ("Did not find matching "^(groupCloseHumanReadable groupClose)^" anywhere before end of file. Opening symbol:")
+                    (* Close present, but wrong: Failure is positioned at closing symbol *)
+                    | Char _ -> parseFail @@
+                        "Expected closing "^(groupCloseHumanReadable groupClose)^" but instead found "^(groupCloseHumanReadable candidateClose)
                 )
 
             (* Quoted string *)
@@ -199,7 +211,7 @@ let tokenize name buf : Token.token =
             | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 
     (* When first entering the parser, treat the entire program as implicitly being surrounded by parenthesis *)
-    in proceed Eof (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
+    in proceed (Eof,currentPosition()) (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
 
 (* Tokenize entry point typed to channel *)
 let tokenizeChannel source channel =
@@ -219,7 +231,7 @@ let snippet source str =
     try
         unwrap @@ tokenizeString source str
     with
-        Token.CompilationError e -> print_endline @@
+        Token.CompilationError e -> failwith @@
             "Internal error: Interpreter-internal code is invalid:" ^
-            (Token.errorString e); exit 1
+            (Token.errorString e)
 

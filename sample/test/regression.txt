@@ -3,6 +3,9 @@
 # Parser/tokenizer
 parse/trivial.em
 parse/tokenTypes.em
+parse/fail/unclosed.em
+parse/fail/misclosed.em
+parse/fail/earlyClose.em
 parse/fail/unclosedQuote.em
 parse/unicode/whitespace.em
 parse/unicode/fail/identifier.em
@@ -16,6 +19,7 @@ string/unicode.em
 backslash/basic.em
 backslash/fail/version.em
 backslash/fail/eof.em
+package/directory.em
 
 # Macros
 macro/math/order.em
