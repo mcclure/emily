@@ -3,6 +3,8 @@
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
 package/reflectProgram.em
 package/reflectPackage.em
+package/builtinLeak.em
+# TODO: add test for "package." package loader
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 closure/scope/boundLet.em   # No defined behavior

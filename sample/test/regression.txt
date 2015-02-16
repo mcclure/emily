@@ -20,6 +20,7 @@ backslash/basic.em
 backslash/fail/version.em
 backslash/fail/eof.em
 package/directory.em
+package/includeFail.em
 
 # Macros
 macro/math/order.em
