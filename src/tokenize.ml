@@ -12,6 +12,12 @@ type tokenizeState = {
     mutable line: int
 }
 
+type groupCloseToken = Eof | Char of string
+
+let groupCloseHumanReadable kind = match kind with
+    | Eof -> "end of file"
+    | Char s -> s
+
 (* Entry point to tokenize, takes a filename and a lexbuf *)
 (* TODO: Somehow strip blank lines? *)
 let tokenize name buf : Token.token =
@@ -95,7 +101,7 @@ let tokenize name buf : Token.token =
     (* Main loop. *)
     (* Takes a constructor that's prepped with all the properties for the enclosing group, and
        needs only the final list of lines to produce a token. Returns a completed group. *)
-    in let rec proceed (groupSeed : Token.codeSequence -> Token.token) lines line =
+    in let rec proceed groupClose (groupSeed : Token.codeSequence -> Token.token) lines line =
         (* Constructor for a token with the current preserved codeposition. *)
         let makeTokenHere = Token.makeToken (currentPosition()) in
 
@@ -103,7 +109,7 @@ let tokenize name buf : Token.token =
         let closePattern = [%sedlex.regexp? '}' | ')' | ']' | eof] in
 
         (* Recurse with the same groupSeed we started with. *)
-        let proceedWithLines = proceed groupSeed in
+        let proceedWithLines = proceed groupClose groupSeed in
 
         (* Recurse with the same groupSeed and lines we started with. *)
         let proceedWithLine =  proceedWithLines lines in
@@ -130,9 +136,18 @@ let tokenize name buf : Token.token =
         (* Helper: Given a string->tokenContents mapping, make the token, add it to the line and recurse *)
         let addSingle constructor = addToLineProceed(makeTokenHere(constructor(matchedLexemes()))) in
 
+        let groupCloseMakeFrom str = match str with
+            | "{" -> Char "}"
+            | "(" -> Char ")"
+            | "[" -> Char "]"
+            | _ -> parseFail "Internal failure: interpreter is confused about parenthesis"
+
+        in let groupCloseUnderToken () = match matchedLexemes () with | "" -> Eof | s -> Char s
+
         (* Recurse with blank code, and a new groupSeed described by the arguments *)
-        let rec openGroup closureKind groupKind =
-            proceed (Token.makeGroup (currentPosition()) closureKind groupKind) [] []
+        in let rec openGroup closureKind groupKind =
+            proceed (groupCloseMakeFrom @@ matchedLexemes())
+                (Token.makeGroup (currentPosition()) closureKind groupKind) [] []
 
         (* Variant assuming non-closure *)
         in let openOrdinaryGroup = openGroup Token.NonClosure
@@ -143,7 +158,13 @@ let tokenize name buf : Token.token =
             | '#', Star (Compl '\n') -> skip ()
 
             (* Again: on ANY group-close symbol, we end the current group *)
-            | closePattern -> closeGroup () (* TODO: Check correctness of closing indicator *)
+            | closePattern -> (
+                let candidateClose = groupCloseUnderToken() in
+                if candidateClose = groupClose then closeGroup ()
+                else match candidateClose with
+                    | Eof -> incompleteFail @@ "Did not find matching "^(groupCloseHumanReadable groupClose)^" anywhere before end of file"
+                    | _ ->   parseFail @@ "Expected closing "^(groupCloseHumanReadable groupClose)^" but instead found "^(groupCloseHumanReadable candidateClose)
+                )
 
             (* Quoted string *)
             | '"' -> addToLineProceed(makeTokenHere(Token.String(quotedString())))
@@ -178,7 +199,7 @@ let tokenize name buf : Token.token =
             | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 
     (* When first entering the parser, treat the entire program as implicitly being surrounded by parenthesis *)
-    in proceed (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
+    in proceed Eof (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
 
 (* Tokenize entry point typed to channel *)
 let tokenizeChannel source channel =
@@ -196,7 +217,7 @@ let unwrap token = match token.Token.contents with
 
 let snippet source str =
     try
-        unwrap @@ tokenizeString source str    
+        unwrap @@ tokenizeString source str
     with
         Token.CompilationError e -> failwith @@
             "Internal error: Interpreter-internal code is invalid:" ^
