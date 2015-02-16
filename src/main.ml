@@ -20,4 +20,5 @@ let () =
         try
             List.iter processOne Options.(run.targets)
         with
-            Token.CompilationError e -> failwith @@ Token.errorString e
+            Token.CompilationError e ->
+                print_endline @@ Token.errorString e; exit 1

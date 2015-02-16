@@ -16,7 +16,7 @@ type groupCloseToken = Eof | Char of string
 
 let groupCloseHumanReadable kind = match kind with
     | Eof -> "end of file"
-    | Char s -> s
+    | Char s -> "\""^s^"\""
 
 (* Entry point to tokenize, takes a filename and a lexbuf *)
 (* TODO: Somehow strip blank lines? *)
@@ -219,7 +219,7 @@ let snippet source str =
     try
         unwrap @@ tokenizeString source str
     with
-        Token.CompilationError e -> failwith @@
+        Token.CompilationError e -> print_endline @@
             "Internal error: Interpreter-internal code is invalid:" ^
-            (Token.errorString e)
+            (Token.errorString e); exit 1
 
