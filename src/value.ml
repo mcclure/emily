@@ -58,7 +58,7 @@ and tableBlankKind =
     | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
     | NoLet     (* Has .set. Used for "flat" expression groups. *)
     | WithLet   (* Has .let. Used for scoped groups. *)
-    | BoxFrom of value option (* Has .parent and uses object literal rules. *)
+    | BoxFrom of value option (* Scope inside an object literal; argument is result-object .parent *)
 
 (* The "registers" are values 1 and 2 described in execute.ml comments *)
 (* The codePositions are (1) the root of the current group (2) the symbol yielding "value 2" *)
@@ -107,6 +107,8 @@ let directoryKeyString = "directory"
 let directoryKey = AtomValue directoryKeyString
 let nonlocalKeyString = "nonlocal"
 let nonlocalKey = AtomValue nonlocalKeyString
+let privateKeyString = "private"
+let privateKey = AtomValue privateKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value

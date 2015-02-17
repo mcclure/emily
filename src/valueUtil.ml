@@ -82,9 +82,9 @@ let rawRethisAssignObjectDefinition (obj:value) v = match v with
     | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
     | _ -> v
 
-(* This handles what occurs when you assign to a table at any other time.
-   The "newborn" quality that makes it possible to assign a this is lost. *)
-let rawRethisAssignObject _ v = match v with
+(* This handles what occurs when you assign to a table at any other time:
+   The "newborn" quality that makes it possible to assign a `this` is lost. *)
+let rawRethisAssignObject v = match v with
     | ClosureValue({this=ThisBlank} as c) -> ClosureValue({c with this=ThisNever})
     | ClosureValue({this=CurrentThis(current,this)} as c) -> ClosureValue({c with this=FrozenThis(current,this)})
     | _ -> v
@@ -95,8 +95,11 @@ let rethisAssignObjectDefinition = snippetClosure 2 (function
     | _ -> impossibleArg "rethisAssignObjectDefinition")
 
 let rethisAssignObject = snippetClosure 1 (function
-    | [a] -> rawRethisAssignObject Null a
+    | [a] -> rawRethisAssignObject a
     | _ -> impossibleArg "rethisAssignObject")
+
+(* This could have been done in-place with a k combinator *)
+let rethisAssignObjectInsideLet _ x = rawRethisAssignObject x
 
 (* This next batch is the functions required to create a blank user table *)
 
@@ -163,9 +166,22 @@ let populateWithSet t =
     populateWithHas t;
     tableSetString t Value.setKeyString (makeSet (TableValue t))
 
-(* Give me a table of the requested type, prepopulate with basics. *)
-let rec tableBlank kind : tableValue =
-    let t = Hashtbl.create(1) in (match kind with
+(* An object is self-referential, so is more complicated than a simple blank table;
+   the table and value must be created together. *)
+let objectBlank parent =
+    let obj = tableTrueBlank() in
+    let objValue = ObjectValue obj in
+    populateWithHas obj;
+    tableSetString obj Value.setKeyString (makeObjectSet objValue);
+    tableSetString obj Value.letKeyString (makeLet rethisAssignObjectInsideLet objValue obj);
+    (match parent with
+        | Some value -> tableSetString obj Value.parentKeyString (value);
+        | _ -> ());
+    obj,objValue
+
+(* Give me a simple table of the requested type, prepopulate with basics. *)
+let tableBlank kind : tableValue =
+    let t = tableTrueBlank() in (match kind with
         | TrueBlank -> ()
         | NoSet -> populateWithHas t
         | NoLet -> populateWithSet t
@@ -174,20 +190,16 @@ let rec tableBlank kind : tableValue =
             tableSetString t Value.letKeyString (makeLet ignoreFirst (TableValue t) t)
         | BoxFrom parent ->
             (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
-               the other an "object" table that the code executed here funnel "let" values into. *)
-            let box = match parent with None -> tableBlank NoSet | Some value -> tableInheriting NoSet value in
-            let boxValue = ObjectValue box in
-            tableSetString box Value.setKeyString (makeObjectSet boxValue);
-            tableSetString box Value.letKeyString (makeLet rawRethisAssignObject boxValue box);
+               the other the literal object result which the code executed here funnel "let" values into. *)
+            let obj,objValue = objectBlank parent in
             populateWithSet t;
-            tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition boxValue box);
-            tableSet t currentKey boxValue;
-            tableSet t thisKey    boxValue
+            tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+            tableSet t currentKey objValue;
+            tableSet t thisKey    objValue
     );
-    sealTable t;
     t
 
-and tableInheriting kind v =
+let tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
 
@@ -246,3 +258,9 @@ let makeLazy table key func =
 let tableSetLazy table key func =
     tableSet table key (makeLazy table key func)
 
+let createPrivateWrapper target privateParent =
+    let proxy = tableTrueBlank() in
+    let _,privateValue = objectBlank privateParent in
+    tableSet proxy privateKey privateValue;
+    tableSet proxy parentKey target;
+    proxy
