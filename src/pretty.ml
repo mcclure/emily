@@ -127,13 +127,9 @@ let displayNumber n =
     | _ -> s
 
 (* Should the REPL should show a key/value pair? if not hide it. *)
-let shouldShowItem (k, v) =
-    match k with
-    | Value.AtomValue s ->
-         (match s with
-         | "parent" | "set" | "has" | "let" -> false
-         | _ -> true)
-    | _ -> true
+let shouldShowItem (k, _) =
+    not @@ List.exists (fun x -> x = k)
+        [Value.parentKey; Value.hasKey; Value.setKey; Value.letKey]
 
 (* Sort items in objects/tables by key name *)
 let sortItems (k1, v1) (k2, v2) =

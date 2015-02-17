@@ -158,10 +158,10 @@ let makeLet (modifier:value->value->value) (target:value) (t:tableValue) = snipp
 
 (* Helpers for tableBlank *)
 let populateWithHas t =
-    tableSetString t "has" (makeHas (TableValue t)) (* FIXME: Should this ever be ObjectValue...? *)
+    tableSetString t Value.hasKeyString (makeHas (TableValue t)) (* FIXME: Should this ever be ObjectValue...? *)
 let populateWithSet t =
     populateWithHas t;
-    tableSetString t "set" (makeSet (TableValue t))
+    tableSetString t Value.setKeyString (makeSet (TableValue t))
 
 (* Give me a table of the requested type, prepopulate with basics. *)
 let rec tableBlank kind : tableValue =
@@ -171,16 +171,16 @@ let rec tableBlank kind : tableValue =
         | NoLet -> populateWithSet t
         | WithLet ->
             populateWithSet t;
-            tableSetString t "let" (makeLet ignoreFirst (TableValue t) t)
+            tableSetString t Value.letKeyString (makeLet ignoreFirst (TableValue t) t)
         | BoxFrom parent ->
             (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
                the other an "object" table that the code executed here funnel "let" values into. *)
             let box = match parent with None -> tableBlank NoSet | Some value -> tableInheriting NoSet value in
             let boxValue = ObjectValue box in
-            tableSetString box "set" (makeObjectSet boxValue);
-            tableSetString box "let" (makeLet rawRethisAssignObject boxValue box);
+            tableSetString box Value.setKeyString (makeObjectSet boxValue);
+            tableSetString box Value.letKeyString (makeLet rawRethisAssignObject boxValue box);
             populateWithSet t;
-            tableSetString t "let" (makeLet rawRethisAssignObjectDefinition boxValue box);
+            tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition boxValue box);
             tableSet t currentKey boxValue;
             tableSet t thisKey    boxValue
     );
@@ -245,3 +245,4 @@ let makeLazy table key func =
 
 let tableSetLazy table key func =
     tableSet table key (makeLazy table key func)
+

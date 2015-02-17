@@ -224,7 +224,7 @@ let assignment past at future =
                 | [],_ -> Token.failToken at "Found a =, but nothing to assign to."
 
                 (* Sorta awkward, detect the "nonlocal" prefix and swap out let. This should be generalized. *)
-                | ({Token.contents=Token.Word "nonlocal"} as cmdToken)::moreLookups,"let" -> resultForCommand cmdToken "set" moreLookups
+                | ({Token.contents=Token.Word "nonlocal"} as cmdToken)::moreLookups,"let" -> resultForCommand cmdToken Value.setKeyString moreLookups
 
                 (* Looks like a = b *)
                 | [({Token.contents=Token.Word name}) as wordAt],_ -> [cloneWord cmdAt cmd; cloneAtom wordAt name; rightside]

@@ -225,7 +225,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
         | Token.Group group ->
             match group.Token.closure with
                 (* Token is nontrivial to evaluate, and will require a new stack frame. *)
-                | Token.NonClosure -> (* FIXME: Does not properly honor WithLet/NoLet! *)
+                | Token.NonClosure ->
                     let newScope = (groupScope group.Token.kind frame.Value.scope) in
                     let items = match group.Token.kind with
                         | Token.Box ->
@@ -304,7 +304,7 @@ and apply stack this a b =
                 | 0 -> descend c (* Apply discarding argument *)
                 | count ->
                     let amendedClosure = Value.{ c with needArgs=count-1;
-                        bound=bv::c.bound } in (* b b is nonsense! *)
+                        bound=bv::c.bound } in
                     match count with
                         | 1 -> descend amendedClosure (* Apply, using argument *)
                         | _ -> r (Value.ClosureValue amendedClosure) (* Simply curry and return. Don't descend stack. *)

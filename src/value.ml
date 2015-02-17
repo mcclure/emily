@@ -47,7 +47,7 @@ and value =
     | ClosureValue of closureValue
     | TableValue of tableValue
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
-    | ContinuationValue of executeStack * Token.codePosition
+    | ContinuationValue of executeStack * Token.codePosition (* codePosition only needed for traceback *)
 
     (* Package support *)
 (*  | PackageValue of value list *)
@@ -80,6 +80,13 @@ and executeStack = executeFrame list
 
 let idGenerator = ref 0.0
 
+(* "Keywords" *)
+let hasKeyString = "has"
+let hasKey = AtomValue hasKeyString
+let setKeyString = "set"
+let setKey = AtomValue setKeyString
+let letKeyString = "let"
+let letKey = AtomValue letKeyString
 let parentKeyString = "parent"
 let parentKey = AtomValue parentKeyString
 let idKeyString = "!id"
@@ -98,6 +105,8 @@ let projectKeyString = "project"
 let projectKey = AtomValue projectKeyString
 let directoryKeyString = "directory"
 let directoryKey = AtomValue directoryKeyString
+let nonlocalKeyString = "nonlocal"
+let nonlocalKey = AtomValue nonlocalKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value
