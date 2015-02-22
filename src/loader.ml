@@ -35,11 +35,14 @@ let tableWithLoaders packageRoot project directory =
     prepareScope Value.directoryKey directory;
     scope
 
-let scopeWithLoaders packageRoot project directory =
-    Value.TableValue(tableWithLoaders packageRoot project directory)
+let scopeForExecute packageRoot project directory =
+    let scope = tableWithLoaders packageRoot project directory in
+    let scopeValue = Value.TableValue scope in
+    let wrapped = ValueUtil.createPrivateWrapper scopeValue BuiltinScope.scopePrototype in
+    Value.TableValue(wrapped)
 
 let executePackage packageRoot project directory buf =
-    let scope = scopeWithLoaders packageRoot project directory in
+    let scope = scopeForExecute packageRoot project directory in
     ignore @@ Execute.execute scope buf;
     scope
 
@@ -60,7 +63,7 @@ let rec loadPackage packageSource projectSource directory path =
 let packageRepo = loadPackage SelfSource NoSource None packageRootPath
 
 let executeProgram project buf =
-    let scope = scopeWithLoaders (Some packageRepo) project project in
+    let scope = scopeForExecute (Some packageRepo) project project in
     Execute.execute scope buf
 
 let loadLocation location =
@@ -72,5 +75,5 @@ let locationAround path =
 
 let executeProgramFrom location buf =
     let project = loadLocation location in
-    let scope = scopeWithLoaders (Some packageRepo) (Some project) (Some project) in
+    let scope = scopeForExecute (Some packageRepo) (Some project) (Some project) in
     Execute.execute scope buf

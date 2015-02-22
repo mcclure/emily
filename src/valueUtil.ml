@@ -168,6 +168,7 @@ let populateWithSet t =
 
 (* An object is self-referential, so is more complicated than a simple blank table;
    the table and value must be created together. *)
+(* table, value convention *)
 let objectBlank parent =
     let obj = tableTrueBlank() in
     let objValue = ObjectValue obj in
@@ -258,9 +259,10 @@ let makeLazy table key func =
 let tableSetLazy table key func =
     tableSet table key (makeLazy table key func)
 
+(* table, value convention *)
 let createPrivateWrapper target privateParent =
     let proxy = tableTrueBlank() in
-    let _,privateValue = objectBlank privateParent in
+    let privateValue = TableValue( tableInheriting Value.WithLet privateParent ) in
     tableSet proxy privateKey privateValue;
     tableSet proxy parentKey target;
     proxy
