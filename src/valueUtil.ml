@@ -259,10 +259,16 @@ let makeLazy table key func =
 let tableSetLazy table key func =
     tableSet table key (makeLazy table key func)
 
+(* Factory for super functions *)
+let dualSwitch parent1 parent2 = snippetTextClosure (Token.Internal "dualConstruct")
+    ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
+    ["key"]
+    "(rawTern (parent1.has key) parent1 parent2) key"
+
 (* table, value convention *)
 let createPrivateWrapper target privateParent =
     let proxy = tableTrueBlank() in
     let privateValue = TableValue( tableInheriting Value.WithLet privateParent ) in
     tableSet proxy privateKey privateValue;
-    tableSet proxy parentKey target;
+    tableSet proxy parentKey (dualSwitch target privateValue);
     proxy
