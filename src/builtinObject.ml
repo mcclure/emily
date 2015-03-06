@@ -1,6 +1,7 @@
 (* Populates a prototype for objects *)
 let objectPrototypeTable = ValueUtil.tableInheriting Value.NoSet BuiltinTrue.truePrototype
 let objectPrototype = Value.ObjectValue(objectPrototypeTable)
+let () = (ValueUtil.objectPrototypeKnot := objectPrototype)
 
 let appendConstruct = ValueUtil.snippetTextMethod (Token.Internal "append")
     ["tern", ValueUtil.tern; "nullfn", BuiltinScope.nullfn]

@@ -1,5 +1,7 @@
 (* Data representation for a runtime value. *)
 
+type boxKind = NewObject | NewScope
+
 type tableValue = (value, value) Hashtbl.t
 
 (* Closure types: *)
@@ -58,7 +60,7 @@ and tableBlankKind =
     | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
     | NoLet     (* Has .set. Used for "flat" expression groups. *)
     | WithLet   (* Has .let. Used for scoped groups. *)
-    | BoxFrom of value option (* Scope inside an object literal; argument is result-object .parent *)
+    | BoxFrom of boxKind (* Scope inside an object literal; argument is result-object .parent *)
 
 (* The "registers" are values 1 and 2 described in execute.ml comments *)
 (* The codePositions are (1) the root of the current group (2) the symbol yielding "value 2" *)
@@ -115,3 +117,7 @@ let tableSet table key value = Hashtbl.replace table key value
 let tableHas table key = match tableGet table key with Some _ -> true | None -> false
 let tableSetString table key value = tableSet table (AtomValue key) value
 let tableSetOption table key value = match value with Some x -> tableSet table key x | _ -> ()
+
+let tableFrom value = match value with
+    | TableValue v | ObjectValue v -> v
+    | _ -> failwith "Internal error-- interpreter accidentally treated a non-object as an object in a place this should have been impossible."

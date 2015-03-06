@@ -169,6 +169,8 @@ let populateWithSet t =
 (* An object is self-referential, so is more complicated than a simple blank table;
    the table and value must be created together. *)
 (* table, value convention *)
+let objectPrototypeKnot = ref Null
+
 let objectBlank parent =
     let obj = tableTrueBlank() in
     let objValue = ObjectValue obj in
@@ -178,10 +180,10 @@ let objectBlank parent =
     (match parent with
         | Some value -> tableSetString obj Value.parentKeyString (value);
         | _ -> ());
-    obj,objValue
+    objValue
 
 (* Give me a simple table of the requested type, prepopulate with basics. *)
-let tableBlank kind : tableValue =
+let rec tableBlank kind : tableValue =
     let t = tableTrueBlank() in (match kind with
         | TrueBlank -> ()
         | NoSet -> populateWithHas t
@@ -189,12 +191,16 @@ let tableBlank kind : tableValue =
         | WithLet ->
             populateWithSet t;
             tableSetString t Value.letKeyString (makeLet ignoreFirst (TableValue t) t)
-        | BoxFrom parent ->
+        | BoxFrom kind ->
             (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
                the other the literal object result which the code executed here funnel "let" values into. *)
-            let obj,objValue = objectBlank parent in
-            populateWithSet t;
-            tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+            let objValue = match kind with
+                | NewObject -> (let objValue = objectBlank @@ Some !objectPrototypeKnot in
+                    let obj = tableFrom objValue in
+                    populateWithSet t;
+                    tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+                    objValue)
+                | NewScope  -> TableValue ( tableBlank WithLet ) in
             tableSet t currentKey objValue;
             tableSet t thisKey    objValue
     );

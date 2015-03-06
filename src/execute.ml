@@ -12,6 +12,8 @@
 
 (* -- DEBUG / PRETTYPRINT HELPERS -- *)
 
+let _ = BuiltinObject.objectPrototype
+
 (* Pretty print for registerState. Can't go in Pretty.ml because module recursion. *)
 let dumpRegisterState registerState =
     match registerState with
@@ -42,7 +44,7 @@ let groupScope tokenKind scope =
     match tokenKind with
         | Token.Plain  -> scope
         | Token.Scoped -> scopeInheriting Value.WithLet scope
-        | Token.Box    -> objectInheriting (Value.BoxFrom (Some BuiltinObject.objectPrototype)) scope
+        | Token.Box    -> objectInheriting Value.(BoxFrom NewObject) scope
 
 (* Combine a value with an existing register var to make a new register var. *)
 (* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)
