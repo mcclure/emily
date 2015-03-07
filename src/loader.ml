@@ -62,6 +62,7 @@ let rec loadPackage packageSource projectSource directory path =
 
 let packageRepo = loadPackage SelfSource NoSource None packageRootPath
 
+(* This leaks Private, we need to execute the package as a box *)
 let executeProgram project buf =
     let scope = scopeForExecute (Some packageRepo) project project in
     Execute.execute scope buf

@@ -166,12 +166,19 @@ let populateWithSet t =
     populateWithHas t;
     tableSetString t Value.setKeyString (makeSet (TableValue t))
 
+(* Factory for super functions. Used for "private" *)
+let dualSwitch parent1 parent2 = snippetTextClosure (Token.Internal "dualConstruct")
+    ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
+    ["key"]
+    "(rawTern (parent1.has key) parent1 parent2) key"
+
 (* An object is self-referential, so is more complicated than a simple blank table;
    the table and value must be created together. *)
 (* table, value convention *)
 let objectPrototypeKnot = ref Null
 
-let objectBlank parent =
+(* Not unified with tableBlank because it returns a value *)
+let objectValueBlank parent =
     let obj = tableTrueBlank() in
     let objValue = ObjectValue obj in
     populateWithHas obj;
@@ -194,15 +201,23 @@ let rec tableBlank kind : tableValue =
         | BoxFrom kind ->
             (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
                the other the literal object result which the code executed here funnel "let" values into. *)
-            let objValue = match kind with
-                | NewObject -> (let objValue = objectBlank @@ Some !objectPrototypeKnot in
-                    let obj = tableFrom objValue in
-                    populateWithSet t;
-                    tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
-                    objValue)
-                | NewScope  -> TableValue ( tableBlank WithLet ) in
-            tableSet t currentKey objValue;
-            tableSet t thisKey    objValue
+            let makeValue() = match kind with
+                | NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
+                | NewScope ->  TableValue(tableBlank WithLet) in
+            let privateValue = makeValue() in
+            let objValue = makeValue() in
+            (* The inside-box scope is odd: It has a has, but can't be assigned to: *)
+            populateWithHas t;
+            (* If you're making an object, it has a "magic" let and current/this: *)
+            (match objValue with ObjectValue obj ->
+                tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+                tableSet t currentKey objValue;
+                tableSet t thisKey    objValue;
+            | _ -> ());
+            (* Access to a private value: *)
+            tableSet t privateKey privateValue;
+            (* Special key-reading behavior around private value: *)
+            tableSet t parentKey (dualSwitch objValue privateValue)
     );
     t
 
@@ -210,6 +225,12 @@ let tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
 
+let createPrivateWrapper target privateParent =
+    let proxy = tableTrueBlank() in
+    let privateValue = TableValue( tableInheriting Value.WithLet privateParent ) in
+    tableSet proxy privateKey privateValue;
+    tableSet proxy parentKey (dualSwitch target privateValue);
+    proxy
 (* Not used by interpreter, but present for user *)
 let rawRethisTransplant obj = match obj with
     | ClosureValue c -> ClosureValue({c with this=ThisBlank})
@@ -265,16 +286,3 @@ let makeLazy table key func =
 let tableSetLazy table key func =
     tableSet table key (makeLazy table key func)
 
-(* Factory for super functions *)
-let dualSwitch parent1 parent2 = snippetTextClosure (Token.Internal "dualConstruct")
-    ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
-    ["key"]
-    "(rawTern (parent1.has key) parent1 parent2) key"
-
-(* table, value convention *)
-let createPrivateWrapper target privateParent =
-    let proxy = tableTrueBlank() in
-    let privateValue = TableValue( tableInheriting Value.WithLet privateParent ) in
-    tableSet proxy privateKey privateValue;
-    tableSet proxy parentKey (dualSwitch target privateValue);
-    proxy
