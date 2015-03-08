@@ -189,6 +189,10 @@ let objectValueBlank parent =
         | _ -> ());
     objValue
 
+(* FIXME: Pass around table objects rather than creating a dupe TableValue here *)
+let populateLetForScope storeIn writeTo =
+    tableSetString storeIn Value.letKeyString (makeLet ignoreFirst (TableValue writeTo) writeTo)
+
 (* Give me a simple table of the requested type, prepopulate with basics. *)
 let rec tableBlank kind : tableValue =
     let t = tableTrueBlank() in (match kind with
@@ -197,27 +201,31 @@ let rec tableBlank kind : tableValue =
         | NoLet -> populateWithSet t
         | WithLet ->
             populateWithSet t;
-            tableSetString t Value.letKeyString (makeLet ignoreFirst (TableValue t) t)
+            populateLetForScope t t
         | BoxFrom kind ->
-            (* There will be two tables made here: One a "normal" scope the object-literal assignments execute in,
-               the other the literal object result which the code executed here funnel "let" values into. *)
-            let makeValue() = match kind with
+            (* BoxFrom, in creating the scope table, actually creates a network of three tables:
+                - A "normal" scope (t), which the code is actually running in; it works with:
+                - The literal object result which the code executed here funnels "let" values into
+                - A "private" scope table, just a container for the "normal" scope's "let". *)
+            let privateTable = tableTrueBlank() in
+            let objValue = match kind with
                 | NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
                 | NewScope ->  TableValue(tableBlank WithLet) in
-            let privateValue = makeValue() in
-            let objValue = makeValue() in
-            (* The inside-box scope is odd: It has a has, but can't be assigned to: *)
-            populateWithHas t;
+            populateWithSet t;
             (* If you're making an object, it has a "magic" let and current/this: *)
-            (match objValue with ObjectValue obj ->
-                tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
-                tableSet t currentKey objValue;
-                tableSet t thisKey    objValue;
-            | _ -> ());
+            (match objValue with
+                | ObjectValue obj ->
+                    tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+                    tableSet t currentKey objValue;
+                    tableSet t thisKey    objValue;
+                | TableValue scope ->
+                    populateLetForScope t scope
+                | _ -> impossibleArg "object literal setup"
+            );
+            populateLetForScope privateTable t;
+            (* TODO: Set and has also *)
             (* Access to a private value: *)
-            tableSet t privateKey privateValue;
-            (* Special key-reading behavior around private value: *)
-            tableSet t parentKey (dualSwitch objValue privateValue)
+            tableSet t privateKey (TableValue privateTable);
     );
     t
 
@@ -225,12 +233,14 @@ let tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
 
+(* TODO: Replace with box, consider trashing dualSwitch *)
 let createPrivateWrapper target privateParent =
     let proxy = tableTrueBlank() in
     let privateValue = TableValue( tableInheriting Value.WithLet privateParent ) in
     tableSet proxy privateKey privateValue;
     tableSet proxy parentKey (dualSwitch target privateValue);
     proxy
+
 (* Not used by interpreter, but present for user *)
 let rawRethisTransplant obj = match obj with
     | ClosureValue c -> ClosureValue({c with this=ThisBlank})

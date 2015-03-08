@@ -1,24 +1,27 @@
 # Test private within an object literal.
 # Expect:
 # 2.
+# 4.
+# 2.
 # 3.
 # <true>
 # <null>
 # <null>
 
-context = 2
+shadowed = 2
 
 obj = [
-    private.shadowed = 3
-    shadowed = 4
+    shadowed = 3
+    println: shadowed
+    private.shadowed = 4
     visible = 5
     private.hidden = 6
-    println: context
-    # println: hidden   # TODO
-    # println: shadowed # TODO
-    println: private.shadowed
+    println: shadowed
+    # println: private.shadowed
 ]
 
+println: shadowed
+println: obj.shadowed
 println: obj.has .visible
 println: obj.has .private
 println: obj.has .hidden
