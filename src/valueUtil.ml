@@ -223,6 +223,8 @@ let rec tableBlank kind : tableValue =
                 | _ -> impossibleArg "object literal setup"
             );
             populateLetForScope privateTable t;
+            (* FIXME: Would it be better to just give the private table its own magic set, has, parent? *)
+            tableSet privateTable parentKey (TableValue t);
             (* TODO: Set and has also *)
             (* Access to a private value: *)
             tableSet t privateKey (TableValue privateTable);
