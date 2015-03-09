@@ -1,7 +1,5 @@
 (* Data representation for a runtime value. *)
 
-type boxKind = NewObject | NewScope
-
 type tableValue = (value, value) Hashtbl.t
 
 (* Closure types: *)
@@ -60,7 +58,7 @@ and tableBlankKind =
     | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
     | NoLet     (* Has .set. Used for "flat" expression groups. *)
     | WithLet   (* Has .let. Used for scoped groups. *)
-    | BoxFrom of boxKind (* Scope inside an object literal; argument is result-object .parent *)
+    | BoxFrom of Token.boxKind (* Scope inside an object literal; argument is result-object .parent *)
 
 (* The "registers" are values 1 and 2 described in execute.ml comments *)
 (* The codePositions are (1) the root of the current group (2) the symbol yielding "value 2" *)

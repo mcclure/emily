@@ -290,11 +290,12 @@ let closureConstruct withReturn =
 
                 (* This is a group, we are done now. *)
                 | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
-                    (* They asked for ^[], unsupported. *)
-                    if kind=Token.Box then Token.failToken at @@ "Can't use object literal with ^"
-
-                    (* Supported group *)
-                    else arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                    (match kind with
+                        (* They asked for ^[], unsupported. *)
+                        | Token.Box _ -> Token.failToken at @@ "Can't use object literal with ^"
+                        (* Supported group *)
+                        | _ -> arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                    )
 
                 (* Reached end of line *)
                 | [] -> Token.failToken at @@ "Body missing for closure"

@@ -209,8 +209,8 @@ let rec tableBlank kind : tableValue =
                 - A "private" scope table, just a container for the "normal" scope's "let". *)
             let privateTable = tableTrueBlank() in
             let objValue = match kind with
-                | NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
-                | NewScope ->  TableValue(tableBlank WithLet) in
+                | Token.NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
+                | Token.NewScope ->  TableValue(tableBlank WithLet) in
             populateWithSet t;
             (* If you're making an object, it has a "magic" let and current/this: *)
             (match objValue with

@@ -14,7 +14,7 @@ let rec dumpCodeTreeGeneral groupPrinter token =
         let l, r = match kind with
             | Token.Plain -> "(", ")"
             | Token.Scoped -> "{", "}"
-            | Token.Box -> "[", "]"
+            | Token.Box _ -> "[", "]"
         in let l = (match closure with
             | Token.NonClosure -> ""
             | Token.ClosureWithBinding (_,[]) -> "^"

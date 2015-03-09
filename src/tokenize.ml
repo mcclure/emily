@@ -21,7 +21,7 @@ let groupCloseHumanReadable kind = match kind with
 
 (* Entry point to tokenize, takes a filename and a lexbuf *)
 (* TODO: Somehow strip blank lines? *)
-let tokenize name buf : Token.token =
+let tokenize ?kind:(enclosingKind=Token.Plain) name buf : Token.token =
     (* -- Helper regexps -- *)
     let digit = [%sedlex.regexp? '0'..'9'] in
     let number = [%sedlex.regexp? Plus digit] in
@@ -205,13 +205,13 @@ let tokenize name buf : Token.token =
             (* On groups or closures, open a new parser (NO TCO AT THIS TIME) and add its result token to the current line *)
             | '(' -> addToLineProceed( openOrdinaryGroup Token.Plain )
             | '{' -> addToLineProceed( openOrdinaryGroup Token.Scoped )
-            | '[' -> addToLineProceed( openOrdinaryGroup Token.Box )
+            | '[' -> addToLineProceed( openOrdinaryGroup @@ Token.Box Token.NewObject )
             | Plus(Compl(Chars "#()[]{}\\;\""|digit|letterPattern|white_space))
                 -> addSingle (fun x -> Token.Symbol x)
             | _ -> parseFail "Unexpected character" (* Probably not possible? *)
 
     (* When first entering the parser, treat the entire program as implicitly being surrounded by parenthesis *)
-    in proceed (Eof,currentPosition()) (Token.makeGroup (currentPosition()) Token.NonClosure Token.Plain) [] []
+    in proceed (Eof,currentPosition()) (Token.makeGroup (currentPosition()) Token.NonClosure enclosingKind) [] []
 
 (* Tokenize entry point typed to channel *)
 let tokenizeChannel source channel =

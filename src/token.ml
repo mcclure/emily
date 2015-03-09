@@ -27,11 +27,14 @@ let fileNameString n = (match n with
 let positionString p = Printf.sprintf "[%s line %d ch %d]"
     (fileNameString p.fileName) p.lineNumber p.lineOffset
 
+(* If the group is boxed, what is returned from it? *)
+type boxKind = NewObject | NewScope
+
 (* What are the rules for descending into this group? *)
 type tokenGroupKind =
     | Plain                        (* Parenthesis *)
     | Scoped                       (* Create a new scope within this group *)
-    | Box                          (* Create a new object *)
+    | Box of boxKind               (* Create a new object *)
 
 (* Is this group a closure? What kind? *)
 type tokenClosureKind =

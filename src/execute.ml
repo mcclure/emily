@@ -42,9 +42,9 @@ let objectInheriting kind v = (* is this needed? *)
 (* Given a parent scope and a token creates an appropriate inner group scope *)
 let groupScope tokenKind scope =
     match tokenKind with
-        | Token.Plain  -> scope
-        | Token.Scoped -> scopeInheriting Value.WithLet scope
-        | Token.Box    -> objectInheriting Value.(BoxFrom NewObject) scope
+        | Token.Plain    -> scope
+        | Token.Scoped   -> scopeInheriting Value.WithLet scope
+        | Token.Box kind -> objectInheriting Value.(BoxFrom kind) scope
 
 (* Combine a value with an existing register var to make a new register var. *)
 (* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)
@@ -230,7 +230,7 @@ and evaluateTokenFromTokens stack frame moreFrames line moreLines token moreToke
                 | Token.NonClosure ->
                     let newScope = (groupScope group.Token.kind frame.Value.scope) in
                     let items = match group.Token.kind with
-                        | Token.Box ->
+                        | Token.Box _ ->
                             let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
                             let word = Token.(clone token @@ Word Value.currentKeyString) in
                             [ [wrapperGroup]; [word] ]
