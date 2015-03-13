@@ -217,14 +217,17 @@ let rec tableBlank kind : tableValue =
                 | ObjectValue obj ->
                     tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
                     tableSet t thisKey    objValue;
+                    (* FIXME: Use the dualInherit trick in both cases. *)
+                    tableSet privateTable parentKey (TableValue t);
                 | TableValue scope ->
-                    populateLetForScope t scope;
+                    populateLetForScope t scope; (* t is the running scope, scope is the scope-to-return *)
+                    (* FIXME: Make private a normal table. *)
+                    populateWithSet privateTable;
+                    populateLetForScope privateTable privateTable (* A pretend WithLet *)
                 | _ -> impossibleArg "object literal setup"
             );
             tableSet t currentKey objValue;
             populateLetForScope privateTable t;
-            (* FIXME: Would it be better to just give the private table its own magic set, has, parent? *)
-            tableSet privateTable parentKey (TableValue t);
             (* TODO: Set and has also *)
             (* Access to a private value: *)
             tableSet t privateKey (TableValue privateTable);
@@ -232,7 +235,18 @@ let rec tableBlank kind : tableValue =
     t
 
 let tableInheriting kind v =
-    let t = tableBlank kind in tableSet t parentKey v;
+    let t = tableBlank kind in
+            (match kind with
+                | BoxFrom Token.NewScope ->
+                    let privateRead = tableGet t privateKey in
+                    let currentRead = tableGet t currentKey in
+                    (match privateRead,currentRead with
+                        | Some privateValue, Some currentValue ->
+                            tableSet t parentKey
+                                (dualSwitch privateValue (dualSwitch currentValue v))
+                        | _,_ -> failwith "Internal failure: Interpreter constructed an impossible package scope"
+                    )
+                | _ -> tableSet t parentKey v);
         t
 
 (* Not used by interpreter, but present for user *)
