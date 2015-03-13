@@ -216,12 +216,12 @@ let rec tableBlank kind : tableValue =
             (match objValue with
                 | ObjectValue obj ->
                     tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
-                    tableSet t currentKey objValue;
                     tableSet t thisKey    objValue;
                 | TableValue scope ->
-                    populateLetForScope t scope
+                    populateLetForScope t scope;
                 | _ -> impossibleArg "object literal setup"
             );
+            tableSet t currentKey objValue;
             populateLetForScope privateTable t;
             (* FIXME: Would it be better to just give the private table its own magic set, has, parent? *)
             tableSet privateTable parentKey (TableValue t);
@@ -234,14 +234,6 @@ let rec tableBlank kind : tableValue =
 let tableInheriting kind v =
     let t = tableBlank kind in tableSet t parentKey v;
         t
-
-(* TODO: Replace with box, consider trashing dualSwitch *)
-let createPrivateWrapper target privateParent =
-    let proxy = tableTrueBlank() in
-    let privateValue = TableValue( tableInheriting Value.WithLet privateParent ) in
-    tableSet proxy privateKey privateValue;
-    tableSet proxy parentKey (dualSwitch target privateValue);
-    proxy
 
 (* Not used by interpreter, but present for user *)
 let rawRethisTransplant obj = match obj with

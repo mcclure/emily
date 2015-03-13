@@ -37,14 +37,11 @@ let tableWithLoaders packageRoot project directory =
 
 let scopeForExecute packageRoot project directory =
     let scope = tableWithLoaders packageRoot project directory in
-    let scopeValue = Value.TableValue scope in
-    let wrapped = ValueUtil.createPrivateWrapper scopeValue BuiltinScope.scopePrototype in
-    Value.TableValue(wrapped)
+    Value.TableValue scope
 
 let executePackage packageRoot project directory buf =
     let scope = scopeForExecute packageRoot project directory in
-    ignore @@ Execute.execute scope buf;
-    scope
+    Execute.execute scope buf
 
 let rec loadPackage packageSource projectSource directory path =
     if Sys.is_directory path then
@@ -57,7 +54,7 @@ let rec loadPackage packageSource projectSource directory path =
                 (fun _ -> proceed (Filename.concat path name))
         ) (Sys.readdir path); directoryObject
     else
-        let buf = Tokenize.tokenizeChannel (Token.File path) (open_in path)
+        let buf = Tokenize.tokenizeChannel ~kind:(Token.Box Token.NewScope) (Token.File path) (open_in path)
         in executePackage (knownFilter packageSource) (knownFilter projectSource) directory buf
 
 let packageRepo = loadPackage SelfSource NoSource None packageRootPath

@@ -21,7 +21,7 @@ let groupCloseHumanReadable kind = match kind with
 
 (* Entry point to tokenize, takes a filename and a lexbuf *)
 (* TODO: Somehow strip blank lines? *)
-let tokenize ?kind:(enclosingKind=Token.Plain) name buf : Token.token =
+let tokenize enclosingKind name buf : Token.token =
     (* -- Helper regexps -- *)
     let digit = [%sedlex.regexp? '0'..'9'] in
     let number = [%sedlex.regexp? Plus digit] in
@@ -214,14 +214,14 @@ let tokenize ?kind:(enclosingKind=Token.Plain) name buf : Token.token =
     in proceed (Eof,currentPosition()) (Token.makeGroup (currentPosition()) Token.NonClosure enclosingKind) [] []
 
 (* Tokenize entry point typed to channel *)
-let tokenizeChannel source channel =
+let tokenizeChannel ?kind:(enclosingKind=Token.Plain) source channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
-    tokenize source lexbuf
+    tokenize enclosingKind source lexbuf
 
 (* Tokenize entry point typed to string *)
-let tokenizeString source str =
+let tokenizeString ?kind:(enclosingKind=Token.Plain) source str =
     let lexbuf = Sedlexing.Utf8.from_string str in
-    tokenize source lexbuf
+    tokenize enclosingKind source lexbuf
 
 let unwrap token = match token.Token.contents with
     | Token.Group g -> g.Token.items
