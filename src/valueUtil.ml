@@ -179,7 +179,7 @@ let dualInherit parent1 parent2 =
         ["key"]
         "(rawTern (parent1.has key) parent1 parent2) .set key" in
     let dualHas = snippetTextClosure (Token.Internal "dualHasConstruct")
-        ["tern",tern; "parent1",parent1; "parent2",parent2]
+        ["tern",tern; "true",Value.True; "parent1",parent1; "parent2",parent2]
         ["key"]
         "tern (parent1.has key) ^(true) ^(parent2.has key)" in
     let t = tableTrueBlank() in
@@ -222,7 +222,7 @@ let rec tableBlank kind : tableValue =
             (* BoxFrom, in creating the scope table, actually creates a network of three tables:
                 - A "normal" scope (t), which the code is actually running in; it works with:
                 - The literal object result which the code executed here funnels "let" values into
-                - A "private" scope table, just a container for the "normal" scope's "let". *)
+                - A "private" scope table, which variable readbacks check before enclosing scope. *)
             let privateTable = tableBlank WithLet in
             let currentValue = match kind with
                 | Token.NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
@@ -238,8 +238,6 @@ let rec tableBlank kind : tableValue =
                 | _ -> impossibleArg "object literal setup"
             );
             tableSet t currentKey currentValue;
-            populateLetForScope privateTable t;
-            (* TODO: Set and has also *)
             (* Access to a private value: *)
             tableSet t privateKey (TableValue privateTable);
     );

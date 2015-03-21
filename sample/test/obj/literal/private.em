@@ -1,12 +1,14 @@
 # Test private within an object literal.
 # Expect:
+# (Inside)
 # 2.
 # 7.
+# 4.
 # 4.
 # <true> <true> <null>
 # <null> <true> <null>
 # <null> <null> <true>
-# Outside
+# (Outside)
 # 7.
 # 3.
 # <null> <null> <null>
@@ -16,6 +18,8 @@ global = 1
 shadowed = 2
 
 obj = [
+    println: "(Inside)"
+
     # Test scope fallthrough-- variables just check enclosing scope
     println: shadowed
 
@@ -49,7 +53,7 @@ obj = [
           (this.has .global)    sp (this.has .hidden)    sp (this.has .visible)    ln
 ]
 
-println: "Outside"
+println: "(Outside)"
 
 # Read back global scope
 println: shadowed
