@@ -77,7 +77,6 @@ obj/inherit/set.em
 obj/inherit/method.em
 obj/this/shadow.em
 obj/literal/this.em
-obj/literal/private.em
 obj/this/let.em
 obj/this/letReversed.em
 obj/this/indirect.em

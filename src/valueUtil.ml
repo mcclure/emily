@@ -167,10 +167,26 @@ let populateWithSet t =
     tableSetString t Value.setKeyString (makeSet (TableValue t))
 
 (* Factory for super functions. Used for "private" *)
-let dualSwitch parent1 parent2 = snippetTextClosure (Token.Internal "dualConstruct")
+let dualSwitch parent1 parent2 = snippetTextClosure (Token.Internal "dualParentConstruct")
     ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
     ["key"]
     "(rawTern (parent1.has key) parent1 parent2) key"
+
+let dualInherit parent1 parent2 =
+    let parent = dualSwitch parent1 parent2 in
+    let dualSet = snippetTextClosure (Token.Internal "dualSetConstruct")
+        ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
+        ["key"]
+        "(rawTern (parent1.has key) parent1 parent2) .set key" in
+    let dualHas = snippetTextClosure (Token.Internal "dualHasConstruct")
+        ["tern",tern; "parent1",parent1; "parent2",parent2]
+        ["key"]
+        "tern (parent1.has key) ^(true) ^(parent2.has key)" in
+    let t = tableTrueBlank() in
+    tableSet t Value.hasKey dualHas;
+    tableSet t Value.setKey dualSet;
+    tableSet t Value.parentKey parent;
+    TableValue t
 
 (* An object is self-referential, so is more complicated than a simple blank table;
    the table and value must be created together. *)
@@ -207,26 +223,21 @@ let rec tableBlank kind : tableValue =
                 - A "normal" scope (t), which the code is actually running in; it works with:
                 - The literal object result which the code executed here funnels "let" values into
                 - A "private" scope table, just a container for the "normal" scope's "let". *)
-            let privateTable = tableTrueBlank() in
-            let objValue = match kind with
+            let privateTable = tableBlank WithLet in
+            let currentValue = match kind with
                 | Token.NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
                 | Token.NewScope ->  TableValue(tableBlank WithLet) in
             populateWithSet t;
             (* If you're making an object, it has a "magic" let and current/this: *)
-            (match objValue with
-                | ObjectValue obj ->
-                    tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
-                    tableSet t thisKey    objValue;
-                    (* FIXME: Use the dualInherit trick in both cases. *)
-                    tableSet privateTable parentKey (TableValue t);
-                | TableValue scope ->
-                    populateLetForScope t scope; (* t is the running scope, scope is the scope-to-return *)
-                    (* FIXME: Make private a normal table. *)
-                    populateWithSet privateTable;
-                    populateLetForScope privateTable privateTable (* A pretend WithLet *)
+            (match currentValue with
+                | ObjectValue current ->
+                    tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition currentValue current);
+                    tableSet t thisKey    currentValue;
+                | TableValue current ->
+                    populateLetForScope t current; (* t is the running scope, scope is the scope-to-return *)
                 | _ -> impossibleArg "object literal setup"
             );
-            tableSet t currentKey objValue;
+            tableSet t currentKey currentValue;
             populateLetForScope privateTable t;
             (* TODO: Set and has also *)
             (* Access to a private value: *)
@@ -243,8 +254,15 @@ let tableInheriting kind v =
                     (match privateRead,currentRead with
                         | Some privateValue, Some currentValue ->
                             tableSet t parentKey
-                                (dualSwitch privateValue (dualSwitch currentValue v))
+                                (dualInherit privateValue (dualInherit currentValue v))
                         | _,_ -> failwith "Internal failure: Interpreter constructed an impossible package scope"
+                    )
+                (* FIXME: Is this code duplication avoidable? *)
+                | BoxFrom Token.NewObject ->
+                    let privateRead = tableGet t privateKey in
+                    (match privateRead with Some privateValue ->
+                            tableSet t parentKey (dualInherit privateValue v)
+                        | _ -> failwith "Internal failure: Interpreter constructed an impossible package scope"
                     )
                 | _ -> tableSet t parentKey v);
         t

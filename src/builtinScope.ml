@@ -60,6 +60,7 @@ let () =
         in printFunction
     );
 
+    setAtomValue "sp" (Value.StringValue " ");
     setAtomValue "ln" (Value.StringValue "\n");
 
     setAtomValue "null" (Value.Null);
