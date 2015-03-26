@@ -2,6 +2,7 @@ VERSION = 0.2b
 PREFIX := /usr/local
 bindir = $(PREFIX)/bin
 mandir = $(PREFIX)/share/man/man1
+INSTALL := install
 
 # Replace "native" with "byte" for debug build
 BUILDTYPE=native
@@ -51,12 +52,12 @@ manpage:
 # Install target
 .PHONY: install install-makedirs
 install-makedirs:
-	install -d $(DESTDIR)$(bindir)
-	install -d $(DESTDIR)$(mandir)
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) -d $(DESTDIR)$(mandir)
 
 install: install-makedirs all
-	install install/bin/emily   $(DESTDIR)$(bindir)
-	install install/man/emily.1 $(DESTDIR)$(mandir)
+	$(INSTALL) install/bin/emily   $(DESTDIR)$(bindir)
+	$(INSTALL) install/man/emily.1 $(DESTDIR)$(mandir)
 
 # Clean target
 .PHONY: clean
