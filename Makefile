@@ -1,11 +1,15 @@
 VERSION = 0.2b
 PREFIX := /usr/local
 bindir = $(PREFIX)/bin
+libdir = $(PREFIX)/lib
 mandir = $(PREFIX)/share/man/man1
 INSTALL := install
+RSYNC := rsync
 
 # Replace "native" with "byte" for debug build
 BUILDTYPE=native
+
+PACKAGE_DIR=emily/$(VERSION)
 
 .PHONY: all
 all: install/bin/emily install/man/emily.1 install/lib/emily/$(VERSION)
@@ -21,7 +25,7 @@ install/man/emily.1: resources/emily.1
 	cp $< $@
 
 # Move packages in place
-install/lib/emily/$(VERSION):
+install/lib/$(PACKAGE_DIR):
 	mkdir -p $@
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
@@ -54,10 +58,12 @@ manpage:
 install-makedirs:
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(mandir)
+	$(INSTALL) -d $(DESTDIR)$(libdir)/$(PACKAGE_DIR)
 
 install: install-makedirs all
 	$(INSTALL) install/bin/emily   $(DESTDIR)$(bindir)
 	$(INSTALL) install/man/emily.1 $(DESTDIR)$(mandir)
+	$(RSYNC) -r install/lib/$(PACKAGE_DIR)/ $(DESTDIR)$(libdir)/$(PACKAGE_DIR)
 
 # Clean target
 .PHONY: clean
