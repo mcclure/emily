@@ -28,6 +28,11 @@ let run = {
     disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
 }
 
+let keyMutate f = List.map @@ function ((a, b, c) : (Arg.key list * Arg.spec * Arg.doc)) -> (f a, b, c)
+
+let keyMutateArgument    = keyMutate @@ fun l -> "--" ^ (String.concat "-" l)
+let keyMutateEnvironment = keyMutate @@ fun l -> "EMILY_" ^ (String.concat "_" @@ List.map String.uppercase l)
+
 let () =
     let targets = ref [] in
     let seenStdin = ref false in
@@ -47,7 +52,7 @@ Options:|})
 
     in let versionSpec key = (key, Arg.Unit(fun () -> run.printVersion <- true), {|Print interpreter version|})
 
-    in let args = [
+    in let executeArgs = [ (* Basic arguments *)
         ("-", Arg.Unit(fun () -> (* Arg's parser means the magic - argument must be passed in this way. *)
             if !seenStdin then failwith "Attempted to parse stdin twice; that doesn't make sense?"
                 else seenStdin := true; targets := Stdin :: !targets
@@ -67,8 +72,14 @@ Options:|})
         versionSpec "--version";
 
         ("--machine-version", Arg.Unit(fun () -> run.printMachineVersion <- true), {|Print interpreter version (machine-readable-- number only)|});
+    ]
 
-        (* For supporting Emily development itself *)
+    in let environmentArgs = [ (* "Config" arguments which can be also set with env vars *)
+        (["package";"path"], Arg.Unit( fun () -> () ) , {|IDK|} );
+        (["package";"path";"append"], Arg.Unit( fun () -> () ) , {|IDK|} );
+    ]
+
+    in let debugArgs = [ (* For supporting Emily development itself-- separate out to sort last in help *)
         ("--debug-dis",   Arg.Unit(fun () -> run.disassemble <- true),        {|Print "disassembled" code and exit|});
         ("--debug-disv",  Arg.Unit(fun () -> run.disassembleVerbose <- true), {|Print "disassembled" code with position data and exit|});
         ("--debug-macro", Arg.Unit(fun () -> run.stepMacro <- true),          {|Print results of each individual macro evaluation|});
@@ -82,7 +93,11 @@ Options:|})
         ),  {|When executing, set all runtime trace type options|});
     ]
 
-    in Arg.parse args targetParse usage;
+    in let args = executeArgs @ (keyMutateArgument environmentArgs) @ debugArgs
+
+    in
+    EnvParse.parse (keyMutateEnvironment environmentArgs);
+    Arg.parse args targetParse usage;
 
     (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
     if run.printMachineVersion then print_endline version else
