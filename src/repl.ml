@@ -59,13 +59,19 @@ let repl targets =
         let buf = (Tokenize.tokenizeChannel (Token.File f) (open_in f)) in
         Execute.execute scope buf in
 
+    let runString s =
+        let buf = Tokenize.tokenizeString Token.Cmdline s in
+        Execute.execute scope buf in
+
     (* Run all file targets -- skip all other targets *)
     let runTargetFiles t =
         match t with
-        | Options.File f -> ignore @@ runFile f
-        | _ -> () in
+            | Options.File f -> ignore @@ runFile f
+            | Options.Literal s -> ignore @@ runString s
+            | Options.Stdin -> failwith "Can't take input from stdin and run in interactive mode at once."
+    in
 
-    (* Road any files provided by the user, before launching REPL *)
+    (* Load any files provided by the user, before launching REPL *)
     let runUserFiles () =
         List.iter runTargetFiles targets in
 
@@ -108,13 +114,13 @@ let repl targets =
                 (* Pretty-print final result *)
                 print_endline @@ (Pretty.replDisplay result true)
 
-            with Sys.Break ->
-                (* Control-C should clear the line, draw a new prompt *)
-                print_endline ""
-            | Token.CompilationError e ->
-                print_endline @@ Token.errorString e
-            | Failure e ->
-                print_endline e
+            with
+                | Sys.Break -> (* Control-C should clear the line, draw a new prompt *)
+                    print_endline ""
+                | Token.CompilationError e ->
+                    print_endline @@ Token.errorString e
+                | Failure e ->
+                    print_endline e
             );
 
             (* Flush stdout so any output is immediately visible *)
