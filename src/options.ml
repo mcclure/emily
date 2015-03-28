@@ -13,6 +13,10 @@ type optionSpec = {
     mutable trace : bool;
     mutable trackObjects : bool;
     mutable traceSet : bool;
+    mutable packagePath : string;
+    mutable packagePathAppend : string;
+    mutable projectPath : string;
+    mutable projectPathAppend : string;
 
     (* Things to do instead of execution *)
     mutable disassemble : bool;
@@ -25,6 +29,7 @@ let run = {
     targets=[];
     repl=false;
     stepMacro=false; trace=false; trackObjects=false; traceSet = false;
+    packagePath="";packagePathAppend="";projectPath="";projectPathAppend="";
     disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
 }
 
@@ -75,8 +80,8 @@ Options:|})
     ]
 
     in let environmentArgs = [ (* "Config" arguments which can be also set with env vars *)
-        (["package";"path"], Arg.Unit( fun () -> () ) , {|IDK|} );
-        (["package";"path";"append"], Arg.Unit( fun () -> () ) , {|IDK|} );
+        (["package";"path"],          Arg.String( fun s -> run.projectPath <- s ) ,     {|IDK|} );
+        (["package";"path";"append"], Arg.String( fun s -> run.projectPathAppend <- s ) , {|IDK|} );
     ]
 
     in let debugArgs = [ (* For supporting Emily development itself-- separate out to sort last in help *)
