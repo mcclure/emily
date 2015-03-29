@@ -57,15 +57,18 @@ let rec loadPackage packageSource projectSource directory path =
         let buf = Tokenize.tokenizeChannel ~kind:(Token.Box Token.NewScope) (Token.File path) (open_in path)
         in executePackage (knownFilter packageSource) (knownFilter projectSource) directory buf
 
-let packageRepo = loadPackage SelfSource NoSource None packageRootPath
+let packageRepo = loadPackage SelfSource NoSource None
+    (match Options.(run.packagePath) with Some s -> s | _ -> packageRootPath)
 
 (* This leaks Private, we need to execute the package as a box *)
 let executeProgram project buf =
     let scope = scopeForExecute (Some packageRepo) project project in
     Execute.execute scope buf
 
-let loadLocation location =
-    let projectPath = match location with Cwd -> bootPath | Path str -> str in
+let loadLocation defaultLocation =
+    let projectPath = match Options.(run.packagePath) with
+        | Some s -> s
+        | _ -> (match defaultLocation with Cwd -> bootPath | Path str -> str) in
     loadPackage (Source packageRepo) SelfSource None projectPath
 
 let locationAround path =
