@@ -1,4 +1,5 @@
 # Test what happens if directory.em gets included while it is already running
+# NOT DIRECTLY EXECUTED BY REGRESSION TESTS
 
 println "Loading reflectProgram.em"
 

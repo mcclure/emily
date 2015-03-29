@@ -12,8 +12,16 @@
 #   # SOMETHING
 #   # SOMETHING
 #       Expect "SOMETHING\nSOMETHING" as program output. (Notes: First space of
-#       line always consumed; trailing whitespace of output always disregarded.)
+#       line always consumed; trailing whitespace of output always disregarded;
+#       a non-comment line is assumed to end the Expect block; put this last.)
 #
+#   # Arg: --some-argument=whatever
+#       Invoke interpreter with argument
+#
+#   # Env: SOME_ENVIRONMENT=whatever
+#       Invoke interpreter with environment variable
+#
+
 # Usage: ./develop/regression.py -a
 # Tested with Python 2.6.1
 
@@ -22,6 +30,7 @@ import os
 import subprocess
 import optparse
 import re
+import copy
 
 def projectRelative( filename ):
     return os.path.normpath(os.path.join(prjroot, filename))
@@ -106,6 +115,9 @@ if flag("s"):
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)
 startp = re.compile(r'^', re.MULTILINE)
+argp = re.compile(r'# Arg:\s*(.+)$', re.I)
+envp = re.compile(r'# Env:\s*(.+)$', re.I)
+kvp = re.compile(r'(\w+)=(.+)$')
 
 def pretag(tag, str):
     tag = "\t%s: " % (tag)
@@ -117,18 +129,46 @@ for filename in files:
     expectfail = False
     scanning = False
     outlines = ''
+    env = None
+    args = []
+    earlyfail = False
+
+    # Pre-scan the file for magic comments with test instructions
     with open(filename) as f:
         for line in f.readlines():
-            expect = expectp.match(line)
+            # First determine if this is an expect directive
+            expect = expectp.match(line) # Expect:
             if expect:
                 expectfail = bool(expect.group(1))
                 scanning = bool(expect.group(2))
             else:
-                outline = linep.match(line)
-                if scanning and outline:
-                    outlines += outline.group(1)
-                else:
-                    scanning = False
+                if scanning: # If currently inside an expect block
+                    outline = linep.match(line)
+                    if outline:
+                        outlines += outline.group(1)
+                    else:
+                        scanning = False
+
+                # Only an expect directive can end an expect block
+                if not scanning: # Other directives:
+                    argline = argp.match(line) # Arg:
+                    if argline:
+                        args += argline.group(1)
+
+                    envline = envp.match(line) # Env:
+                    if envline:
+                        if not env:
+                            env = copy.deepcopy( os.environ )
+                        kvline = kvp.match( envline.group(1) )
+                        if not kvline:
+                            print "\tMALFORMED TEST: \"Env:\" line not of form A=B"
+                            earlyfail = True
+                            break
+                        env[kvline.group(1)] = kvline.group(2)
+
+    if earlyfail:
+        failures += 1
+        continue
 
     print "Running %s..." % (filename)
     try:
