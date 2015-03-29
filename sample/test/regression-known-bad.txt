@@ -1,9 +1,6 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-package/customPath/arg.em
-package/customPath/env.em
-package/customPath/both.em
 package/reflectProgram.em
 package/reflectPackage.em
 package/builtinLeak.em

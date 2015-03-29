@@ -66,7 +66,7 @@ let executeProgram project buf =
     Execute.execute scope buf
 
 let loadLocation defaultLocation =
-    let projectPath = match Options.(run.packagePath) with
+    let projectPath = match Options.(run.projectPath) with
         | Some s -> s
         | _ -> (match defaultLocation with Cwd -> bootPath | Path str -> str) in
     loadPackage (Source packageRepo) SelfSource None projectPath

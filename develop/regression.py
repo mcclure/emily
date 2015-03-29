@@ -153,7 +153,7 @@ for filename in files:
                 if not scanning: # Other directives:
                     argline = argp.match(line) # Arg:
                     if argline:
-                        args += argline.group(1)
+                        args += [argline.group(1)]
 
                     envline = envp.match(line) # Env:
                     if envline:
@@ -161,7 +161,7 @@ for filename in files:
                             env = copy.deepcopy( os.environ )
                         kvline = kvp.match( envline.group(1) )
                         if not kvline:
-                            print "\tMALFORMED TEST: \"Env:\" line not of form A=B"
+                            print "\tMALFORMED TEST: \"Env:\" line not of form KEY=VALUE"
                             earlyfail = True
                             break
                         env[kvline.group(1)] = kvline.group(2)
@@ -172,7 +172,7 @@ for filename in files:
 
     print "Running %s..." % (filename)
     try:
-        proc = subprocess.Popen(stdcall+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(stdcall+args+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE,env=env)
     except OSError as e:
         print "\nCATASTROPHIC FAILURE: Couldn't find emily?:"
         print e
