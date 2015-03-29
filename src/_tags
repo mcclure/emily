@@ -1,2 +1,2 @@
 true: safe_string
-<*>: package(sedlex, containers, fileutils)
+<*>: package(sedlex, containers, fileutils, str)

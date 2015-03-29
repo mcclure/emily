@@ -13,10 +13,10 @@ type optionSpec = {
     mutable trace : bool;
     mutable trackObjects : bool;
     mutable traceSet : bool;
-    mutable packagePath : string;
-    mutable packagePathAppend : string;
-    mutable projectPath : string;
-    mutable projectPathAppend : string;
+    mutable packagePath : string list option;
+    mutable packagePathAppend : string list;
+    mutable projectPath : string list option;
+    mutable projectPathAppend : string list;
 
     (* Things to do instead of execution *)
     mutable disassemble : bool;
@@ -29,7 +29,7 @@ let run = {
     targets=[];
     repl=false;
     stepMacro=false; trace=false; trackObjects=false; traceSet = false;
-    packagePath="";packagePathAppend="";projectPath="";projectPathAppend="";
+    packagePath=None;packagePathAppend=[];projectPath=None;projectPathAppend=[];
     disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
 }
 
@@ -37,6 +37,12 @@ let keyMutate f = List.map @@ function ((a, b, c) : (Arg.key list * Arg.spec * A
 
 let keyMutateArgument    = keyMutate @@ fun l -> "--" ^ (String.concat "-" l)
 let keyMutateEnvironment = keyMutate @@ fun l -> "EMILY_" ^ (String.concat "_" @@ List.map String.uppercase l)
+
+let buildPathSetSpec name action whatIs isAppend =
+    (name, Arg.String(fun s -> action @@ CCString.Split.list_cpy ~by:":" s),
+        "Colon-separated list of paths, which " ^
+        (if isAppend then "are appended to" else "replace") ^
+        " the default search paths for the " ^ whatIs ^ " loader.")
 
 let () =
     let targets = ref [] in
@@ -80,8 +86,10 @@ Options:|})
     ]
 
     in let environmentArgs = [ (* "Config" arguments which can be also set with env vars *)
-        (["package";"path"],          Arg.String( fun s -> run.projectPath <- s ) ,     {|IDK|} );
-        (["package";"path";"append"], Arg.String( fun s -> run.projectPathAppend <- s ) , {|IDK|} );
+        buildPathSetSpec ["package";"path"]          (fun a -> run.packagePath <- Some a)  "package" false;
+        buildPathSetSpec ["package";"path";"append"] (fun a -> run.packagePathAppend <- a) "package" true;
+        buildPathSetSpec ["project";"path"]          (fun a -> run.projectPath <- Some a)  "project" false;
+        buildPathSetSpec ["project";"path";"append"] (fun a -> run.projectPathAppend <- a) "project" true;
     ]
 
     in let debugArgs = [ (* For supporting Emily development itself-- separate out to sort last in help *)
