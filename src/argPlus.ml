@@ -23,14 +23,12 @@ let argParse rules fallback usage =
         match consume () with
             | None -> ()
             | Some key -> (match (CCHashtbl.get lookup key) with
-                | Some spec -> (match spec with
-                        | Arg.Unit f -> f ()
-                        | Arg.String f -> (match consume () with
-                                | None -> print_endline "MISSING!"
-                                | Some arg -> f arg
-                            )
-                        | _ -> argPlusLimitations "argParse"
+                | Some Arg.Unit f -> f ()
+                | Some Arg.String f -> (match consume () with
+                        | None -> print_endline "MISSING!"
+                        | Some arg -> f arg
                     )
+                | Some _ -> argPlusLimitations "argParse"
                 | None ->
                     let keyLen = String.length key in
                     if (keyLen > 0 && String.get key 0 == '-') then
@@ -42,7 +40,8 @@ let argParse rules fallback usage =
                                 (match (CCHashtbl.get lookup subKey) with
                                     | Some Arg.Unit _ -> print_endline "UNWANTED ARGUMENT"
                                     | Some Arg.String f -> f subValue
-                                    | _ -> argPlusLimitations "argParse")
+                                    | Some _ -> argPlusLimitations "argParse"
+                                    | None -> print_endline "MISSING WITH =!")
                             | None -> print_endline "FAIL"
                     else
                         fallback key
