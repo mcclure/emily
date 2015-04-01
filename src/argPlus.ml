@@ -32,19 +32,17 @@ let argParse rules fallback usage =
                         | _ -> argPlusLimitations "argParse"
                     )
                 | None ->
-                    if (String.length key > 0 && String.get key 0 == '-') then
-                        print_endline "FAIL"
+                    let keyLen = String.length key in
+                    if (keyLen > 0 && String.get key 0 == '-') then
+                        let eqAt = try Some (String.index key '=') with Not_found -> None in
+                        match eqAt with
+                            | Some splitAt ->
+                                let subKey = String.sub key 0 splitAt in
+                                let subValue = String.sub key (splitAt+1) (keyLen-splitAt-1)
+                                in print_endline @@ "Key:"^subKey^",Value:"^subValue
+                            | None -> print_endline "FAIL"
                     else
                         fallback key
             );
             proceed()
     in ignore @@ consume(); proceed() (* Discard argv[0] and start *)
-
-let parseEquals rules withFallback s =
-    try
-        let splitAt = String.index s '=' in
-        let key = String.sub s 0 splitAt in
-        let value = String.sub s (splitAt+1) ((String.length s)-splitAt-1)
-        in print_endline @@ "Key:"^key^",Value:"^value
-    with
-        Not_found -> withFallback s
