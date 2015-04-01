@@ -31,7 +31,11 @@ let argParse rules fallback usage =
                             )
                         | _ -> argPlusLimitations "argParse"
                     )
-                | None -> fallback key (* TODO: Catch - errors, = *)
+                | None ->
+                    if (String.length key > 0 && String.get key 0 == '-') then
+                        print_endline "FAIL"
+                    else
+                        fallback key
             );
             proceed()
     in ignore @@ consume(); proceed() (* Discard argv[0] and start *)
