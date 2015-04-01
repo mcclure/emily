@@ -38,8 +38,11 @@ let argParse rules fallback usage =
                         match eqAt with
                             | Some splitAt ->
                                 let subKey = String.sub key 0 splitAt in
-                                let subValue = String.sub key (splitAt+1) (keyLen-splitAt-1)
-                                in print_endline @@ "Key:"^subKey^",Value:"^subValue
+                                let subValue = String.sub key (splitAt+1) (keyLen-splitAt-1) in
+                                (match (CCHashtbl.get lookup subKey) with
+                                    | Some Arg.Unit _ -> print_endline "UNWANTED ARGUMENT"
+                                    | Some Arg.String f -> f subValue
+                                    | _ -> argPlusLimitations "argParse")
                             | None -> print_endline "FAIL"
                     else
                         fallback key
