@@ -31,10 +31,8 @@ let run = {
     disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
 }
 
-let keyMutate f = List.map @@ function ((a, b, c) : (Arg.key list * Arg.spec * Arg.doc)) -> (f a, b, c)
-
-let keyMutateArgument    = keyMutate @@ fun l -> "--" ^ (String.concat "-" l)
-let keyMutateEnvironment = keyMutate @@ fun l -> "EMILY_" ^ (String.concat "_" @@ List.map String.uppercase l)
+let keyMutateArgument    = ArgPlus.keyMutate @@ fun l -> "--" ^ (String.concat "-" l)
+let keyMutateEnvironment = ArgPlus.keyMutate @@ fun l -> "EMILY_" ^ (String.concat "_" @@ List.map String.uppercase l)
 
 let buildPathSetSpec name action whatIs =
     (name, Arg.String(action), "Directory root for packages loaded from \"" ^ whatIs ^ "\"")
@@ -42,8 +40,6 @@ let buildPathSetSpec name action whatIs =
 let () =
     let targets = ref [] in
     let seenStdin = ref false in
-
-    let targetParse t = targets := File t :: !targets in
 
     let usage = (fullVersion ^ {|
 
@@ -101,9 +97,11 @@ Options:|})
 
     in let args = executeArgs @ (keyMutateArgument environmentArgs) @ debugArgs
 
+    in let targetParse t = targets := File t :: !targets
+
     in
-    EnvParse.parse (keyMutateEnvironment environmentArgs);
-    Arg.parse args targetParse usage;
+    ArgPlus.envParse (keyMutateEnvironment environmentArgs);
+    ArgPlus.argParse args targetParse usage;
 
     (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
     if run.printMachineVersion then print_endline version else
