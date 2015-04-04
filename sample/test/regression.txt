@@ -22,6 +22,8 @@ backslash/fail/eof.em
 package/directory.em
 package/includeFail.em
 package/private.em
+
+# Cmdline
 package/customPath/arg.em
 package/customPath/env.em
 package/customPath/both.em

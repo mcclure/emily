@@ -1,6 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
+parse/fail/arg.em
 package/reflectProgram.em
 package/reflectPackage.em
 package/builtinLeak.em
