@@ -21,6 +21,9 @@
 #   # Env: SOME_ENVIRONMENT=whatever
 #       Invoke interpreter with environment variable
 #
+#   # Omit file
+#       Invoke interpreter WITHOUT test file as argument
+#
 
 # Usage: ./develop/regression.py -a
 # Tested with Python 2.6.1
@@ -118,6 +121,7 @@ startp = re.compile(r'^', re.MULTILINE)
 argp = re.compile(r'# Arg:\s*(.+)$', re.I)
 envp = re.compile(r'# Env:\s*(.+)$', re.I)
 kvp = re.compile(r'(\w+)=(.+)$')
+omitp = re.compile(r'# Omit\s*file', re.I)
 
 def pretag(tag, str):
     tag = "\t%s: " % (tag)
@@ -131,6 +135,7 @@ for filename in files:
     outlines = ''
     env = None
     args = []
+    omit = False
     earlyfail = False
 
     # Pre-scan the file for magic comments with test instructions
@@ -166,13 +171,16 @@ for filename in files:
                             break
                         env[kvline.group(1)] = kvline.group(2)
 
+                    if omitp.match(line):
+                        omit = True
+
     if earlyfail:
         failures += 1
         continue
 
     print "Running %s..." % (filename)
     try:
-        proc = subprocess.Popen(stdcall+args+[filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE,env=env)
+        proc = subprocess.Popen(stdcall+args+([] if omit else [filename]), stdout=subprocess.PIPE, stderr=subprocess.PIPE,env=env)
     except OSError as e:
         print "\nCATASTROPHIC FAILURE: Couldn't find emily?:"
         print e

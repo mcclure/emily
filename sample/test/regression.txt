@@ -24,6 +24,8 @@ package/includeFail.em
 package/private.em
 
 # Cmdline
+arg/param.em
+arg/equals.em
 package/customPath/arg.em
 package/customPath/env.em
 package/customPath/both.em
