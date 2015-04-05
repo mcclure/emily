@@ -101,12 +101,12 @@ Options:|})
 
     in
     ArgPlus.envParse (keyMutateEnvironment environmentArgs);
-    ArgPlus.argParse args targetParse usage;
-
-    (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
-    if run.printMachineVersion then print_endline version else
-    if run.printVersion then print_endline fullVersion else
-      run.targets <- List.rev !targets;
-    if (run.repl) then () else match run.targets with
-        | [] -> Arg.usage args usage; exit 1 (* No targets! *)
-        | _  -> ()
+    ArgPlus.argParse args targetParse usage (fun _ ->
+        (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
+        if run.printMachineVersion then print_endline version else
+        if run.printVersion then print_endline fullVersion else
+          run.targets <- List.rev !targets;
+        if (run.repl) then () else match run.targets with
+            | [] -> raise @@ ArgPlus.Help 1 (* No targets! Fail and print help. *)
+            | _  -> ()
+    )

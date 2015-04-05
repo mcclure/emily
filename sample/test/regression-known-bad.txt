@@ -1,9 +1,6 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-arg/fail/extraEquals.em
-arg/fail/missingParam.em
-arg/fail/badParam.em
 package/reflectProgram.em
 package/reflectPackage.em
 package/builtinLeak.em
