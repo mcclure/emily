@@ -1,6 +1,9 @@
 (* Populates a prototype for floats *)
 let floatPrototypeTable = ValueUtil.tableInheriting Value.NoSet BuiltinTrue.truePrototype
 
+(* Sign-of-divisor modulus *)
+let modulus a b = mod_float ( (mod_float a b) +. b ) b
+
 let () =
     let (setValue, _, setAtomMethod) = BuiltinNull.atomFuncs floatPrototypeTable in
 
@@ -22,6 +25,7 @@ let () =
     setAtomMath "minus"  ( -. );
     setAtomMath "times"  ( *. );
     setAtomMath "divide" ( /. );
+    setAtomMath "mod"    modulus;
 
     (* Do I need all four comparators   ? *)
     setAtomTest "lt"     ( <  );

@@ -349,6 +349,7 @@ let builtinMacros = [
     R(30.), "~", makeUnary    "negate";
     R(40.), "/", makeSplitter "divide";
     R(40.), "*", makeSplitter "times";
+    R(40.), "%", makeSplitter "mod";
     R(50.), "-", makeSplitter "minus";
     R(50.), "+", makeSplitter "plus";
 
@@ -364,6 +365,7 @@ let builtinMacros = [
     (* Boolean *)
     R(70.), "&&", makeShortCircuit "and";
     R(75.), "||", makeShortCircuit "or";
+    R(77.), "%%", makeShortCircuit "xor";
 
     (* Grouping *)
     L(90.), ":", applyRight;
