@@ -62,6 +62,9 @@ let executeNext scope code at = Value.{register=LineStart(Value.Null,at); code; 
 (* Mostly I call this if a nested match has to implement a case already excluded *)
 let internalFail () = failwith "Internal consistency error: Reached impossible place"
 
+let failWithStack stack mesg =
+    failwith @@ mesg^"\n"^(ValueUtil.stackString stack)
+
 (* -- INTERPRETER MAIN LOOP -- *)
 
 (* A tree of mutually recursive functions:
@@ -252,7 +255,9 @@ and apply stack this a b =
     let readTable t =
         match (a,Value.tableGet t bv) with
                 | _, Some Value.BuiltinMethodValue      f -> r @@ Value.BuiltinFunctionValue(f this)
-                | _, Some Value.BuiltinUnaryMethodValue f -> r @@ f this
+                | _, Some Value.BuiltinUnaryMethodValue f -> r @@
+                    (try f this with
+                        Failure e -> failWithStack stack @@ "Runtime error, applying "^(Pretty.dumpValue a)^" to "^(Pretty.dumpValue bv)^": "^e)
                 | Value.ObjectValue _, Some (Value.ClosureValue _ as c) -> r @@ ValueUtil.rawRethisSuperFrom this c
                 | _, Some v -> r v
                 | _, None ->
@@ -301,7 +306,8 @@ and apply stack this a b =
                         );
                         executeStep @@ (executeNext scope exec.Value.body bat)::stack
                 | Value.ClosureExecBuiltin f ->
-                    r (f bound)
+                    r @@ try (f bound) with
+                        Failure e -> failWithStack stack @@ "Runtime error, applying builtin closure to arguments ["^ (String.concat ", " @@ List.map Pretty.dumpValue bound) ^"]: " ^ e
             in (match c.Value.needArgs with
                 | 0 -> descend c (* Apply discarding argument *)
                 | count ->
@@ -324,7 +330,9 @@ and apply stack this a b =
         | Value.StringValue v -> readTable BuiltinTrue.truePrototypeTable
         | Value.AtomValue v ->   readTable BuiltinTrue.truePrototypeTable
         (* If applying a builtin special. *)
-        | Value.BuiltinFunctionValue f -> r ( f bv )
+        | Value.BuiltinFunctionValue f ->
+            r (try f bv with
+                Failure e -> failWithStack stack @@ "Runtime error, applying builtin function to "^(Pretty.dumpValue bv)^": " ^ e)
         (* Unworkable -- all builtin method values should be erased by readTable *)
         | Value.BuiltinMethodValue _ | Value.BuiltinUnaryMethodValue _
             -> internalFail()

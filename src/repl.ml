@@ -118,9 +118,9 @@ let repl targets =
                 | Sys.Break -> (* Control-C should clear the line, draw a new prompt *)
                     print_endline ""
                 | Token.CompilationError e ->
-                    print_endline @@ Token.errorString e
+                    print_endline @@ "Error parsing:\n" ^ (Token.errorString e)
                 | Failure e ->
-                    print_endline e
+                    print_endline @@ "Error executing:\n" ^ e
             );
 
             (* Flush stdout so any output is immediately visible *)

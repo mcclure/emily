@@ -80,7 +80,7 @@ let dumpValueTreeGeneral wrapper v =
         | Value.ClosureValue {Value.exec=e; Value.needArgs=n} ->
             let tag = match e with Value.ClosureExecUser _ -> "closure" | Value.ClosureExecBuiltin _ -> "closure-builtin" in
              "<" ^ tag ^ "/" ^ string_of_int(n) ^">"
-        | Value.TableValue     _ -> wrapper "table" v
+        | Value.TableValue     _ -> wrapper "scope" v (* From the user's perspective, a table is a scope *)
         | Value.ObjectValue    _ -> wrapper "object" v
         | Value.ContinuationValue _ -> "<return>"
 

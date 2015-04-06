@@ -7,7 +7,7 @@ let badArgTable = badArg "table"
 let badArgClosure = badArg "closure"
 let impossibleArg name = failwith @@ "Internal failure: Impossible argument to "^name
 
-let misapplyString a b = "Application failure: "^(Pretty.dumpValue a)^" can't respond to "^(Pretty.dumpValue b)
+let misapplyString a b = "Runtime failure: "^(Pretty.dumpValue a)^" can't respond to "^(Pretty.dumpValue b)
 let rawMisapplyArg a b = failwith @@ misapplyString a b
 
 (* Tools *)

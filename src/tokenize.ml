@@ -94,7 +94,8 @@ let tokenize enclosingKind name buf : Token.token =
             (* A second backslash? Okay, back out and let the main loop handle it *)
             | '\\' -> backtrack()
             (* User probably did not intend to concatenate with blank line. *)
-            | eof -> incompleteFail "Found EOF immediately after backslash, expected token or new line."
+            | eof -> if seenText then backtrack() else
+                incompleteFail "Found EOF immediately after backslash, expected token or new line."
             (* TODO: Ignore rather than error *)
             | any -> parseFail "Did not recognize text after backslash."
             | _ -> parseFail "Internal failure: Reached impossible place"
