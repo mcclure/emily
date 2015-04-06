@@ -6,6 +6,7 @@
 # 3.
 # 2.
 # 1.
+# <null>
 
 # Test sp, ln
 print "a" sp "b" ln
@@ -23,3 +24,6 @@ if (null) ^{println 6}
 # Test while
 let .i 3
 while ^(i.gt 0) ^{println i; set .i (i .minus 1)}
+
+# Test and, or, xor
+println ( xor ^(or ^( and ^(true) ^(null) ) ^(true) ) ^(true) )

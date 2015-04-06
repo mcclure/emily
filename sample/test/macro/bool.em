@@ -7,6 +7,7 @@
 # <null>
 # <null>
 # <null>
+# <null>
 
 println( null && true )
 println( true || null )
@@ -15,3 +16,4 @@ println( null  || null  && true  )
 println( !true || !true && !null )
 println( true  && null  || null  )
 println( !null && !true || !true )
+println( !null && !true || true %% true )

@@ -50,6 +50,7 @@ macro/fail/assignPath.em
 # Operators
 math/statement.em
 math/basic.em
+math/mod.em
 math/bool.em
 macro/boolGroup.em
 math/equal.em
