@@ -7,7 +7,7 @@ emily - an ML-y programming language
 
 ## DESCRIPTION
 
-**emily** is a stand-alone Emily language interpreter. It executes one or more Emily programs from the command line. Each program will be executed in an isolated scope.
+**emily** is a stand-alone Emily language interpreter. It executes one or more Emily programs from the command line. Unless `-i` is specified, each program will be executed in an isolated scope.
 
 An input source (an Emily program) may be one of the following:
 
@@ -22,6 +22,15 @@ Documentation of the Emily programming language can be found at <br><<http://emi
   * `-e` <source>:
     Execute a program inline.
 
+  * `-i`:
+    After executing the programs (if any), boot into interactive mode. Lines of code will be accepted from the command line and their results will be printed.
+
+  * `--package-path` <path>:
+    Path to use for "package" loader (default is ../lib/emily/0.2, relative to the emily interpreter binary).
+
+  * `--project-path` <path>:
+    Path to use for "project" loader (default is enclosing directory of source file, or current working directory for a program loaded from `-e` or stdin).
+
   * `-v`, `--version`:
     Print human-readable interpreter version.
 
@@ -34,6 +43,15 @@ Documentation of the Emily programming language can be found at <br><<http://emi
 ## DEBUG OPTIONS
 
 A series of "debug" flags are included, intended for debugging the interpreter. These are not standardized and may vary in future versions of the interpreter. To see a listing, run `emily` with either the `--help` flag or no flags.
+
+## ENVIRONMENT VARIABLES
+
+Some command line arguments may alternately be specified as environment variables. If both environment variable and command line argument are supplied, the command line argument will take precedence.
+
+The mapping is:
+
+* `--package_path` -> `EMILY_PACKAGE_PATH`
+* `--project_path` -> `EMILY_PROJECT_PATH`
 
 ## EXIT STATUS
 

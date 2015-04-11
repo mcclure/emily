@@ -1,4 +1,4 @@
-**Emily programming language, version 0.2b**  
+**Emily programming language, version 0.2**  
 **Tutorial**
 
 This is a quick overview of how to write programs in the Emily programming language. I assume you have written in some programming language before, I assume you know how to access your operating system's command line, and I assume you have [already installed the interpreter](build.md).
@@ -78,7 +78,7 @@ If you run this code you get:
 
 You'll notice two additional kinds of values here, when we used the equality operators: `true` and `null`. You can get these values directly in your program by saying `true` or `null`. `null` is just what Emily calls false.
 
-You can't do anything to a string right now except `print` or `println` it.
+You can't do anything to a string right now except `print` or `println` it. (`==` on strings also works.)
 
 There's three more kinds of values: Closures, objects, and atoms.
 
@@ -92,7 +92,7 @@ This makes a function "twice" which multiplies a number by two. Functions, again
 
     twice = ^number (number * 2)
 
-And we could have not bothered with the variable at all:
+And we could use this function without creating a variable at all:
 
     println ( ( ^number (number * 2) ) 4 )
 
@@ -128,7 +128,7 @@ And this will print `three`. This is actually not any different from what we wer
 
 This will print `2`.
 
-Above we see `=` being used both to set the values of variables, and to set the values of keys on objects. There is a trick: `=` is doing the same thing in both cases. Every line of code has a "scope object", which holds all its variables. When you write an identifier by itself, like `numbers`, what you are doing is looking up the key `.numbers` on the scope object; `numbers.a` is the same as saying `(SCOPE).numbers.a`, if you could somehow get a reference to the scope.
+Above we see `=` being used both to set the values of variables, and to set the values of keys on objects. There is a trick: `=` is doing the same thing in both cases. Every line of code has a "scope object", which holds all its variables. When you write an identifier by itself, like `numbers`, what you are doing is looking up the key `.numbers` on the scope object; `numbers.a` is the same as saying `(SCOPE).numbers.a`, if you could somehow get a reference to the scope. When you use `=` inside an object literal, assigning to the scope object reroutes the assignment to the object you are building.
 
 # Fancier stuff
 
@@ -233,7 +233,7 @@ You might be saying now: I don't **care** about all this functional programming 
 
 `while` needs `^` on both of its parentheticals-- the `(x < 5)` gets run again and again at each pass of the loop, so it needs that "not yet".
 
-By the way, you don't **need** to use `if` or `while` at all, because there's recursion:
+By the way, you don't **need** to use `while` to get a loop, because there's recursion:
 
     countdown ^x = (
         println x
@@ -245,7 +245,23 @@ By the way, you don't **need** to use `if` or `while` at all, because there's re
 
 Emily uses a trick from functional programming that isn't worth explaining here called "tail recursion", which keeps the stack from overflowing if you end a function with a recursive call.
 
-# Prototypes
+## Loading files
+
+If you write more than one program in Emily, you might find there are functions or definitions you want in every program. You can share a piece of code between programs by putting it in a "package". A package is just a file or directory on disk. You can load packages out of your current directory by using the `directory` object. If you make these two files:
+
+* `includeMe.em`:
+
+        name = "test"
+
+* `executeMe.em`:
+
+        println: directory.includeMe.name
+
+Running `executeMe.em` will print out "`test`".
+
+For more information on working with packages, see "About packages" in [manual.md](manual.md).
+
+## Prototypes
 
 One more concept I want to throw at you, and then I'll try to explain why this stuff works the way it does.
 
@@ -305,7 +321,7 @@ This prints
 
 Each call to `super` calls the function in the parent. Wait, couldn't you have also just said `do: this.parent.describe`, instead of using `super`? Well, that's legal, but then the special-ness that makes `this` work would break; if you'd said `this.parent.describe`, you'd have gotten a function that was a method of `banana`, not a method of `plantain`, and the describe line would have said "It is yellow". `super` makes sure the special method rewiring still works.
 
-### Array builtins
+## Array builtins
 
 One last thing, real quick: If you don't set a `parent` on an object, it still has a parent. There's a universal default parent for objects. At the moment, all this universal parent contains is `append` and `each`. These are methods that let you treat objects like arrays:
 

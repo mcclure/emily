@@ -26,7 +26,7 @@ To comply with the license, simply include the above block of text in some acces
 
 * Erik Osheim <<d_m@plastic-idolatry.com>>
 
-	REPL implementation
+    REPL implementation
 
 * David Madore <<http://www.madore.org/~david/>>
 
@@ -41,3 +41,7 @@ To comply with the license, simply include the above block of text in some acces
     Documentation improvements
 
 All authors retain the copyright to their own contributions.
+
+# Thanks
+
+Andi would like to thank Whitequark for extensive help with OCaml, Misty De Meo for managing releases, Andrea Faulds for help with some math, and Jan Vitek for lending me that book on combinators.

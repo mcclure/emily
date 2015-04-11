@@ -43,7 +43,7 @@ In order to build this, you will need to install:
 - ocaml -- I use 4.02.1 installed via OS X "homebrew"
 - ocamlfind -- I use 1.5.5, installed via opam
 - sedlex -- I use 1.99.2, installed via opam
-- containers -- I use 0.7, installed via opam
+- containers -- I use 0.9, installed via opam
 - fileutils -- I use 0.4.4, installed via opam
 
 You should be able to just install ocaml and opam from your package manager, and then run `opam install ocamlfind sedlex containers`.
@@ -56,7 +56,7 @@ The build product will be left in the "package" directory. To install it to a st
 
 ### I'm on Windows...
 
-Okay! The bundled `Makefile` is not going to work for you. Luckily, the `Makefile` is just a thin wrapper on a tool called `ocamlbuild`, which in theory works on Windows and is installed along with the standard OCaml distribution. You will need to follow the `ocamlbuild` instructions to build the file `src/main.native` with ocamlfind enabled. Let me know if it works!
+Okay! The bundled `Makefile` is not going to work for you. Luckily, the `Makefile` is just a thin wrapper on a tool called `ocamlbuild`, which in theory works on Windows and is installed along with the standard OCaml distribution. You will still need the above packages-- at least one person has successfully installed them via WODI-- and then need to follow the `ocamlbuild` instructions to build the file `src/main.native` with ocamlfind enabled. Let me know if it works!
 
 ## Additional/optional builds
 
@@ -65,7 +65,7 @@ Building a new version of the manpage from the Markdown file requires the presen
 - ruby -- I use 2.1.2p95, installed via MacPorts
 - ronn -- I use 0.7.3, installed via RubyGems
 
-With these installed, you can run `make manpage`. You do not need to do this unless you edit [manpage.md](manpage.md).
+With these installed, edit the date in Makefile and run `make manpage`. This creates `resources/emily.1`, which you should check back in. You do not need to do this unless you edit [manpage.1.md](manpage.md).
 
 # It didn't work!
 

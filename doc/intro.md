@@ -1,4 +1,4 @@
-This last year I've been working on a programming language. Around April, I sat down and I wrote out a [list of all the things I want out of a language](http://msm.runhello.com/p/928). Nothing that exists right now felt satisfying, so I decided to make my own. I've named this language Emily, and as of today I have a [finished "version 0.1" release that you can download and run](https://bitbucket.org/runhello/emily/wiki/Home). This version is **very** primitive in certain ways, but you can write a program in it and it points enough toward what the language can eventually be that I'm excited.
+This last year I've been working on a programming language. About a year ago, I sat down and I wrote out a [list of all the things I want out of a language](http://msm.runhello.com/p/928). Nothing that exists right now felt satisfying, so I decided to make my own. I've named this language Emily, and I'm now up to a [working "version 0.2" release that you can download and run](https://bitbucket.org/runhello/emily/wiki/Home). This version is very primitive in certain ways, but you can write a program in it and it points enough toward what the language can eventually be that I'm excited.
 
 In this file:
 
@@ -142,7 +142,7 @@ So what's happening here? The object that `child` inherits from is chosen by set
 
 There's a couple more interesting things that made it into the language, even as early as this version is:
 
-- `\version 0.1`
+- `\version 0.2`
     This feature is small, but I believes it solves a somewhat fundamental problem with programming languages. Each Emily program is encouraged to start with a line identifying the language version it was developed against. When an Emily interpreter-- current or future-- encounters the `\version` line, it makes a decision about whether that code can be run or not. If the hosting interpreter is backward-compatible with the code's version, it just runs. But if backward-incompatible changes have been made to the language since then, it will either enter a compatibility mode or politely refuse to run. At some point, it will be possible to install these compatibility modes as pluggable modules.
 
     I write a lot of Python, and a huge running problem is compatibility between versions. In Python, as in most programming languages, the implementation version is the same as the language version. Python 2.4 runs Python 2.4, Python 2.7 runs Python 2.7, Python 3.1 runs Python 3.1, etc. Meanwhile Python 2.7 can run Python 2.4 code, but Python 3.1 **can't** run Python 2.7 code, which means Python is competing with itself and nobody uses Python 3 because all the code's written for 2.7. (And even before the big 3.0 switch, **forward** compatibility created a huge problem all by itself: If you had a program that used a feature from 2.5, but what you had installed was 2.4, you wouldn't know it until you tried to run it and something would break strangely, possibly at runtime.)

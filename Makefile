@@ -1,4 +1,4 @@
-VERSION = 0.2b
+VERSION = 0.2
 PREFIX := /usr/local
 bindir = $(PREFIX)/bin
 libdir = $(PREFIX)/lib
@@ -49,9 +49,9 @@ test-all:
 .PHONY: manpage
 manpage:
 	ronn -r --pipe --manual="Emily programming language" \
-	               --date="2015-01-15" \
+	               --date="2015-04-07" \
 	               --organization="http://emilylang.org" \
-	               doc/manpage.1.md > install/man/emily.1
+	               doc/manpage.1.md > resources/emily.1
 
 # Install target
 .PHONY: install install-makedirs

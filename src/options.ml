@@ -1,6 +1,6 @@
 (* Parse and validate command line arguments. *)
 
-let version = "0.2b"
+let version = "0.2"
 let fullVersion = ("Emily language interpreter: Version " ^ version)
 
 type executionTarget = Stdin | File of string | Literal of string

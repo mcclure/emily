@@ -1,4 +1,4 @@
-**Emily programming language, version 0.2b**  
+**Emily programming language, version 0.2**  
 **Reference manual**
 
 This is a reference for the Emily programming language. It lists all features but does not attempt to explain usage or concepts. If you want something that explains concepts, read [intro.md](intro.md).
@@ -8,16 +8,6 @@ Non-language-lawyers will likely want to skip to the "Syntax: Operator Precedenc
 Table of contents:
 
 [TOC]
-
-# Known falsehoods
-
-Differences between this manual and the current state of the repository ("TODO: Document"):
-
-- `&&` / `||` now short-circuit.
-- `and`, `or, `xor` need documentation.
-- `.and`, `.or` no longer exist.
-- `.eq` now works on everything.
-- `package`/`project`/`directory`
 
 # Execution model
 
@@ -144,6 +134,7 @@ In the table below, operators higher in the table are evaluated first. If a phas
             |       | ^!
     90      | LTR   | ? :
             |       | :
+    77      | RTL   | %%
     75      | RTL   | ||
     70      | RTL   | &&
     65      | RTL   | !=
@@ -188,9 +179,10 @@ In the table below, higher items are "higher precedence" (bind tighter). Left-as
                |               | ==
     9          | Left          | &&
     10         | Left          | ||
-    11         | Right         | ? :
-    12         | Right         | =
-    13         | Left          | `
+    11         | Left          | %%
+    12         | Right         | ? :
+    13         | Right         | =
+    14         | Left          | `
 
 ## Operators
 
@@ -204,7 +196,7 @@ If a `\` is followed by anything else, or by an end-of-file, this is a failure a
 
 **Usage:** `\version` *[version number]*
 
-This is a reader instruction (right now, the only one) which reports the interface version of Emily that the program was written against. In this version of Emily, if anything at all is written here other than the literal string `\version 0.1`, this is a failure and the program will terminate without running.
+This is a reader instruction (right now, the only one) which reports the interface version of Emily that the program was written against. In this version of Emily, if anything at all is written here other than the literal string `\version 0.1` or `\version 0.2`, this is a failure and the program will terminate without running.
 
 In the long term, for **all future versions of Emily**, the plan is that when the Emily interpreter sees `\version *[number]*`, it will:
 
@@ -213,6 +205,8 @@ In the long term, for **all future versions of Emily**, the plan is that when th
 - If this is not possible, or the version number is not recognized (for example it is a future version of the language), this is a failure and the program will terminate without running.
 
 Ideally a program should always start with `\version`, and should select the oldest interface version which can run the code.
+
+*Note: The contract here is not yet being totally correctly followed. Emily 0.2 treats the 0.1 interface as something it is fully backward compatible with. However, this is not really accurate-- it is possible to write a valid 0.1 program which behaves differently in 0.2. In particular imagine what happens if you create a local variable named "private" and then try to access it from inside of an object literal. I figure this is "close enough for now" but in future versions of Emily the compatibility handling will need to be more precise.*
 
 ### # 
 
@@ -298,6 +292,24 @@ Ternary operator. Captures the entire statement and splits it in three. At run t
 
     tern (a b c) ^!(d e f) ^!(g h i)
 
+### ||
+
+**Usage:** *[statement 1]* `||` *[statement 2]*
+
+Boolean OR. *[statement 1]* will be evaluated. If it is true (not `null`), its value will be returned. If it is false (`null`), *[statement 2]* will be evaluated and its value returned.
+
+### &&
+
+**Usage:** *[statement 1]* `&&` *[statement 2]*
+
+Boolean AND. *[statement 1]* will be evaluated. If it is false (`null`), `null` will be returned. If it is true (not `null`), then *[statement 2]* will be evaluated and its value returned.
+
+### %%
+
+**Usage:** *[statement 1]* `%%` *[statement 2]*
+
+Boolean XOR. *[statement 1]* and *[statement 2]* will be evaluated. If both are true (not `null`) or both are false (`null`), `null` will be returned. If only *[statement 1]* is true, its value will be returned. If only *[statement 2]* is true, its value will be returned.
+
 ### ~
 
 **Usage:** `~` *[token]*
@@ -380,18 +392,6 @@ The familiar "order of operations" emerges from the grouping caused by all this 
 
 What the application of `.plus`, or any other atom, means in practice will depend on the type returned by the left-side statement.
 
-### ||
-
-**Usage:** *[statement 1]* `||` *[statement 2]*
-
-Splitter for `.or`. Intended for boolean OR. **Notice: Because splitters evaluate both their arguments, || and && do NOT short-circuit. This is a bad thing and will be fixed in a future language version.**
-
-### &&
-
-**Usage:** *[statement 1]* `&&` *[statement 2]*
-
-Splitter for `.and`. Intended for boolean AND.
-
 ### ==
 
 **Usage:** *[statement 1]* `==` *[statement 2]*
@@ -460,6 +460,12 @@ Splitter for `.times`. Intended for mathematical multiplication or something lik
 
 Splitter for `.divide`. Intended for mathematical division or something like it.
 
+### %
+
+**Usage:** *[statement 1]* `/` *[statement 2]*
+
+Splitter for `.mod`. Intended for mathematical modulus or something like it. See `mod` under Number for behavior details.
+
 # Builtins
 
 A set of builtin functions and other values are available on the various built-in types.
@@ -470,43 +476,29 @@ Remember that for scopes, a field lookup is done by just writing a word, like `n
 
 Note that there is nothing to stop the user from shadowing builtins in the current scope with local variables, and that if the user does this then some macros may break. For example `!` cannot work if `not` is shadowed, `? :` cannot work if `tern` is shadowed, etc. Future updates will contain features to prevent such accidental breakage.
 
-For anything below, a reference to "the target" means whatever object the field lookup was performed on, i.e., `3` in the case of `3.negate`.
-
 ## Common
 
 ### All objects
 
+Note: Even `null` responds to these.
+
 #### has
 
-**Usage:** `has` *[arg 1]*
+**Usage:** `has` *[arg]*
 
-Takes a value and returns `true` if the target is able to properly handle the value and `null` if it is not (i.e., the result is `null` if applying the target against *[arg 1]* will result in an error).
+**Or:** *[object]* `.has` *[arg]*
 
-Note: Even `null` responds to this.
+Takes a value and returns `true` if the target is able to properly handle the value and `null` if it is not (i.e., the result is `null` if applying the target against *[arg]* will result in an error).
 
-### Common: Objects and values
+#### eq
 
-These methods are used for boolean logic and are present in common for all values which are not scopes. Because of the short-circuiting problem described under `||` above, they will not exist in future versions.
+**Usage:** `eq` *[arg]*
 
-#### and
+**Or:** *[object]* `.eq` *[arg]*
 
-**Usage:** `and` *[arg 1]*
+If *[arg]* is equal to the target, returns `true`. Otherwise returns `null`.
 
-Returns `true` if both the target and *[arg 1]* are true (not `null`)
-
-#### or
-
-**Usage:** `or` *[arg 1]*
-
-Returns `true` if either the target and *[arg 1]* are true (not `null`)
-
-#### xor
-
-**Usage:** `xor` *[arg 1]*
-
-Returns `true` if exactly one of the target and *[arg 1]* are true (not `null`)
-
-### Common: Scopes and objects
+### Scopes and objects
 
 These methods are present in common for scopes and user objects (things that act as containers).
 
@@ -515,6 +507,8 @@ These methods are present in common for scopes and user objects (things that act
 See "About objects: Assignments" below.
 
 ## Scope
+
+Remember the idea is that these are the fields inherited by all scope objects. In other words, these are "globals".
 
 ### null
 
@@ -545,6 +539,10 @@ Note: The behavior of `print` and `println` with regard to buffer flushing is cu
 ### `ln`
 
 Value equal to "\n".
+
+### `sp`
+
+Value equal to " " (one space).
 
 ### do
 
@@ -580,6 +578,30 @@ Takes two arguments, both assumed to be zero-argument closures. Repeatedly execu
 
 Takes one argument. If the argument is `null`, returns `true`. If the argument is anything else, returns `null`.
 
+### and
+
+**Usage:** `and` *[arg 1]* *[arg 2]*
+
+Slightly arcane. You probably actually want to use `&&`, which this is the underlying implementation for.
+
+Takes two arguments, both closures. If the evaluated value of *[arg 1]* is true (not `null`) returns the evaluated value of *[arg 2]*. If *[arg 2]* is false (`null`) returns `null` without evaluating *[arg 2]*.
+
+### or
+
+**Usage:** `or` *[arg 1]* *[arg 2]*
+
+Slightly arcane. You probably actually want to use `&&`, which this is the underlying implementation for.
+
+Takes two arguments, both closures. If the evaluated value of *[arg 1]* is true (not `null`), returns it without evaluating *[arg 2]*. Otherwise evaluates and returns the valeu of *[arg 2]*.
+
+### xor
+
+**Usage:** `xor` *[arg 1]* *[arg 2]*
+
+Slightly arcane. You probably actually want to use `%%`, which this is the underlying implementation for.
+
+Takes two arguments, both closures, and evaluates both. If only the evaluated value of *[arg 1]* is true (not `null`), returns it. If only the evaluated value of *[arg 2]* is true (not `null`), returns it. If neither or both evaluated values are true, returns `null`.
+
 ### nullfn
 
 **Usage:** `nullfn` *[arg]*
@@ -596,21 +618,25 @@ Slightly arcane. This is the underlying implementation for `?:`. If *[arg 1]* is
 
 See "Manual control of 'this' and 'current'" below.
 
+### package, project, directory
+
+See "About packages" below.
+
 ## Object
 
 In other words, user objects, created with `[` ... `]`.
 
 ### append
 
-**Usage:** `append` *[arg 1]*
+**Usage:** *[object]* `.append` *[arg]*
 
-Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming `0` if there is no such field), set the value *[arg 1]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`.
+Allows an object to be used as a numeric-index array. For object `o`, `o.append x` will check `o.count` (assuming `0` if there is no such field), set the value *[arg]* for the key `o.count`, then set the value `o.count + 1` for the key `.count`.
 
 ### each
 
-**Usage:** `each` *[arg 1]*
+**Usage:** *[object]* `.each` *[arg]*
 
-Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, applies *[arg 1]* to the value of each consecutive field *n* that the object possesses (testing with `.has`) until one is not present, then stops. Returns `null`.
+Iterates over an object which has been used as a numeric-index array. Starting with *n*=0, applies *[arg]* to the value of each consecutive field *n* that the object possesses (testing with `.has`) until one is not present, then stops. Returns `null`.
 
 ## Number
 
@@ -618,63 +644,72 @@ For all number methods taking arguments, the argument must be another number. If
 
 ### negate
 
-Returns the target times -1.
+**Usage:** *[number]* `.negate`
+
+Returns *[number]* times -1.
 
 ### add
 
-**Usage:** `add` *[arg 1]*
+**Usage:** *[number]* `.add` *[arg]*
 
-Adds the target to *[arg 1]* and returns the result.
+Adds *[number]* to *[arg]* and returns the result.
 
 ### minus
 
-**Usage:** `minus` *[arg 1]*
+**Usage:** *[number]* `.minus` *[arg]*
 
-Subtracts *[arg 1]* from the target and returns the result.
+Subtracts *[arg]* from *[number]* and returns the result.
 
 ### times
 
-**Usage:** `times` *[arg 1]*
+**Usage:** *[number]* `.times` *[arg]*
 
-Multiples *[arg 1]* by the target and returns the result.
+Multiples *[number]* by *[arg]* and returns the result.
 
 ### divide
 
-**Usage:** `divide` *[arg 1]*
+**Usage:** *[number]* `.divide` *[arg]*
 
-Divides the target by *[arg 1]* and returns the result.
+Divides *[number]* by *[arg]* and returns the result.
+
+### mod
+
+**Usage:** *[number]* `.mod` *[arg]*
+
+Performs the modulus of *[number]* by *[arg]* and returns the result.
+
+When *[number]* and *[arg]* have differing signs, modulus has "floored division" or "sign-of-divisor" semantics; in other words, it works like `%` in Python, not like C99 fmod.
+
+To be explicit:
+
+     11 %  10 ==  1
+    ~11 % ~10 == ~1
+    ~11 %  10 ==  9
+     11 % ~10 == ~9
 
 ### lt
 
-**Usage:** `lt` *[arg 1]*
+**Usage:** *[number]* `.lt` *[arg]*
 
-If *[arg 1]* is less than the target, returns `true`. Otherwise returns `null`.
+If *[number]* is less than *[arg]*, returns `true`. Otherwise returns `null`.
 
 ### lte
 
-**Usage:** `lte` *[arg 1]*
+**Usage:** *[number]* `.lte` *[arg]*
 
-If *[arg 1]* is less than or equal to the target, returns `true`. Otherwise returns `null`.
+If *[number]* is less than or equal to *[arg]*, returns `true`. Otherwise returns `null`.
 
 ### gt
 
-**Usage:** `gt` *[arg 1]*
+**Usage:** *[number]* `.gt` *[arg]*
 
-If *[arg 1]* is greater than the target, returns `true`. Otherwise returns `null`.
+If *[number]* is greater than *[arg]*, returns `true`. Otherwise returns `null`.
 
 ### gte
 
-**Usage:** `gte` *[arg 1]*
+**Usage:** *[number]* `.gte` *[arg]*
 
-If *[arg 1]* is greater than or equal to the target, returns `true`. Otherwise returns `null`.
-
-### eq
-
-**Usage:** `eq` *[arg 1]*
-
-If *[arg 1]* is equal to the target, returns `true`. Otherwise returns `null`.
-
-Notice something very alarming: In 0.1 this is a method on number. It is not present on true, false, strings, or objects. This will be fixed in later versions.
+If *[number]* is greater than or equal to *[arg]*, returns `true`. Otherwise returns `null`.
 
 # About user closures
 
@@ -716,7 +751,7 @@ Continuations are basically the functional-programming equivalent of GOTO.
 
 Functions are maps from value to value. A closure, in Emily, is a function which is expressed as a series of lines of code, and the mapping is defined by that value. A special kind of function is the object, which another language might call a dictionary, which is a map from a finite set of keys to a finite set of values. A lookup on an object is generally non-mutating.
 
-Object creation is done with a group wrapped by the `[` ... `]` symbols. Like `{ }`, `[ ]` creates a new scope. The difference is that `{ }` returns the value from the final line and discards its scope, whereas `[ ]` discards its final line and returns the scope. In other words, by making assignments inside a `[ ]` you are building up an object, and then at the end of the `[ ]` this object is returned.
+Object creation is done with a group wrapped by the `[` ... `]` symbols. Like `{ }`, `[ ]` creates a new scope. The difference is that `{ }` returns the value from the final line and discards its scope, whereas `[ ]` discards its final line and returns the scope. In other words, by making assignments inside a `[ ]` you are building up an object, and then at the end of the `[ ]` this object is returned. The scope inside of an object literal also has a `private`; see "Private" under "About packages" below.
 
 Objects have a "parent". This is what some languages call a "prototype". If a key is requested on an object, and the object does not have a value for that key, it will check the parent (which is literally the field `parent`). If the parent doesn't have it, it will then check *its* parent, and so on. If an object is reached in this chain with no parent and the key still has not been matched, this is a failure and the program will halt.
 
@@ -778,6 +813,76 @@ A design goal of Emily is that anything the language interpreter can do, a third
 - thisUpdate *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, leaves `current` unaltered and updates `this` to *[object]*.
 
 In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me that these are useful.
+
+# About packages
+
+Packages are Emily code loaded from disk. They are accessed through the package "loaders" `package`, `project` and `directory` (see below). A package loader is an object which invisibly encapsulates an on-disk directory. Atom lookups on this object will query the directory; if a directory with the given atom name is found a loader for that directory will be returned, or if a source file with the atom name plus the `.em` extension is found that file will be loaded and executed "as a package" (see below) and its result returned. Notice an consequence of this is that you cannot use a loader to load any file whose filename contains characters diallowed in an Emily atom.
+
+Loading code through a loader is lazy; if a single `.em` file is loaded multiple times from a loader, the interpreter will attempt to avoid executing it more than once. (This has not been well tested and might not always work properly if you have set custom loader paths-- in particular, setting the package and project dirs to the same directory will probably behave weird.)
+
+## Executing code "as a package"
+
+When code is executed through a loader, it runs in a scope very similar to that of an object literal. Code run inside the package file is "building an object" as it goes, and all assignments to top-level scope within the file are added to this new object. Basically, imagine that the toplevel scope is "returned" at the end of the file.
+
+Similar to object literals, a `current` object is visible inside the package code; however, `this` is not. Also unlike object literals, variables assigned to within the package file are immediately visible without having to use `current`. To be totally explicit, this is legal in the toplevel scope of a package:
+
+    x = 3     # Add to package scope
+    println x # Read back from package scope
+
+However, this is not legal code:
+
+    obj = [
+        x = 3     # Add to object
+        println x # This reads from enclosing scope, not object.
+    ]
+
+## Private
+
+When writing a package file, you might find that you need to use scratch variables which you don't want to be exported outside the package. For this purpose, you can use `private`. `private` is an object (it can be both written to and read from) the members of which will be visible to code in the package. If both private and non-private variables exist with the same name, the private variable will take precedence. For example, if these two files exist in the same directory:
+
+File `includeMe.em`:
+
+    private.x = "don't export me!"
+    x = "export me!"
+    print "Private variable says: " x ln
+
+File `executeMe.em`:
+
+    exported = directory.includeMe.x
+    print "exported variable says: " exported ln
+
+Then executing `executeMe.em` will print:
+
+    Private variable says: don't export me!
+    exported variable says: export me!
+
+But this is confusing, so please don't do it.
+
+`private` will not exist in source files that are being executed directly using the interpreter. It only exists in packages...
+
+#### ...and object literals
+
+`private` is also available inside of object literals, where it behaves the same way as it does in package code-- **including** the un-object-literal-like detail of any variables assigned to `private` being immediately visible. For example, this is valid:
+
+    a = [
+        private.x = 3
+        y = x
+    ]
+    println: a.y
+
+This will print "3".
+
+## Loaders
+
+* `package` loads the "standard library" packages from the Emily standard library. (Right now this is empty.)
+* `project` loads packages from "your project"-- that is, the directory the interpreter believes to contain your program.
+* `directory` loads from "the directory which contains the currently executing file".
+
+Unlike the other two loaders, the search path for `directory` can vary from file to file; in the entry point for your program (the `.em` file, your `-e` string), `directory` and `project` will by default be the same, but for code executed using a loader they can differ.
+
+If you run a `.em` file as a program using the Emily interpreter, the project directory will be by default set to the directory which contains that file. If you instruct the Emily interperter to run with `-e`, stdin input, or in interactive mode, the project directory will be the current working directory at the time the interpreter is invoked.
+
+You can also explicitly set both the package and project directories when you invoke the Emily interpreter, either by using command line arguments (`--package-path` and `--project-path`) or using environment variables (`EMILY_PACKAGE_PATH` and `EMILY_PROJECT_PATH`). See the [manpage](manpage.1.md).
 
 # Miscellania
 
