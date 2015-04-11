@@ -26,7 +26,9 @@ install/man/emily.1: resources/emily.1
 
 # Move packages in place
 install/lib/$(PACKAGE_DIR):
+ifdef CREATE_LIBDIR
 	mkdir -p $@
+endif
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
 .PHONY: _build/src/main.$(BUILDTYPE)
@@ -63,7 +65,9 @@ install-makedirs:
 install: install-makedirs all
 	$(INSTALL) install/bin/emily   $(DESTDIR)$(bindir)
 	$(INSTALL) install/man/emily.1 $(DESTDIR)$(mandir)
+ifdef CREATE_LIBDIR
 	$(RSYNC) -r install/lib/$(PACKAGE_DIR)/ $(DESTDIR)$(libdir)/$(PACKAGE_DIR)
+endif
 
 # Clean target
 .PHONY: clean

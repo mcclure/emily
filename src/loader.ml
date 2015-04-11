@@ -6,9 +6,7 @@ let nameAtom filename = Value.AtomValue (try
 (* TODO: This should be normalized. Strongly consider using extunix.realpath instead *)
 let readlink path = FileUtil.readlink path
 let bootPath = readlink @@ Sys.getcwd()
-let exePath  = readlink @@
-    Filename.concat (Sys.getcwd()) (Filename.dirname @@ Array.get Sys.argv 0)
-let packageRootPath = List.fold_left Filename.concat exePath [".."; "lib"; "emily"; Options.version]
+let packageRootPath = ""
 
 type loaderSource =
     | NoSource
@@ -44,18 +42,23 @@ let executePackage packageRoot project directory buf =
     Execute.execute scope buf
 
 let rec loadPackage packageSource projectSource directory path =
-    if Sys.is_directory path then
-        let directoryTable = ValueUtil.tableBlank Value.NoSet in
-        let directoryObject = Value.ObjectValue directoryTable in
-        let directoryFilter = selfFilter directoryObject in
-        let proceed = loadPackage (directoryFilter packageSource) (directoryFilter projectSource) (Some directoryObject) in
-        Array.iter (fun name ->
-            ValueUtil.tableSetLazy directoryTable (nameAtom name)
-                (fun _ -> proceed (Filename.concat path name))
-        ) (Sys.readdir path); directoryObject
-    else
-        let buf = Tokenize.tokenizeChannel ~kind:(Token.Box Token.NewScope) (Token.File path) (open_in path)
-        in executePackage (knownFilter packageSource) (knownFilter projectSource) directory buf
+    try
+        if String.length path == 0 then
+            raise @@ Sys_error "Empty path"
+        else if Sys.is_directory path then
+            let directoryTable = ValueUtil.tableBlank Value.NoSet in
+            let directoryObject = Value.ObjectValue directoryTable in
+            let directoryFilter = selfFilter directoryObject in
+            let proceed = loadPackage (directoryFilter packageSource) (directoryFilter projectSource) (Some directoryObject) in
+            Array.iter (fun name ->
+                ValueUtil.tableSetLazy directoryTable (nameAtom name)
+                    (fun _ -> proceed (Filename.concat path name))
+            ) (Sys.readdir path); directoryObject
+        else
+            let buf = Tokenize.tokenizeChannel ~kind:(Token.Box Token.NewScope) (Token.File path) (open_in path)
+            in executePackage (knownFilter packageSource) (knownFilter projectSource) directory buf
+    with Sys_error s ->
+        Value.TableValue( ValueUtil.tableBlank Value.NoSet )
 
 let packageRepo = loadPackage SelfSource NoSource None
     (match Options.(run.packagePath) with Some s -> s | _ -> packageRootPath)
