@@ -197,7 +197,7 @@ What you see here is part of a [more ambitious set of ideas](http://msm.runhello
 
     What really interests me though is the possibility of a `\reader`, which would cause the reader to just plain get out of the way and hand off parsing the rest of the file to a piece of Emily code. My daydream here is that if you could write a `\reader` that parses some completely other programming language and emits Emily ASTs (hopefully easy since Emily really only barely has an AST, the AST is just a tree of applications)-- and if I'm right that it will be unusually easy to write Emily code that accepts other languages' objects as guests-- then Emily could become a useful intermediate layer that knows how to translate between several different languages and mediate their differences.
 
-These are all Big Ideas though, and the ideas the language **already** has could stand some cleanup, so for 0.2 I'm going to be focused on basic functionality improvements (less confusing scoping, operators on strings, short-circuiting booleans, user-defined operators, unicode, package loading, IO).
+These are all Big Ideas though, and the ideas the language **already** has could stand some cleanup, so for 0.x I'm going to be focused on basic functionality improvements (less confusing scoping, operators on strings, short-circuiting booleans, user-defined operators, unicode, package loading, IO).
 
 ## Downloading and running Emily
 

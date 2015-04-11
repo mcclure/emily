@@ -1,4 +1,4 @@
-VERSION = 0.2
+VERSION = 0.3b
 PREFIX := /usr/local
 bindir = $(PREFIX)/bin
 libdir = $(PREFIX)/lib

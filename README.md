@@ -1,4 +1,4 @@
-# Emily programming language, version 0.2
+# Emily programming language, version 0.3b
 
 If you are reading this file on GitHub or BitBucket: Please click the "Wiki" button to the side of the page.
 
