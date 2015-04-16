@@ -16,7 +16,7 @@ let () =
         ignore @@ Loader.executeProgramFrom location buf
     in
     if Options.(run.repl) then
-        if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then Repl.repl Options.(run.targets)
+        ( if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then Repl.repl Options.(run.targets) )
     else
         try
             List.iter processOne Options.(run.targets)

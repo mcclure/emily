@@ -12,7 +12,7 @@ BUILDTYPE=native
 PACKAGE_DIR=emily/$(VERSION)
 
 export BUILD_PACKAGE_DIR=$(libdir)/$(PACKAGE_DIR)
-export BUILD_INCLUDE_REPL=
+export BUILD_INCLUDE_REPL=1
 
 .PHONY: all
 all: install/bin/emily install/man/emily.1 install/lib/emily/$(VERSION)

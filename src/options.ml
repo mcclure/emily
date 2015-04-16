@@ -46,9 +46,13 @@ let () =
 Sample usage:
     emily filename.em     # Execute program
     emily -               # Execute from stdin
-    emily -e "println 3"  # Execute from command line
+    emily -e "println 3"  # Execute from command line|}
+
+(* Only include this bit if REPL enabled *)
+^ (if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then {|
     emily -i              # Run in interactive mode (REPL)
-    emily -i filename.em  # ...after executing this program
+    emily -i filename.em  # ...after executing this program|}
+else "")^{|
 
 Options:|})
 
