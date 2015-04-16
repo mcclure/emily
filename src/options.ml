@@ -65,10 +65,14 @@ Options:|})
             targets := Literal f :: !targets
         ), "Execute code inline");
 
+    ] @ (if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then [
+
+        (* Only include if Makefile requested REPL *)
         ("-i", Arg.Unit(fun f ->
             run.repl <- true
-            (*targets := Repl :: !targets*)
         ), "Enter interactive mode (REPL)");
+
+    ] else []) @ [ (* Normal arguments continue *)
 
         versionSpec "-v";
         versionSpec "--version";

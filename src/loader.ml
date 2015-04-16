@@ -6,7 +6,7 @@ let nameAtom filename = Value.AtomValue (try
 (* TODO: This should be normalized. Strongly consider using extunix.realpath instead *)
 let readlink path = FileUtil.readlink path
 let bootPath = readlink @@ Sys.getcwd()
-let packageRootPath = ""
+let packageRootPath = [%getenv "BUILD_PACKAGE_DIR"]
 
 type loaderSource =
     | NoSource
