@@ -49,17 +49,6 @@ and value =
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
     | ContinuationValue of executeStack * Token.codePosition (* codePosition only needed for traceback *)
 
-    (* Package support *)
-(*  | PackageValue of value list *)
-(*  | PackageDirectory of string *)
-
-and tableBlankKind =
-    | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
-    | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
-    | NoLet     (* Has .set. Used for "flat" expression groups. *)
-    | WithLet   (* Has .let. Used for scoped groups. *)
-    | BoxFrom of Token.boxKind (* Scope inside an object literal; argument is result-object .parent *)
-
 (* The "registers" are values 1 and 2 described in execute.ml comments *)
 (* The codePositions are (1) the root of the current group (2) the symbol yielding "value 2" *)
 and registerState =
@@ -77,6 +66,31 @@ and executeFrame = {
 
 (* The current state of an execution thread consists of just the stack of frames. *)
 and executeStack = executeFrame list
+
+type tableBlankKind =
+    | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
+    | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
+    | NoLet     (* Has .set. Used for "flat" expression groups. *)
+    | WithLet   (* Has .let. Used for scoped groups. *)
+
+(* For making a scope inside an object literal *)
+type tableBoxKind =
+    | BoxNew   of Token.boxKind
+    | BoxValue of value
+
+type executeContext = {
+    nullProto   : value;
+    trueProto   : value;
+    floatProto  : value;
+    stringProto : value;
+    atomProto   : value;
+    objectProto : value;
+}
+
+type executeStarter = {
+    rootScope : value;
+    context  : executeContext;
+}
 
 let idGenerator = ref 0.0
 
