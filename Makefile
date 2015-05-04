@@ -1,10 +1,18 @@
 VERSION = 0.3b
-PREFIX := /usr/local
+ifdef EMILY_BUILD_LOCAL
+	PREFIX := ..
+else
+	PREFIX := /usr/local
+endif
 bindir = $(PREFIX)/bin
 libdir = $(PREFIX)/lib
 mandir = $(PREFIX)/share/man/man1
 INSTALL := install
+# TODO: Also delete?
 RSYNC := rsync
+
+#TODO: Remove now that we always make a libdir?
+CREATE_LIBDIR=1
 
 # Replace "native" with "byte" for debug build
 BUILDTYPE=native
@@ -28,9 +36,10 @@ install/man/emily.1: resources/emily.1
 	cp $< $@
 
 # Move packages in place
-install/lib/$(PACKAGE_DIR):
+install/lib/$(PACKAGE_DIR): 
 ifdef CREATE_LIBDIR
 	mkdir -p $@
+	$(RSYNC) -r library/ $@/
 endif
 
 # Use ocamlbuild to construct executable. Always run, ocamlbuild figures out freshness itself.
@@ -77,3 +86,6 @@ endif
 clean:
 	ocamlbuild -clean
 	rm -f _tags install/bin/emily install/man/emily.1
+ifdef CREATE_LIBDIR
+	rm -rf install/lib
+endif

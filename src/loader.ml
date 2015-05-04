@@ -12,7 +12,15 @@ let nameAtom filename = Value.AtomValue (try
 (* TODO: This should be normalized. Strongly consider using extunix.realpath instead *)
 let readlink path = FileUtil.readlink path
 let bootPath = readlink @@ Sys.getcwd()
-let packageRootPath = [%getenv "BUILD_PACKAGE_DIR"]
+let packageRootPath =
+    let envPath = [%getenv "BUILD_PACKAGE_DIR"] in
+    if FilePath.is_relative envPath then
+        (* This will work as long as the executable was not executed from $PATH. *)
+        let exePath  = readlink @@
+            Filename.concat (Sys.getcwd()) (Filename.dirname @@ Array.get Sys.argv 0)
+        in Filename.concat exePath envPath
+    else envPath
+
 
 (* What should the target of this particular loader be? *)
 type loaderSource =
@@ -114,7 +122,7 @@ let completeStarter withProjectLocation =
         (* TODO convert path to either path or value to load from  *)
         (* TODO find some way to make this not assume path loaded from disk *)
         (* FIXME plus emily/prototype in there *)
-        let path = FilePath.concat packageRootPath (pathKey ^ ".em") in
+        let path = List.fold_left FilePath.concat packageRootPath ["emily";"prototype";pathKey ^ ".em"] in
         ignore @@ loadPackageFile
             (subStarterWith packageStarter @@
                 ValueUtil.boxBlank (ValueUtil.InheritValue proto) packageStarter.Value.rootScope)
