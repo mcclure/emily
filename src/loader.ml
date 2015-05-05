@@ -77,20 +77,22 @@ let loadPackageFile starter (projectSource:loaderSource) (directory:loaderSource
     (* FIXME: What if knownFilter is NoSource here? This is the "file where expected a directory" case. *)
     let buf = Tokenize.tokenizeChannel ~kind:(Token.Box Token.NewScope) (Token.File path) (open_in path)
     in executePackage starter (knownFilter projectSource) (knownFilter directory) buf
-let rec loadPackage starter (projectSource:loaderSource) (directory:loaderSource) path =
+let rec loadPackageDir starter (projectSource:loaderSource) path =
+    let directoryTable = ValueUtil.tableBlank Value.NoSet in
+    let directoryObject = Value.ObjectValue directoryTable in
+    let directoryFilter = selfFilter directoryObject in
+    let proceed = loadPackage starter (directoryFilter projectSource) (Source directoryObject) in
+    Array.iter (fun name ->
+        ValueUtil.tableSetLazy directoryTable (nameAtom name)
+            (fun _ -> proceed (Filename.concat path name))
+    ) (Sys.readdir path); directoryObject
+and loadPackage starter (projectSource:loaderSource) (directory:loaderSource) path =
     try
         (* COMMENT ME!!! This is not good enough. *)
         if String.length path == 0 then
             raise @@ Sys_error "Empty path"
         else if Sys.is_directory path then
-            let directoryTable = ValueUtil.tableBlank Value.NoSet in
-            let directoryObject = Value.ObjectValue directoryTable in
-            let directoryFilter = selfFilter directoryObject in
-            let proceed = loadPackage starter (directoryFilter projectSource) (Source directoryObject) in
-            Array.iter (fun name ->
-                ValueUtil.tableSetLazy directoryTable (nameAtom name)
-                    (fun _ -> proceed (Filename.concat path name))
-            ) (Sys.readdir path); directoryObject
+            loadPackageDir starter projectSource path
         else
             loadPackageFile starter projectSource directory path
     with Sys_error s ->
@@ -121,17 +123,18 @@ let completeStarter withProjectLocation =
         (* TODO convert path to either path or value to load from  *)
         (* TODO find some way to make this not assume path loaded from disk *)
         let path = List.fold_left FilePath.concat packageRootPath ["emily";"prototype";pathKey ^ ".em"] in
+        let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
         ignore @@ loadPackageFile
             (subStarterWith packageStarter @@
                 ValueUtil.boxBlank (ValueUtil.InheritValue proto) packageStarter.Value.rootScope)
-            NoSource NoSource path
+            NoSource (Source enclosing) path
     in
     Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;
     Value.tableSet rootScope Value.packageKey package;
     populateProto Value.(packageStarter.rootScope)           "scope";
     populateProto Value.(packageStarter.context.nullProto)   "null";
     populateProto Value.(packageStarter.context.trueProto)   "true";
-    populateProto Value.(packageStarter.context.floatProto)  "float";
+    populateProto Value.(packageStarter.context.floatProto)  "number";
     populateProto Value.(packageStarter.context.stringProto) "string";
     populateProto Value.(packageStarter.context.atomProto)   "atom";
     populateProto Value.(packageStarter.context.objectProto) "object";
