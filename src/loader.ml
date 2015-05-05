@@ -129,6 +129,7 @@ let completeStarter withProjectLocation =
             NoSource NoSource path
     in
     (* FIXME: Set internal here *)
+    Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;
     Value.tableSet rootScope Value.packageKey package;
     populateProto Value.(packageStarter.rootScope)           "scope";
     populateProto Value.(packageStarter.context.nullProto)   "null";
