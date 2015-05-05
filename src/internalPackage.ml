@@ -20,6 +20,9 @@ let () =
         subTable
     in
 
+    (* FIXME: At some point consolidate all these adhoc functions in one place. *)
+    let internalFail () = failwith "Internal consistency error: Reached impossible place" in
+
     (* Create a function that consumes an argument, then returns itself. `fn` should return void *)
     let reusable fn =
         let rec inner arg =
@@ -42,14 +45,14 @@ let () =
 
     let setAtomMath ?target:(table=doubleTable) name f = setAtomValue ~target:table name @@ ValueUtil.snippetClosure 2 (function
         | [Value.FloatValue f1;Value.FloatValue f2] -> Value.FloatValue( f f1 f2 )
-        | [Value.FloatValue _; _] -> failwith "Don't know how to add that to a number"
-        | _ -> failwith "Internal consistency error: Reached impossible place"
+        | [Value.FloatValue _; _] -> failwith "Don't know how to combine that with a number"
+        | _ -> internalFail ()
     ) in
 
     let setAtomTest ?target:(table=doubleTable) name f = setAtomValue ~target:table name @@ ValueUtil.snippetClosure 2 (function
         | [Value.FloatValue f1; Value.FloatValue f2] -> ValueUtil.boolCast( f f1 f2 )
         | [Value.FloatValue _; _] -> failwith "Don't know how to compare that to a number"
-        | _ -> failwith "Internal consistency error: Reached impossible place"
+        | _ -> internalFail ()
     ) in
 
     setAtomMath "add"      ( +. );
@@ -69,9 +72,12 @@ let () =
     setAtomValue "thisFreeze" ValueUtil.rethisAssignObject;
     setAtomValue "thisUpdate" ValueUtil.rethisSuperFrom;
 
-    (* TODO *)
     setAtomValue "setPropertyKey" @@ ValueUtil.snippetClosure 3 (function
-        | _ -> Value.Null (* NO *)
+        | [Value.TableValue t;k;v] | [Value.ObjectValue t;k;v] ->
+            Value.tableSet t k @@ Value.UserMethodValue v;
+            Value.Null
+        | [_;_;_] -> failwith "Attempted to call setPropertyKey on something other than an object"
+        | _ -> internalFail ()
     );
 
     ()

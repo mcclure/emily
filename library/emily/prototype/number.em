@@ -13,4 +13,6 @@ setMethodFrom .lt:     internal.double.lessThan
 setMethodFrom .lte:    internal.double.lessThanEqual
 setMethodFrom .gt:     internal.double.greaterThan
 setMethodFrom .gte:    internal.double.greaterThanEqual
-setMethodFrom .negate: internal.double.multiply: 0 .minus 1
+
+# FIXME: Saying 0 .minus 1 at this point doesn't seem to work. Why not?
+setMethodFrom .negate: internal.double.multiply: internal.double.subtract 0 1

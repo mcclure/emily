@@ -38,13 +38,14 @@ and value =
     | StringValue of string
     | AtomValue   of string
 
-    (* Hack types for builtins *)
+    (* Hack types for builtins *) (* FIXME: Can some of these be deprecated? *)
     | BuiltinFunctionValue          of (value -> value) (* function argument = result *)
     | BuiltinUnaryMethodValue       of (value -> value) (* function self = result *)
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
 
     (* Complex user-created values *)
     | ClosureValue of closureValue
+    | UserMethodValue of value
     | TableValue of tableValue
     | ObjectValue of tableValue (* Same as TableValue but treats 'this' different *)
     | ContinuationValue of executeStack * Token.codePosition (* codePosition only needed for traceback *)

@@ -36,7 +36,8 @@ install/man/emily.1: resources/emily.1
 	cp $< $@
 
 # Move packages in place
-install/lib/$(PACKAGE_DIR): 
+.PHONY: install/lib/$(PACKAGE_DIR)
+install/lib/$(PACKAGE_DIR):
 ifdef CREATE_LIBDIR
 	mkdir -p $@
 	$(RSYNC) -r library/ $@/

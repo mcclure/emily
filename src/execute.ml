@@ -254,11 +254,13 @@ let execute startingPoint code =
 
     (* apply item a to item b and return it to the current frame *)
     and apply stack this a b =
+        (* FIXME: Document what *exactly* is the definition of b/bat? *)
         let bv,bat = b in
         let r v = returnTo stack (v,bat) in
         (* Pull something out of a table, possibly recursing *)
         let readTable t =
             match (a,Value.tableGet t bv) with
+                    | _, Some Value.UserMethodValue f -> apply stack f f (this,bat) (* FIXME: Comment this *)
                     | _, Some Value.BuiltinMethodValue      f -> r @@ Value.BuiltinFunctionValue(f this)
                     | _, Some Value.BuiltinUnaryMethodValue f -> r @@
                         (try f this with
@@ -339,7 +341,7 @@ let execute startingPoint code =
                 r (try f bv with
                     Failure e -> failWithStack stack @@ "Runtime error, applying builtin function to "^(Pretty.dumpValue bv)^": " ^ e)
             (* Unworkable -- all builtin method values should be erased by readTable *)
-            | Value.BuiltinMethodValue _ | Value.BuiltinUnaryMethodValue _
+            | Value.BuiltinMethodValue _ | Value.BuiltinUnaryMethodValue _ | Value.UserMethodValue _
                 -> internalFail()
 
     (* --- MAIN LOOP ENTRY POINT --- *)
