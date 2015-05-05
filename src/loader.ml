@@ -53,14 +53,14 @@ let subStarterWith starter table =
     {starter with Value.rootScope=Value.TableValue table}
 let subStarterPair starter =
     let table = ValueUtil.tableInheriting Value.NoLet starter.Value.rootScope in
-    table,subStarterWith starter @@ ValueUtil.tableInheriting Value.NoLet starter.Value.rootScope
+    table,subStarterWith starter @@ table
 
 (* Given a starter, make a new starter with a subscope and the requested project/directory. *)
 let starterForExecute starter (project:Value.value option) (directory:Value.value option) =
     let table,subStarter = subStarterPair starter in
-    let prepareScope = Value.tableSetOption table in
-    prepareScope Value.projectKey   project;
-    prepareScope Value.directoryKey directory; (* FIXME: Shouldn't directory=None be a failure? *)
+    Value.tableSetOption table Value.projectKey   project;
+    Value.tableSet table Value.directoryKey
+        (match directory with Some d -> d | None -> Value.TableValue(ValueUtil.tableBlank Value.NoSet));
     subStarter
 
 (* Loader is invoking execute internally to load a package from a file. *)
@@ -96,8 +96,7 @@ let rec loadPackage starter (projectSource:loaderSource) (directory:loaderSource
     with Sys_error s ->
         Value.TableValue( ValueUtil.tableBlank Value.NoSet )
 
-(* This is the "load project" step. It should probably be averted. *)
-(* FIXME: This is old style *)
+(* Return the value for the project loader. Needs to know "where" the project is. *)
 let projectForLocation starter defaultLocation =
     let projectPath = match Options.(run.projectPath) with
         | Some s -> s
@@ -121,14 +120,12 @@ let completeStarter withProjectLocation =
     let populateProto proto pathKey =
         (* TODO convert path to either path or value to load from  *)
         (* TODO find some way to make this not assume path loaded from disk *)
-        (* FIXME plus emily/prototype in there *)
         let path = List.fold_left FilePath.concat packageRootPath ["emily";"prototype";pathKey ^ ".em"] in
         ignore @@ loadPackageFile
             (subStarterWith packageStarter @@
                 ValueUtil.boxBlank (ValueUtil.InheritValue proto) packageStarter.Value.rootScope)
             NoSource NoSource path
     in
-    (* FIXME: Set internal here *)
     Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;
     Value.tableSet rootScope Value.packageKey package;
     populateProto Value.(packageStarter.rootScope)           "scope";
