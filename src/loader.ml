@@ -73,9 +73,10 @@ let executePackage starter (project:Value.value option) (directory:Value.value o
 (* TODO: Here "lazy" means if you access a field corresponding to a file, the file is loaded.
          Maybe loading should be even lazier, such that load when a field is loaded *from* a file, load occurs?
          This would make prototype loading way easier. *)
-let loadPackageFile starter (projectSource:loaderSource) (directory:loaderSource) path =
+(* FIXME: Couldn't kind be NewScope and the starter impose the box? *)
+let loadPackageFile ?kind:(kind=Token.Box Token.NewScope) starter (projectSource:loaderSource) (directory:loaderSource) path =
     (* FIXME: What if knownFilter is NoSource here? This is the "file where expected a directory" case. *)
-    let buf = Tokenize.tokenizeChannel ~kind:(Token.Box Token.NewScope) (Token.File path) (open_in path)
+    let buf = Tokenize.tokenizeChannel ~kind:kind (Token.File path) (open_in path)
     in executePackage starter (knownFilter projectSource) (knownFilter directory) buf
 let rec loadPackageDir starter (projectSource:loaderSource) path =
     let directoryTable = ValueUtil.tableBlank Value.NoSet in
@@ -124,9 +125,9 @@ let completeStarter withProjectLocation =
         (* TODO find some way to make this not assume path loaded from disk *)
         let path = List.fold_left FilePath.concat packageRootPath ["emily";"prototype";pathKey ^ ".em"] in
         let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
-        ignore @@ loadPackageFile
+        ignore @@ loadPackageFile ~kind:Token.Plain
             (subStarterWith packageStarter @@
-                ValueUtil.boxBlank (ValueUtil.InheritValue proto) packageStarter.Value.rootScope)
+                ValueUtil.boxBlank (ValueUtil.PopulateValue proto) packageStarter.Value.rootScope)
             NoSource (Source enclosing) path
     in
     Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;

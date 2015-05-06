@@ -216,12 +216,18 @@ let rec tableBlank kind : tableValue =
     );
     t
 
-type boxKind = NewScope | InheritValue of value
+type boxKind = NewScope | PopulateValue of value | InheritValue of value
 
 let boxBlank boxKind boxParent =
     let t = tableBlank NoLet in
     let privateTable = tableBlank WithLet in
     let privateValue = TableValue privateTable in
+    let handleObjectPair (obj,objValue) =
+        tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+        tableSet t thisKey   objValue;
+        tableSet t parentKey (dualInherit privateValue boxParent);
+        objValue
+    in
     let currentValue = match boxKind with
         | NewScope ->
             let scope = tableBlank WithLet in
@@ -229,12 +235,10 @@ let boxBlank boxKind boxParent =
             populateLetForScope t scope; (* t is the running scope, scope is the scope-to-return *)
             tableSet t parentKey (dualInherit privateValue (dualInherit scopeValue boxParent));
             scopeValue
+        | PopulateValue v ->
+            handleObjectPair (tableFrom v,v)
         | InheritValue parent ->
-            let obj,objValue = objectPairBlank @@ Some parent in
-            tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
-            tableSet t thisKey   objValue;
-            tableSet t parentKey (dualInherit privateValue boxParent);
-            objValue
+            handleObjectPair @@ objectPairBlank @@ Some parent
     in
     tableSet t currentKey currentValue;
     (* Access to a private value: *)
