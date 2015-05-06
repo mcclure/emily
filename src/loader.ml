@@ -51,8 +51,8 @@ let knownFilter source = match source with
 (* THIS COMMENT IS WRONG, FIX IT *)
 let subStarterWith starter table =
     {starter with Value.rootScope=Value.TableValue table}
-let subStarterPair starter =
-    let table = ValueUtil.tableInheriting Value.NoLet starter.Value.rootScope in
+let subStarterPair ?kind:(kind=Value.NoLet) starter =
+    let table = ValueUtil.tableInheriting kind starter.Value.rootScope in
     table,subStarterWith starter @@ table
 
 (* Given a starter, make a new starter with a subscope and the requested project/directory. *)
@@ -140,7 +140,7 @@ let completeStarter withProjectLocation =
     populateProto Value.(packageStarter.context.atomProto)   "atom";
     populateProto Value.(packageStarter.context.objectProto) "object";
     let project = projectForLocation packageStarter withProjectLocation in
-    let scope,starter = subStarterPair packageStarter in
+    let scope,starter = subStarterPair ~kind:Value.WithLet packageStarter in
     Value.tableSet scope Value.projectKey   project;
     Value.tableSet scope Value.directoryKey project;
     starter
