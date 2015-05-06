@@ -1,1 +1,1 @@
-eq = internal.primitiveEq
+internal.setPropertyKey current .eq: internal.primitiveEq

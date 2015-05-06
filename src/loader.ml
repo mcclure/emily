@@ -112,8 +112,8 @@ let locationAround path =
 
 (* External entry point: Build a starter *)
 let completeStarter withProjectLocation =
-    let rootScope = ValueUtil.tableTrueBlank() in
-    let nv() = Value.TableValue(ValueUtil.tableTrueBlank()) in (* "New value" *)
+    let rootScope = ValueUtil.tableBlank Value.NoSet in
+    let nv() = Value.TableValue(ValueUtil.tableBlank Value.NoSet) in (* "New value" *)
     let packageStarter = Value.{rootScope=Value.TableValue rootScope;context={
         nullProto=nv(); trueProto=nv(); floatProto=nv();
         stringProto=nv(); atomProto=nv(); objectProto=nv()}} in

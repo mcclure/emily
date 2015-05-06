@@ -4,11 +4,11 @@ eq ^ = null
 private.setMethodFrom ^key method = \
     internal.setPropertyKey current key method
 
-setMethodFrom .append ^this v (
-    if (!this.has.count) (this.count = 0)
+setMethodFrom .append ^this v {
+    if !(this.has.count) ^(this.count = 0)
     this (this.count) = v
     this.count = this.count + 1
-)
+}
 
 setMethodFrom .each ^this f {
     idx = 0
