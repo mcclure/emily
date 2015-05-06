@@ -9,11 +9,13 @@ rawTern = internal.tern
 # DUPLICATES valueUtil
 tern ^predicate a b = do: rawTern predicate a b
 
+not ^x = rawTern x null true
+
 if ^predicate body = tern predicate ^(do body) nullfn
 
-loop ^f = if f ^(loop f)
+loop ^f = if (do f) ^(loop f)
 
-while ^predicate body = if predicate ^(do body; while predicate body) nullfn
+while ^predicate body = if (do predicate) ^(do body; while predicate body)
 
 and ^a b = tern (do a) b nullfn
 
