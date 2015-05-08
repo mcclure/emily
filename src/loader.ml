@@ -55,6 +55,9 @@ let subStarterPair ?kind:(kind=Value.NoLet) starter =
     let table = ValueUtil.tableInheriting kind starter.Value.rootScope in
     table,subStarterWith starter @@ table
 
+let boxSubStarter starter kind =
+    subStarterWith starter @@ ValueUtil.boxBlank kind starter.Value.rootScope
+
 (* Given a starter, make a new starter with a subscope and the requested project/directory. *)
 let starterForExecute starter (project:Value.value option) (directory:Value.value option) =
     let table,subStarter = subStarterPair starter in
@@ -67,6 +70,8 @@ let starterForExecute starter (project:Value.value option) (directory:Value.valu
 let executePackage starter (project:Value.value option) (directory:Value.value option) buf =
     Execute.execute (starterForExecute starter project directory) buf
 
+let packagesLoaded = Hashtbl.create(1)
+
 (* Create a package loader object. Will recursively call itself in a lazy way on field access.
    Directory and projectSource will be replaced as needed on field access, will not. *)
 (* TODO: Consider a guard on multi-loading? *)
@@ -74,9 +79,9 @@ let executePackage starter (project:Value.value option) (directory:Value.value o
          Maybe loading should be even lazier, such that load when a field is loaded *from* a file, load occurs?
          This would make prototype loading way easier. *)
 (* FIXME: Couldn't kind be NewScope and the starter impose the box? *)
-let loadPackageFile ?kind:(kind=Token.Box Token.NewScope) starter (projectSource:loaderSource) (directory:loaderSource) path =
+let loadFile starter (projectSource:loaderSource) (directory:loaderSource) path =
     (* FIXME: What if knownFilter is NoSource here? This is the "file where expected a directory" case. *)
-    let buf = Tokenize.tokenizeChannel ~kind:kind (Token.File path) (open_in path)
+    let buf = Tokenize.tokenizeChannel (Token.File path) (open_in path)
     in executePackage starter (knownFilter projectSource) (knownFilter directory) buf
 let rec loadPackageDir starter (projectSource:loaderSource) path =
     let directoryTable = ValueUtil.tableBlank Value.NoSet in
@@ -88,16 +93,26 @@ let rec loadPackageDir starter (projectSource:loaderSource) path =
             (fun _ -> proceed (Filename.concat path name))
     ) (Sys.readdir path); directoryObject
 and loadPackage starter (projectSource:loaderSource) (directory:loaderSource) path =
-    try
-        (* COMMENT ME!!! This is not good enough. *)
-        if String.length path == 0 then
-            raise @@ Sys_error "Empty path"
-        else if Sys.is_directory path then
-            loadPackageDir starter projectSource path
-        else
-            loadPackageFile starter projectSource directory path
-    with Sys_error s ->
-        Value.TableValue( ValueUtil.tableBlank Value.NoSet )
+    (* This is gonna do bad things on case-insensitive filesystems *)
+    match CCHashtbl.get packagesLoaded path with
+        | Some v -> v
+        | None ->
+            let v =
+                try
+                    (* COMMENT ME!!! This is not good enough. *)
+                    if String.length path == 0 then
+                        raise @@ Sys_error "Empty path"
+                    else if Sys.is_directory path then
+                        loadPackageDir starter projectSource path
+                    else
+                        let packageScope = Value.TableValue(ValueUtil.tableBlank Value.NoSet) in
+                        ignore @@ loadFile (boxSubStarter starter @@ ValueUtil.PopulateValue packageScope)
+                            projectSource directory path;
+                        packageScope
+                with Sys_error s ->
+                    Value.TableValue( ValueUtil.tableBlank Value.NoSet )
+            in Hashtbl.replace packagesLoaded path v;
+            v
 
 (* Return the value for the project loader. Needs to know "where" the project is. *)
 let projectForLocation starter defaultLocation =
@@ -125,9 +140,8 @@ let completeStarter withProjectLocation =
         (* TODO find some way to make this not assume path loaded from disk *)
         let path = List.fold_left FilePath.concat packageRootPath ["emily";"prototype";pathKey ^ ".em"] in
         let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
-        ignore @@ loadPackageFile ~kind:Token.Plain
-            (subStarterWith packageStarter @@
-                ValueUtil.boxBlank (ValueUtil.PopulateValue proto) packageStarter.Value.rootScope)
+        ignore @@ loadFile
+            (boxSubStarter packageStarter @@ ValueUtil.PopulateValue proto)
             NoSource (Source enclosing) path
     in
     Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;

@@ -216,14 +216,14 @@ let tokenize enclosingKind name buf : Token.token =
     in proceed (Eof,currentPosition()) (Token.makeGroup (currentPosition()) Token.NonClosure enclosingKind) [] []
 
 (* Tokenize entry point typed to channel *)
-let tokenizeChannel ?kind:(enclosingKind=Token.Plain) source channel =
+let tokenizeChannel source channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
-    tokenize enclosingKind source lexbuf
+    tokenize Token.Plain source lexbuf
 
 (* Tokenize entry point typed to string *)
-let tokenizeString ?kind:(enclosingKind=Token.Plain) source str =
+let tokenizeString source str =
     let lexbuf = Sedlexing.Utf8.from_string str in
-    tokenize enclosingKind source lexbuf
+    tokenize Token.Plain source lexbuf
 
 let unwrap token = match token.Token.contents with
     | Token.Group g -> g.Token.items
