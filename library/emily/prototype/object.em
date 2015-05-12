@@ -17,3 +17,9 @@ setMethodFrom .each ^this f {
         idx = idx + 1
     )
 }
+
+setMethodFrom .map ^this f {
+    result = []
+    this.each: ^x(result.append: f x)
+    result
+}

@@ -810,7 +810,7 @@ A design goal of Emily is that anything the language interpreter can do, a third
 - `thisTransplant` *[closure]* - Resets ANY closure to "blank" state. If something that isn't a closure is passed in, it's returned unaltered.
 - `thisFreeze` *[closure]* - If closure is "blank", converts to "never". If closure is "method", converts it to "frozen".
 - `thisInit` *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, converts it to "frozen".
-- thisUpdate *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, leaves `current` unaltered and updates `this` to *[object]*.
+- `thisUpdate` *[object]* *[closure]* - If given a "blank" closure, puts it in "method" state with `current` and `this` equal to *[object]*. If given a "method" closure, leaves `current` unaltered and updates `this` to *[object]*.
 
 In other words, `thisInit` does the transform performed when assigning to an object definition; `thisFreeze` does the transform performed when assigning to an object at other times; and `thisUpdate` does the transform performed when invoking a method on `super` or implicitly fetching a method out of an object's `.parent`. It is not clear to me that these are useful.
 

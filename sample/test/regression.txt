@@ -42,6 +42,7 @@ macro/tern.em
 macro/assign.em
 macro/math/basic.em
 macro/nonlocal.em
+macro/list.em
 macro/fail/unknown.em
 macro/fail/ternOpen.em
 macro/fail/ternNest.em

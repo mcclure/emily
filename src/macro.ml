@@ -305,6 +305,33 @@ let closureConstruct withReturn =
 
         in openClosure [] future
 
+(* Commas in statement *)
+let comma past at future =
+    (* Split statement into comma-delimited sections. Generates a reverse list of token reverse-lists *)
+    let rec gather accumulateLine accumulateAll future =
+        (* A new value for accumulateLine *)
+        let pushLine() = (accumulateLine)::accumulateAll in
+        match future with
+            (* Finished *)
+            | [] -> pushLine()
+            (* Another comma was found, open a new section *)
+            | {Token.contents=Token.Symbol ","}::moreFuture -> gather [] (pushLine()) moreFuture
+            (* Add token to current section *)
+            | t::moreFuture -> gather (t::accumulateLine) accumulateAll moreFuture
+    (* Given reverse list of reverse-list-of-tokens, create a list of this.append statements *)
+    in let rec emit accumulateFinal subLines =
+        match subLines with
+            (* Finished *)
+            | [] -> accumulateFinal
+            (* Blank line-- ignore it *)
+            | []::moreLines -> emit accumulateFinal moreLines
+            (* Nonempty line-- wrap TOKENS into this.append(TOKENS); *)
+            | (firstToken::moreTokens as tokens)::moreLines -> emit (
+                [cloneWord firstToken "this"; cloneAtom firstToken "append"; cloneGroup firstToken [process @@ List.rev tokens]]
+            ::accumulateFinal) moreLines
+    (* Pull apart past with gather, stitch back together with emit, we now have a list of statements we can turn into a group. *)
+    in [cloneGroup at @@ emit [] @@ gather [] [past] future]
+
 (* Atom *)
 let atom past at future =
     match future with
@@ -376,6 +403,9 @@ let builtinMacros = [
     L(100.), "^!", closureConstruct false;
     L(105.), "=",  assignment;
     L(110.), ".",  atom;
+
+    (* Pseudo-statement *)
+    L(150.), ",", comma;
 ]
 
 (* Populate macro table from builtinMacros. *)
