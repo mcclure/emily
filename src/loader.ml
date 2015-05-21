@@ -138,7 +138,7 @@ let completeStarter withProjectLocation =
     let populateProto proto pathKey =
         (* TODO convert path to either path or value to load from  *)
         (* TODO find some way to make this not assume path loaded from disk *)
-        let path = List.fold_left FilePath.concat packageRootPath ["emily";"prototype";pathKey ^ ".em"] in
+        let path = List.fold_left FilePath.concat packageRootPath ["emily";"core";"prototype";pathKey ^ ".em"] in
         let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
         ignore @@ loadFile
             (boxSubStarter packageStarter @@ ValueUtil.PopulateValue proto)
