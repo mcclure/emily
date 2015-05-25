@@ -37,10 +37,25 @@ let () =
     setAtomFn "not"  (fun v -> match v with Value.Null -> Value.True | _ -> Value.Null);
     setAtomBinary "primitiveEq" (fun a b -> ValueUtil.boolCast ( (=) a b ));
 
+    setAtomValue "thisTransplant" ValueUtil.rethisTransplant;
+    setAtomValue "thisInit" ValueUtil.rethisAssignObjectDefinition;
+    setAtomValue "thisFreeze" ValueUtil.rethisAssignObject;
+    setAtomValue "thisUpdate" ValueUtil.rethisSuperFrom;
+
+    setAtomValue "setPropertyKey" @@ ValueUtil.snippetClosure 3 (function
+        | [Value.TableValue t;k;v] | [Value.ObjectValue t;k;v] ->
+            Value.tableSet t k @@ Value.UserMethodValue v;
+            Value.Null
+        | [_;_;_] -> failwith "Attempted to call setPropertyKey on something other than an object"
+        | _ -> internalFail ()
+    );
+
+    (* "Submodule" internal.out *)
     let outTable = insertTable "out" in
     setAtomFn ~target:outTable "print" @@ reusable (fun v -> print_string @@ Pretty.dumpValueForUser v);
     setAtomFn ~target:outTable "flush" @@ reusable (fun _ -> flush_all ());
 
+    (* "Submodule" internal.double *)
     let doubleTable = insertTable "double" in
 
     let setAtomMath ?target:(table=doubleTable) name f = setAtomValue ~target:table name @@ ValueUtil.snippetClosure 2 (function
@@ -55,6 +70,11 @@ let () =
         | _ -> internalFail ()
     ) in
 
+    let setAtomMathFn ?target:(table=doubleTable) name f = setAtomFn ~target:table name @@ (function
+        | Value.FloatValue f1 -> Value.FloatValue( f f1 )
+        | _ -> failwith "Can only perform that function on a number"
+    ) in
+
     setAtomMath "add"      ( +. );
     setAtomMath "subtract" ( -. );
     setAtomMath "multiply" ( *. );
@@ -67,17 +87,14 @@ let () =
     setAtomTest "greaterThan"      ( >  );
     setAtomTest "greaterThanEqual" ( >= );
 
-    setAtomValue "thisTransplant" ValueUtil.rethisTransplant;
-    setAtomValue "thisInit" ValueUtil.rethisAssignObjectDefinition;
-    setAtomValue "thisFreeze" ValueUtil.rethisAssignObject;
-    setAtomValue "thisUpdate" ValueUtil.rethisSuperFrom;
+    setAtomMathFn "floor"  floor;
 
-    setAtomValue "setPropertyKey" @@ ValueUtil.snippetClosure 3 (function
-        | [Value.TableValue t;k;v] | [Value.ObjectValue t;k;v] ->
-            Value.tableSet t k @@ Value.UserMethodValue v;
-            Value.Null
-        | [_;_;_] -> failwith "Attempted to call setPropertyKey on something other than an object"
-        | _ -> internalFail ()
-    );
+    (* "Submodule" internal.type *)
+    let typeTable = insertTable "type" in
 
+    setAtomFn ~target:typeTable "isAtom"   (fun v -> match v with Value.AtomValue   _ -> Value.True | _ -> Value.Null);
+    setAtomFn ~target:typeTable "isString" (fun v -> match v with Value.StringValue _ -> Value.True | _ -> Value.Null);
+    setAtomFn ~target:typeTable "isNumber" (fun v -> match v with Value.FloatValue  _ -> Value.True | _ -> Value.Null);
+
+    (* Done *)
     ()

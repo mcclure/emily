@@ -21,7 +21,6 @@ let packageRootPath =
         in Filename.concat exePath envPath
     else envPath
 
-
 (* What should the target of this particular loader be? *)
 type loaderSource =
     | NoSource                  (* I don't want the loader *)
@@ -115,11 +114,12 @@ and loadPackage starter (projectSource:loaderSource) (directory:loaderSource) pa
             v
 
 (* Return the value for the project loader. Needs to know "where" the project is. *)
-let projectForLocation starter defaultLocation =
-    let projectPath = match Options.(run.projectPath) with
+let projectPathForLocation location =
+    match Options.(run.projectPath) with
         | Some s -> s
-        | _ -> (match defaultLocation with Cwd -> bootPath | Path str -> str) in
-    loadPackage starter SelfSource NoSource projectPath
+        | _ -> (match location with Cwd -> bootPath | Path str -> str)
+let projectForLocation starter defaultLocation =
+    loadPackage starter SelfSource NoSource @@ projectPathForLocation defaultLocation
 
 (* For external use: Given a file, get the loadLocation it would be executed within. *)
 let locationAround path =

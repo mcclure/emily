@@ -23,7 +23,7 @@ export BUILD_PACKAGE_DIR=$(libdir)/$(PACKAGE_DIR)
 export BUILD_INCLUDE_REPL=1
 
 .PHONY: all
-all: install/bin/emily install/man/emily.1 install/lib/emily/$(VERSION)
+all: install/bin/emily install/man/emily.1 install/lib/$(PACKAGE_DIR)
 
 # Move final executable in place.
 install/bin/emily: _build/src/main.$(BUILDTYPE)

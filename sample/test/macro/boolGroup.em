@@ -28,3 +28,6 @@ println ( !(!5 || 4) )
 
 println 3 || println 5
 println 6 && println 8
+
+# Print nothing at all!
+3 || (println "o"; 4) ? 1 : 2

@@ -13,13 +13,19 @@ let () =
         (*  *)
         if Options.(run.disassemble) then print_endline (Pretty.dumpCodeTreeTerse buf) else
         if Options.(run.disassembleVerbose) then print_endline (Pretty.dumpCodeTreeDense buf) else
+        if Options.(run.printPackage) then print_endline Loader.packageRootPath else
+        if Options.(run.printProject) then print_endline @@ Loader.projectPathForLocation location else
         ignore @@ Loader.executeProgramFrom location buf
     in
     if Options.(run.repl) then
         ( if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then Repl.repl Options.(run.targets) )
     else
         try
-            List.iter processOne Options.(run.targets)
+            List.iter processOne
+                (* FIXME: This is maybe awkward? It is here so printPackage can work without a target. *)
+                (* It works by assuming an implicit -e '', which is only safe if we assume *)
+                (* option.ml would have failed already if that weren't ok. *)
+                (match Options.(run.targets) with [] -> [Options.Literal ""] | t -> t)
         with
             | Token.CompilationError e ->
                 prerr_endline @@ Token.errorString e; exit 1

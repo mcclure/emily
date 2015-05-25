@@ -15,10 +15,13 @@ type optionSpec = {
     mutable traceSet : bool;
     mutable packagePath : string option;
     mutable projectPath : string option;
+    mutable dontNeedTargets : bool; (* Set indirectly by several options *)
 
     (* Things to do instead of execution *)
     mutable disassemble : bool;
     mutable disassembleVerbose : bool;
+    mutable printPackage : bool;
+    mutable printProject : bool;
     mutable printVersion : bool;
     mutable printMachineVersion : bool;
 }
@@ -26,9 +29,11 @@ type optionSpec = {
 let run = {
     targets=[];
     repl=false;
-    stepMacro=false; trace=false; trackObjects=false; traceSet = false;
+    stepMacro=false; trace=false; trackObjects=false; traceSet=false;
     packagePath=None;projectPath=None;
-    disassemble=false; disassembleVerbose=false; printVersion = false; printMachineVersion = false;
+    dontNeedTargets=false;
+    disassemble=false; disassembleVerbose=false;
+    printPackage=false; printProject=false; printVersion=false; printMachineVersion=false;
 }
 
 let keyMutateArgument    = ArgPlus.keyMutate @@ fun l -> "--" ^ (String.concat "-" l)
@@ -73,7 +78,7 @@ Options:|})
 
         (* Only include if Makefile requested REPL *)
         ("-i", Arg.Unit(fun f ->
-            run.repl <- true
+            run.repl <- true; run.dontNeedTargets <- true;
         ), "Enter interactive mode (REPL)");
 
     ] else []) @ [ (* Normal arguments continue *)
@@ -81,7 +86,7 @@ Options:|})
         versionSpec "-v";
         versionSpec "--version";
 
-        ("--machine-version", Arg.Unit(fun () -> run.printMachineVersion <- true), {|Print interpreter version (machine-readable-- number only)|});
+        ("--machine-version", Arg.Unit(fun () -> run.printMachineVersion <- true), {|Print interpreter version (number only) and quit|});
     ]
 
     in let environmentArgs = [ (* "Config" arguments which can be also set with env vars *)
@@ -101,6 +106,8 @@ Options:|})
             run.trackObjects <- true;
             run.traceSet <- true
         ),  {|When executing, set all runtime trace type options|});
+        ("--debug-print-package-path", Arg.Unit(fun () -> run.printPackage <- true; run.dontNeedTargets <- true),  {|Print package loader path and quit|});
+        ("--debug-print-project-path", Arg.Unit(fun () -> run.printProject <- true; run.dontNeedTargets <- true),  {|Print project loader path and quit|});
     ]
 
     in let args = executeArgs @ (keyMutateArgument environmentArgs) @ debugArgs
@@ -114,7 +121,7 @@ Options:|})
         if run.printMachineVersion then print_endline version else
         if run.printVersion then print_endline fullVersion else (
             run.targets <- List.rev !targets;
-            if (run.repl) then () else match run.targets with
+            if (run.dontNeedTargets) then () else match run.targets with
                 | [] -> raise @@ ArgPlus.Help 1 (* No targets! Fail and print help. *)
                 | _  -> ()
         )
