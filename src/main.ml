@@ -13,7 +13,7 @@ let () =
         (*  *)
         if Options.(run.disassemble) then print_endline (Pretty.dumpCodeTreeTerse buf) else
         if Options.(run.disassembleVerbose) then print_endline (Pretty.dumpCodeTreeDense buf) else
-        if Options.(run.printPackage) then print_endline Loader.packageRootPath else
+        if Options.(run.printPackage) then print_endline @@ Loader.packageRootPath () else
         if Options.(run.printProject) then print_endline @@ Loader.projectPathForLocation location else
         ignore @@ Loader.executeProgramFrom location buf
     in

@@ -12,7 +12,7 @@ let nameAtom filename = Value.AtomValue (try
 (* TODO: This should be normalized. Strongly consider using extunix.realpath instead *)
 let readlink path = FileUtil.readlink path
 let bootPath = readlink @@ Sys.getcwd()
-let packageRootPath =
+let defaultPackagePath =
     let envPath = [%getenv "BUILD_PACKAGE_DIR"] in
     if FilePath.is_relative envPath then
         (* This will work as long as the executable was not executed from $PATH. *)
@@ -20,6 +20,8 @@ let packageRootPath =
             Filename.concat (Sys.getcwd()) (Filename.dirname @@ Array.get Sys.argv 0)
         in Filename.concat exePath envPath
     else envPath
+let packageRootPath () =
+    match Options.(run.packagePath) with Some s -> s | _ -> defaultPackagePath
 
 (* What should the target of this particular loader be? *)
 type loaderSource =
@@ -132,13 +134,13 @@ let completeStarter withProjectLocation =
     let packageStarter = Value.{rootScope=Value.TableValue rootScope;context={
         nullProto=nv(); trueProto=nv(); floatProto=nv();
         stringProto=nv(); atomProto=nv(); objectProto=nv()}} in
-    let package = loadPackage packageStarter NoSource NoSource @@
-        match Options.(run.packagePath) with Some s -> s | _ -> packageRootPath
+    let packagePath = packageRootPath () in
+    let package = loadPackage packageStarter NoSource NoSource packagePath
     in
     let populateProto proto pathKey =
         (* TODO convert path to either path or value to load from  *)
         (* TODO find some way to make this not assume path loaded from disk *)
-        let path = List.fold_left FilePath.concat packageRootPath ["emily";"core";"prototype";pathKey ^ ".em"] in
+        let path = List.fold_left FilePath.concat packagePath ["emily";"core";"prototype";pathKey ^ ".em"] in
         let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
         ignore @@ loadFile
             (boxSubStarter packageStarter @@ ValueUtil.PopulateValue proto)

@@ -129,6 +129,10 @@ def pretag(tag, str):
 
 failures = 0
 
+# In testing, it appears the current process environment can be altered by subprocess.Popen.
+# So make a copy before any potential modification occurs.
+globalEnv = copy.deepcopy( os.environ )
+
 for filename in files:
     expectfail = False
     scanning = False
@@ -163,7 +167,7 @@ for filename in files:
                     envline = envp.match(line) # Env:
                     if envline:
                         if not env:
-                            env = copy.deepcopy( os.environ )
+                            env = copy.deepcopy( globalEnv )
                         kvline = kvp.match( envline.group(1) )
                         if not kvline:
                             print "\tMALFORMED TEST: \"Env:\" line not of form KEY=VALUE"
@@ -180,7 +184,7 @@ for filename in files:
 
     print "Running %s..." % (filename)
     try:
-        proc = subprocess.Popen(stdcall+args+([] if omit else [filename]), stdout=subprocess.PIPE, stderr=subprocess.PIPE,env=env)
+        proc = subprocess.Popen(stdcall+args+([] if omit else [filename]), stdout=subprocess.PIPE, stderr=subprocess.PIPE,env=env if env else globalEnv)
     except OSError as e:
         print "\nCATASTROPHIC FAILURE: Couldn't find emily?:"
         print e

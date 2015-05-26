@@ -30,9 +30,9 @@ arg/fail/extraEquals.em
 arg/fail/missingParam.em
 arg/fail/badParam.em
 arg/fail/badEquals.em
-package/customPath/arg.em
-package/customPath/env.em
-package/customPath/both.em
+arg/path/defaultProject.em
+arg/path/setProject.em
+arg/path/setPackage.em
 
 # Macros
 macro/math/order.em
@@ -114,3 +114,6 @@ builtin/obj.em
 
 # Stress test
 ski/stars.em
+
+# Library
+library/emily/functional.em
