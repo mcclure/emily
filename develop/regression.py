@@ -117,7 +117,7 @@ if flag("s"):
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)
-inline_expectp = re.compile(r'# Expect ?= ?(.+)$', re.S|re.I)
+inline_expectp = re.compile(r'# Expect: ?(.+)$', re.S|re.I)
 startp = re.compile(r'^', re.MULTILINE)
 argp = re.compile(r'# Arg:\s*(.+)$', re.I)
 envp = re.compile(r'# Env:\s*(.+)$', re.I)
@@ -145,8 +145,11 @@ for filename in files:
             # First determine if this is an expect directive
             expect = expectp.match(line) # Expect:
             inline = inline_expectp.match(line)
-            if inline:
+            # If the inline pattern matches and the inline body isn't empty,
+            # then we're looking at an inline expect directive
+            if inline and not inline.group(1).isspace():
                 outlines += inline.group(1)
+            # Otherwise, if it's an expect we're beginning a multiline expect
             elif expect:
                 expectfail = bool(expect.group(1))
                 scanning = bool(expect.group(2))
