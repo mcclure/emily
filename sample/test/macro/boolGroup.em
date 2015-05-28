@@ -1,30 +1,25 @@
 # Order of operation tests of boolean/logic operators
-# Expect:
-# <true>
-# <true>
-# <null>
-# 4.
-# <null>
-# 3.
-# 6.
-# 8.
 
-# Expected output: true
+# Expect = <true>
 println: 4 < 5
 
-# Expect output: true
+# Expect = <true>
 println: 4 < 5 && 1 < 9
 
-# Expect output: false
+# Expect = <null>
 println: () && 4
 
-# Expect output: true (4)
+# Expect = 4.
 println: 5 && 4
 
-# Expect output: false
+# Expect = <null>
 println ( !(!5 || 4) )
 
 # Test short circuit:
 
+# Expect = 3.
 println 3 || println 5
+# Expect:
+# 6.
+# 8.
 println 6 && println 8

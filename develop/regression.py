@@ -117,6 +117,7 @@ if flag("s"):
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)
+inline_expectp = re.compile(r'# Expect ?= ?(.+)$', re.S|re.I)
 startp = re.compile(r'^', re.MULTILINE)
 argp = re.compile(r'# Arg:\s*(.+)$', re.I)
 envp = re.compile(r'# Env:\s*(.+)$', re.I)
@@ -143,7 +144,10 @@ for filename in files:
         for line in f.readlines():
             # First determine if this is an expect directive
             expect = expectp.match(line) # Expect:
-            if expect:
+            inline = inline_expectp.match(line)
+            if inline:
+                outlines += inline.group(1)
+            elif expect:
                 expectfail = bool(expect.group(1))
                 scanning = bool(expect.group(2))
             else:
@@ -202,7 +206,7 @@ for filename in files:
         failures += 1
     elif outstr != outlines:
         print "\tFAIL:   Output differs"
-        print "\n%s\n\n%s" % ( pretag("EXPECT", outlines), pretag("STDOUT",outstr) )
+        print "\n%s\n\n%s" % ( pretag("EXPECT", outlines), pretag("STDOUT", outstr) )
         failures += 1
     elif flag("v"):
         if outstr:
