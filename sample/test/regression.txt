@@ -3,6 +3,7 @@
 # Parser/tokenizer
 parse/trivial.em
 parse/tokenTypes.em
+parse/sciNotation.em
 parse/fail/unclosed.em
 parse/fail/misclosed.em
 parse/fail/earlyClose.em

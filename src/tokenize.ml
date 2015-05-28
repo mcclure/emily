@@ -27,7 +27,8 @@ let tokenize enclosingKind name buf : Token.token =
     let number = [%sedlex.regexp? Plus digit] in
     let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in (* TODO: should be "alphabetic" *)
     let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
-    let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number) ] in
+    let sciNotation = [%sedlex.regexp? ('e'|'E'), Opt('+'|'-'), number ] in
+    let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number), Opt sciNotation ] in
 
     (* Helper function: We treat a list as a stack by appending elements to the beginning,
        but this means we have to do a reverse operation to seal the stack at the end. *)
