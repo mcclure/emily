@@ -25,10 +25,16 @@ let tokenize enclosingKind name buf : Token.token =
     (* -- Helper regexps -- *)
     let digit = [%sedlex.regexp? '0'..'9'] in
     let number = [%sedlex.regexp? Plus digit] in
+    let octalDigit = [%sedlex.regexp? '0'..'7'] in
+    let octalNumber = [%sedlex.regexp? "0o", Plus octalDigit] in
+    let hexDigit = [%sedlex.regexp? '0'..'9'|'a'..'f'|'A'..'F'] in
+    let hexNumber = [%sedlex.regexp? "0x", Plus hexDigit] in
+    let binaryNumber = [%sedlex.regexp? "0b", Plus ('0'|'1') ] in
     let letterPattern = [%sedlex.regexp? 'a'..'z'|'A'..'Z'] in (* TODO: should be "alphabetic" *)
     let wordPattern = [%sedlex.regexp? letterPattern, Star ('A'..'Z' | 'a'..'z' | digit) ] in
     let sciNotation = [%sedlex.regexp? ('e'|'E'), Opt('+'|'-'), number ] in
-    let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number), Opt sciNotation ] in
+    let floatPattern = [%sedlex.regexp? '.',number | number, Opt('.', number), Opt sciNotation] in
+    let numberPattern = [%sedlex.regexp? hexNumber | octalNumber | floatPattern | binaryNumber] in
 
     (* Helper function: We treat a list as a stack by appending elements to the beginning,
        but this means we have to do a reverse operation to seal the stack at the end. *)
@@ -183,8 +189,15 @@ let tokenize enclosingKind name buf : Token.token =
             (* Quoted string *)
             | '"' -> addToLineProceed(makeTokenHere(Token.String(quotedString())))
 
-            (* Floating point number *)
-            | floatPattern -> addSingle (fun x -> Token.Number(float_of_string x))
+            (* Floating point number
+               More complicated because float_of_string doesn't handle octal or binary *)
+            | numberPattern -> addSingle (fun x ->
+                               if (String.length x) < 3 then
+                                 Token.Number(float_of_string x)
+                               else match (String.sub x 0 2) with
+                                      "0b" | "0o" -> Token.Number(float_of_int (int_of_string x))
+                                      | _         -> Token.Number(float_of_string x))
+
 
             (* Local scope variable *)
             | wordPattern -> addSingle (fun x -> Token.Word x)
