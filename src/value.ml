@@ -42,6 +42,7 @@ and value =
     | BuiltinFunctionValue          of (value -> value) (* function argument = result *)
     | BuiltinUnaryMethodValue       of (value -> value) (* function self = result *)
     | BuiltinMethodValue   of (value -> value -> value) (* function self argument = result *)
+    | BuiltinHandoffValue of (executeContext -> executeStack -> (value*Token.codePosition) -> value) (* Take control of interpreter *)
 
     (* Complex user-created values *)
     | ClosureValue of closureValue
@@ -68,6 +69,15 @@ and executeFrame = {
 (* The current state of an execution thread consists of just the stack of frames. *)
 and executeStack = executeFrame list
 
+and executeContext = {
+    nullProto   : value;
+    trueProto   : value;
+    floatProto  : value;
+    stringProto : value;
+    atomProto   : value;
+    objectProto : value;
+}
+
 type tableBlankKind =
     | TrueBlank (* Really, actually empty. Only used for snippet scopes. *)
     | NoSet     (* Has .has. Used for immutable builtin prototypes. *)
@@ -78,15 +88,6 @@ type tableBlankKind =
 type tableBoxKind =
     | BoxNew   of Token.boxKind
     | BoxValue of value
-
-type executeContext = {
-    nullProto   : value;
-    trueProto   : value;
-    floatProto  : value;
-    stringProto : value;
-    atomProto   : value;
-    objectProto : value;
-}
 
 type executeStarter = {
     rootScope : value;
