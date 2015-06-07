@@ -26,4 +26,6 @@ atc.codepoint.each println
 printsp (atc.char.count) (atc.char.has 1) (atc.char.has 4) (atc.char 1) ln \
         (atc.codepoint.count) (atc.codepoint.has 1) \
         (atc.codepoint.has 4) (atc.codepoint 1) ln
-println ""
+
+# Expect: abcd
+println: "ab" + "cd"

@@ -31,3 +31,5 @@ private.viewObject ^iterator str = [
 
 setMethodFrom .char:      viewObject: internal.string.iterUtf8
 setMethodFrom .codepoint: viewObject: internal.string.iterUtf8Codepoint
+
+setMethodFrom .plus: internal.string.concat
