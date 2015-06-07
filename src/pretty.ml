@@ -74,6 +74,7 @@ let dumpValueTreeGeneral wrapper v =
         | Value.FloatValue v -> string_of_float v
         | Value.StringValue s -> escapeString s
         | Value.AtomValue s -> "." ^ s
+        | Value.UserMethodValue _ -> "<object-method>"
         | Value.BuiltinFunctionValue _ -> "<builtin>"
         | Value.BuiltinMethodValue _ -> "<object-builtin>"
         | Value.BuiltinUnaryMethodValue _ -> "<property-builtin>"

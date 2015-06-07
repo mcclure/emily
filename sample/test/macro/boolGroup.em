@@ -23,3 +23,6 @@ println 3 || println 5
 # 6.
 # 8.
 println 6 && println 8
+
+# Print nothing at all!
+3 || (println "o"; 4) ? 1 : 2

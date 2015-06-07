@@ -7,6 +7,8 @@
 # 2.
 # 1.
 # <null>
+# 2.
+# <true> <null> <true> <null> <true> <null> <true> <null>
 
 # Test sp, ln
 print "a" sp "b" ln
@@ -27,3 +29,13 @@ while ^(i.gt 0) ^{println i; set .i (i .minus 1)}
 
 # Test and, or, xor
 println ( xor ^(or ^( and ^(true) ^(null) ) ^(true) ) ^(true) )
+
+# Test math
+println: floor 2.718281828
+
+# Test types
+print (atom .atom)       sp (atom "atom")          sp \
+      (string "3.14159") sp (string 3.14159)       sp \
+      (number 3.14159)   sp (number "3.14159")     sp \
+      (int 3)            sp (int 3.14159)          sp \
+      ln

@@ -26,7 +26,7 @@ Documentation of the Emily programming language can be found at <br><<http://emi
     After executing the programs (if any), boot into interactive mode. Lines of code will be accepted from the command line and their results will be printed.
 
   * `--package-path` <path>:
-    Path to use for "package" loader (default is ../lib/emily/0.2, relative to the emily interpreter binary).
+    Path to use for "package" loader (default is ../lib/emily/0.3b, relative to the emily interpreter binary).
 
   * `--project-path` <path>:
     Path to use for "project" loader (default is enclosing directory of source file, or current working directory for a program loaded from `-e` or stdin).

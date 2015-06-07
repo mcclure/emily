@@ -1,10 +1,12 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
-package/reflectProgram.em
-package/reflectPackage.em
+package/customPath/arg.em  # At present, this fails because the prototypes cannot be loaded.
+package/customPath/env.em
+package/customPath/both.em
+#package/reflectProgram.em # hangs
+#package/reflectPackage.em # hangs
 package/builtinLeak.em
-# TODO: add test for "package." package loader
 
 # SERIOUS FAILURES -- MAJOR BUGS, FIX ASAP
 closure/scope/boundLet.em   # No defined behavior

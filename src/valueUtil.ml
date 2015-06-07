@@ -188,13 +188,8 @@ let dualInherit parent1 parent2 =
     tableSet t Value.parentKey parent;
     TableValue t
 
-(* An object is self-referential, so is more complicated than a simple blank table;
-   the table and value must be created together. *)
-(* table, value convention *)
-let objectPrototypeKnot = ref Null
-
-(* Not unified with tableBlank because it returns a value *)
-let objectValueBlank parent =
+(* Not unified with tableBlank because it returns a value not an object *)
+let objectPairBlank parent =
     let obj = tableTrueBlank() in
     let objValue = ObjectValue obj in
     populateWithHas obj;
@@ -203,7 +198,7 @@ let objectValueBlank parent =
     (match parent with
         | Some value -> tableSetString obj Value.parentKeyString (value);
         | _ -> ());
-    objValue
+    obj,objValue
 
 (* FIXME: Pass around table objects rather than creating a dupe TableValue here *)
 let populateLetForScope storeIn writeTo =
@@ -218,51 +213,36 @@ let rec tableBlank kind : tableValue =
         | WithLet ->
             populateWithSet t;
             populateLetForScope t t
-        | BoxFrom kind ->
-            (* BoxFrom, in creating the scope table, actually creates a network of three tables:
-                - A "normal" scope (t), which the code is actually running in; it works with:
-                - The literal object result which the code executed here funnels "let" values into
-                - A "private" scope table, which variable readbacks check before enclosing scope. *)
-            let privateTable = tableBlank WithLet in
-            let currentValue = match kind with
-                | Token.NewObject -> objectValueBlank @@ Some !objectPrototypeKnot
-                | Token.NewScope ->  TableValue(tableBlank WithLet) in
-            populateWithSet t;
-            (* If you're making an object, it has a "magic" let and current/this: *)
-            (match currentValue with
-                | ObjectValue current ->
-                    tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition currentValue current);
-                    tableSet t thisKey    currentValue;
-                | TableValue current ->
-                    populateLetForScope t current; (* t is the running scope, scope is the scope-to-return *)
-                | _ -> impossibleArg "object literal setup"
-            );
-            tableSet t currentKey currentValue;
-            (* Access to a private value: *)
-            tableSet t privateKey (TableValue privateTable);
     );
     t
 
-let tableInheriting kind v =
-    let t = tableBlank kind in
-            (match kind with
-                | BoxFrom Token.NewScope ->
-                    let privateRead = tableGet t privateKey in
-                    let currentRead = tableGet t currentKey in
-                    (match privateRead,currentRead with
-                        | Some privateValue, Some currentValue ->
-                            tableSet t parentKey
-                                (dualInherit privateValue (dualInherit currentValue v))
-                        | _,_ -> failwith "Internal failure: Interpreter constructed an impossible package scope"
-                    )
-                (* FIXME: Is this code duplication avoidable? *)
-                | BoxFrom Token.NewObject ->
-                    let privateRead = tableGet t privateKey in
-                    (match privateRead with Some privateValue ->
-                            tableSet t parentKey (dualInherit privateValue v)
-                        | _ -> failwith "Internal failure: Interpreter constructed an impossible package scope"
-                    )
-                | _ -> tableSet t parentKey v);
+type boxKind = PopulateValue of value | InheritValue of value
+
+let boxBlank boxKind boxParent =
+    let t = tableBlank NoLet in
+    let privateTable = tableBlank WithLet in
+    let privateValue = TableValue privateTable in
+    let handleObjectPair canSeeOwnScope (obj,objValue) =
+        tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
+        tableSet t thisKey   objValue;
+        tableSet t parentKey (dualInherit privateValue
+            @@ if canSeeOwnScope then dualInherit objValue boxParent else boxParent);
+        objValue
+    in
+    let currentValue = match boxKind with
+        | PopulateValue v -> (* This is currently used for packages *)
+            handleObjectPair true (tableFrom v,v)
+        | InheritValue parent -> (* This is currently used for objects. FIXME, decouple canSeeOwnScope into its own thing? *)
+            handleObjectPair false @@ objectPairBlank @@ Some parent
+    in
+    tableSet t currentKey currentValue;
+    (* Access to a private value: *)
+    tableSet t privateKey privateValue;
+    t
+
+let tableInheriting tableKind v =
+    let t = tableBlank tableKind in
+        tableSet t parentKey v;
         t
 
 (* Not used by interpreter, but present for user *)

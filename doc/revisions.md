@@ -1,6 +1,6 @@
 # Release history
 
-## Version 0.2 -- April 9, 2015
+## Version 0.2 -- April 11, 2015
 
 Changes:
 

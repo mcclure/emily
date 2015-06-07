@@ -45,6 +45,8 @@ In order to build this, you will need to install:
 - sedlex -- I use 1.99.2, installed via opam
 - containers -- I use 0.9, installed via opam
 - fileutils -- I use 0.4.4, installed via opam
+- ppx_getenv -- I use 1.1, installed via opam
+- ppx_const -- I use 1.0, installed via opam
 
 You should be able to just install ocaml and opam from your package manager, and then run `opam install ocamlfind sedlex containers`.
 

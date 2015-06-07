@@ -48,6 +48,8 @@ You should not have to be continously trying to remember "how to do it" (do I ty
 
 Computers are good at repetitive, non-executive tasks and bad at decisionmaking. Humans are good at decisionmaking and bad at repetitive tasks. If there is something such that "you have to do it every time", it is something the computer could and should be doing.
 
+The language you use should be precise. Using "inline" to describe "do not duplicate across linking units" is bad because eventually it comes to mean *only* that and you no longer have a way to say something is "inline".
+
 ## No parser
 
 ### Types determine what is possible

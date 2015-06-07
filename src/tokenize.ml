@@ -212,6 +212,7 @@ let tokenize enclosingKind name buf : Token.token =
                TODO: A more general system for reader instructions; allow tab after \version *)
             | "\\version 0.1"  -> escape true; skip() (* Ignore to end of line, don't consume *)
             | "\\version 0.2"  -> escape true; skip() (* Ignore to end of line, don't consume *)
+            | "\\version 0.3b"  -> escape true; skip() (* Ignore to end of line, don't consume *)
             | '\\' -> escape false; skip()            (* Ignore to end of line and consume it *)
 
             (* Ignore whitespace *)
@@ -229,14 +230,14 @@ let tokenize enclosingKind name buf : Token.token =
     in proceed (Eof,currentPosition()) (Token.makeGroup (currentPosition()) Token.NonClosure enclosingKind) [] []
 
 (* Tokenize entry point typed to channel *)
-let tokenizeChannel ?kind:(enclosingKind=Token.Plain) source channel =
+let tokenizeChannel source channel =
     let lexbuf = Sedlexing.Utf8.from_channel channel in
-    tokenize enclosingKind source lexbuf
+    tokenize Token.Plain source lexbuf
 
 (* Tokenize entry point typed to string *)
-let tokenizeString ?kind:(enclosingKind=Token.Plain) source str =
+let tokenizeString source str =
     let lexbuf = Sedlexing.Utf8.from_string str in
-    tokenize enclosingKind source lexbuf
+    tokenize Token.Plain source lexbuf
 
 let unwrap token = match token.Token.contents with
     | Token.Group g -> g.Token.items
