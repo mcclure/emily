@@ -117,7 +117,7 @@ if flag("s"):
 
 expectp = re.compile(r'# Expect(\s*failure)?(\:?)', re.I)
 linep = re.compile(r'# ?(.+)$', re.S)
-inline_expectp = re.compile(r'# Expect: ?(.+)$', re.S|re.I)
+inline_expectp = re.compile(r'# Expect:\s*(.+)$', re.S|re.I)
 startp = re.compile(r'^', re.MULTILINE)
 argp = re.compile(r'# Arg:\s*(.+)$', re.I)
 envp = re.compile(r'# Env:\s*(.+)$', re.I)

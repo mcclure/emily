@@ -19,6 +19,7 @@ println ( !(!5 || 4) )
 
 # Expect: 3.
 println 3 || println 5
+
 # Expect:
 # 6.
 # 8.

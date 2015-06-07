@@ -40,6 +40,10 @@ To comply with the license, simply include the above block of text in some acces
 
     Documentation improvements
 
+* Caleb Jones <<bionicle.dragon@gmail.com>>
+
+    Parser and testcase improvements
+
 All authors retain the copyright to their own contributions.
 
 # Thanks
