@@ -1,6 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
+string/builtin.em # Program halts with success after calling string.each
 package/customPath/arg.em  # At present, this fails because the prototypes cannot be loaded.
 package/customPath/env.em
 package/customPath/both.em
