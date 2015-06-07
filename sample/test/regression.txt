@@ -16,6 +16,8 @@ string/print.em
 string/escape.em
 string/unicode.em
 string/builtin.em
+string/fail/type.em
+string/fail/count.em
 
 # Reader
 backslash/basic.em
@@ -57,6 +59,7 @@ math/mod.em
 math/bool.em
 macro/boolGroup.em
 math/equal.em
+math/fail/type.em
 
 # Variables and scopes
 set/basic.em
