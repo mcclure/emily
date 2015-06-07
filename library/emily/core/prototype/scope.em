@@ -37,14 +37,17 @@ true = internal.true
 
 print = internal.out.print
 
-private.printPlus ^f = {
-    p ^x = (print x; do f; p);
-    p
+println ^s = ( print s ln; do: internal.out.flush ; println )
+
+# FIXME: Any whitespace not just ln
+printsp ^s = {
+    printsp2 ^s = s == ln ? (
+        print s; printsp
+    ) : (
+        print sp s; printsp2
+    )
+    print s; printsp2
 }
-
-println = printPlus ^(print ln; do: internal.out.flush)
-
-printsp = printPlus ^(print sp)
 
 thisTransplant = internal.thisTransplant
 thisInit       = internal.thisInit

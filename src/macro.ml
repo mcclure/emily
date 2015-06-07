@@ -394,7 +394,7 @@ let builtinMacros = [
     R(75.), "||", makeShortCircuit "or";
     R(77.), "%%", makeShortCircuit "xor";
 
-    (* Grouping *)
+    (* Grouping *) (* FIXME: Would these make more sense after assignment? *)
     L(90.), ":", applyRight;
     L(90.), "?", question;
 

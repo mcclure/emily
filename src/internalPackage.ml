@@ -115,7 +115,7 @@ let () =
         Value.StringValue(Buffer.contents buffer)
     ) in
     let iteratorValue filter str = (
-        let loc = fakeRegisterLocation "internal.string.interUtf8" in
+        let loc = fakeRegisterLocation "internal.string.iterUtf8" in
         let decoder = Uutf.decoder ~encoding:`UTF_8 @@ `String(str) in
         Value.BuiltinHandoffValue(fun context stack fnat ->
             let f, at = fnat in
