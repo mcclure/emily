@@ -115,6 +115,7 @@ let () =
         Value.StringValue(Buffer.contents buffer)
     ) in
     let iteratorValue filter str = (
+        let loc = fakeRegisterLocation "internal.string.interUtf8" in
         let decoder = Uutf.decoder ~encoding:`UTF_8 @@ `String(str) in
         Value.BuiltinHandoffValue(fun context stack fnat ->
             let f, at = fnat in
@@ -122,12 +123,11 @@ let () =
             match decoded with
                 | `Uchar u ->
                     let result = filter u in
-                    let loc = fakeRegisterLocation "internal.string.interUtf8" in
                     Execute.executeStep context @@
                            (fakeRegisterFrom @@ Value.PairValue (f,result,loc,loc))
                         ::((fakeRegisterFrom @@ Value.FirstValue(truefnValue,loc,loc))
                         ::stack)
-                | _ -> Value.Null
+                | _ -> Execute.returnTo context stack (Value.Null,loc)
         )
     ) in
     setAtomStringOp "iterUtf8"          (iteratorValue ucharToString);
