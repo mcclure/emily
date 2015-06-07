@@ -2,9 +2,11 @@
 
 4
 4.0
+4e0
+0.25E-1
 
-.test
-"test"
+.four
+"four"
 
 null
 true
