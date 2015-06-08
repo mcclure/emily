@@ -122,3 +122,4 @@ ski/stars.em
 
 # Library
 library/emily/functional.em
+library/emily/array.em

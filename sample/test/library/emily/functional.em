@@ -1,4 +1,4 @@
-# Test 'functional' module.
+# Test emily.functional module
 # Expect:
 # 1729.
 # 3.

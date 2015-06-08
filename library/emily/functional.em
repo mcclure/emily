@@ -1,3 +1,5 @@
+# Functional programming basics
+
 combinator = [
     o ^x y z = x: y z
     a ^x y = y x
