@@ -133,6 +133,11 @@ let () =
     setAtomStringOp "iterUtf8"          (iteratorValue ucharToString);
     setAtomStringOp "iterUtf8Codepoint" (iteratorValue ucharToCodepoint);
 
+    setAtomValue ~target:stringTable "codepointToString" @@ ValueUtil.snippetClosure 1 (function
+        | [Value.FloatValue u] -> ucharToString @@ int_of_float u
+        | _ -> failwith "Can only perform that operation on a number"
+    );
+
     setAtomValue ~target:stringTable "concat" @@ ValueUtil.snippetClosure 2 (function
         | [Value.StringValue f1;Value.StringValue f2] -> Value.StringValue( f1 ^ f2 )
         | [Value.StringValue _; _] -> failwith "Don't know how to combine that with a string"

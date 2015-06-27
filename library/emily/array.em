@@ -23,13 +23,3 @@ range ^base limit = [
 rangeTo = range 0
 
 copy ^a = [ a.each ^x( x, ) ] # FIXME: This idiom...
-
-join ^joiner a = {
-    result = ""
-    first = true
-    a.each ^s(
-        first ? (first = null) : (result = result + joiner)
-        result = result + s
-    )
-    result
-}

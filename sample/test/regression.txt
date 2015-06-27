@@ -121,5 +121,6 @@ builtin/obj.em
 ski/stars.em
 
 # Library
-library/emily/functional.em
 library/emily/array.em
+library/emily/functional.em
+library/emily/string.em

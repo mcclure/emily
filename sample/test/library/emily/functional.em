@@ -1,17 +1,13 @@
 # Test emily.functional module
-# Expect:
-# 1729.
-# 3.
-# 3.
-# 7.
-# 7.
 
 p = package.emily.functional
 c = p.combinator
 u = p.util
 
 # Test s, k, i
+
 # Copypaste from ski/stars.em
+# Expect: 1729.
 {
     # FIXME: I need an import
     s = c.s; k = c.k; i = c.i
@@ -35,6 +31,12 @@ u = p.util
 
 # FIXME: How on earth do you test v? I'm gonna skip it.
 
+# Expect:
+# 3.
+# 3.
+# 7.
+# 7.
+
 # Test apply
 [c.a, u.apply].each ^a (a 3 println)
 
@@ -43,3 +45,12 @@ u = p.util
     (o (u.identity): \
        o println: 3 .plus) 4
 )
+
+# Test map
+
+# Expect:
+# 2.
+# 3.
+# 4.
+
+u.map ^x(x+1) [1,2,3] .each println

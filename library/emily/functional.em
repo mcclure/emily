@@ -14,7 +14,5 @@ util = [
     identity = combinator.i
     compose  = combinator.o
 
-    lazyMap ^f obj = obj.each ^x( x, )
-
-    map ^f obj = [ obj.each ^x( x, ) ]
+    map ^f obj = [ obj.each ^x( f x, ) ]
 ]

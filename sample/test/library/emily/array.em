@@ -35,7 +35,3 @@ r3 = p.copy r
 r3 1 = 100
 r3.each println
 println: r 1
-
-# Expect:
-# a, b, c
-println: p.join ", " ["a", "b", "c"]
