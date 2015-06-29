@@ -100,6 +100,8 @@ let tokenize enclosingKind name buf : Token.token =
             | white_space -> escape seenText
             (* A second backslash? Okay, back out and let the main loop handle it *)
             | '\\' -> backtrack()
+            (* Comments are allowed after a backslash, and ignored as normal. *)
+            | '#', Star (Compl '\n') -> escape seenText
             (* User probably did not intend to concatenate with blank line. *)
             | eof -> if seenText then backtrack() else
                 incompleteFail "Found EOF immediately after backslash, expected token or new line."

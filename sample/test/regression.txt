@@ -23,6 +23,7 @@ string/fail/count.em
 backslash/basic.em
 backslash/fail/version.em
 backslash/fail/eof.em
+backslash/fail/whitespace.em
 package/directory.em
 package/includeFail.em
 package/private.em

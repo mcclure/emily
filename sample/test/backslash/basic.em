@@ -2,6 +2,7 @@
 # Expect:
 # 4.
 # 5.
+# 6.
 
 println \
 4
@@ -9,6 +10,10 @@ println \
 # Whitespace after backslash
 println \    
 5
+
+# Whitespace + comment after backslash
+println \  # Comment
+6
 
 # Version directive. A noop.
 \version 0.1
