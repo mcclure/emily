@@ -139,7 +139,7 @@ let makeUnary atomString : macroFunction = (fun past at future ->
     match future with
         | a :: farFuture ->
             arrange at past [a; cloneAtom at atomString] farFuture
-        | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
+        | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by something"
 )
 
 (* Given argument "op", make a macro to turn `OP a` into `(op (a))` *)
@@ -147,7 +147,7 @@ let makePrefixUnary wordString : macroFunction = (fun past at future ->
     match future with
         | a :: farFuture ->
             arrange at past [cloneWord at wordString; a] farFuture
-        | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by a symbol"
+        | _ -> Token.failToken at @@ (Pretty.dumpCodeTreeTerse at) ^ " must be followed by something"
 )
 
 (* Given argument "op", make a macro to turn `a b … OP d e …` into `(op ^(a b …) ^(d e …)` *)
@@ -340,6 +340,20 @@ let atom past at future =
             arrangeToken at past (cloneAtom at a) moreFuture
         | _ -> Token.failToken at "Expected identifier after ."
 
+let makeDualModeSplitter unaryAtom binaryAtom : macroFunction = (fun past at future ->
+    let prefixUnary = makeUnary unaryAtom in
+    let splitter = makeSplitter binaryAtom in
+    match past with
+        | []
+        | {Token.contents=Token.Symbol "*"}::_ (* Because this is intended for unary -, special-case arithmetic. *)
+        | {Token.contents=Token.Symbol "/"}::_ (* I don't much like this solution? *)
+        | {Token.contents=Token.Symbol "%"}::_
+        | {Token.contents=Token.Symbol "-"}::_
+        | {Token.contents=Token.Symbol "+"}::_
+            -> prefixUnary past at future
+        | _  -> splitter past at future
+)
+
 (* Just to be as explicit as possible:
 
    Each macro has a priority number and a direction preference.
@@ -377,7 +391,7 @@ let builtinMacros = [
     R(40.), "/", makeSplitter "divide";
     R(40.), "*", makeSplitter "times";
     R(40.), "%", makeSplitter "mod";
-    R(50.), "-", makeSplitter "minus";
+    R(50.), "-", makeDualModeSplitter "negate" "minus";
     R(50.), "+", makeSplitter "plus";
 
     (* Comparators *)

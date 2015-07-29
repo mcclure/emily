@@ -46,6 +46,7 @@ macro/bool.em
 macro/tern.em
 macro/assign.em
 macro/math/basic.em
+macro/math/unaryMinus.em
 macro/nonlocal.em
 macro/list.em
 macro/fail/unknown.em
