@@ -9,7 +9,7 @@
 goto ^y = y y
 
 counter = 0
-loop = do ^(return)
+loop = do ^@(return)
 println: counter
 counter = counter + 1
 goto loop

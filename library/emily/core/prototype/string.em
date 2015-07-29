@@ -19,7 +19,7 @@ private.viewObject ^iterator str = [
     parent ^field = (
         int field ? {
             index = 0
-            this.each ^!v(                # FIXME: Rethink ^! syntax
+            this.each ^v(
                 index == field ? return v : (index = index + 1)
             )
         } : (

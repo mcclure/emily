@@ -131,7 +131,7 @@ In the table below, operators higher in the table are evaluated first. If a phas
     110     | LTR   | .
     105     | LTR   | =
     100     | LTR   | ^
-            |       | ^!
+            |       | ^@
     90      | LTR   | ? :
             |       | :
     77      | RTL   | %%
@@ -164,7 +164,7 @@ In the table below, higher items are "higher precedence" (bind tighter). Left-as
     1          | Right         | \version
     2          | Right         | .
     3          | Right         | ^
-               |               | ^!
+               |               | ^@
     4          | Left          | ~
                |               | !
     5          | Left          | *
@@ -260,11 +260,11 @@ Redundant ^s are allowed-- `^a b (a)` does the same thing as `^a ^b (a)`. Imagin
 
 For more information on closure values, see "About functions -> user closures" below.
 
-### ^!
+### ^@
 
-**Usage:** `^!` *[optional: any number of words]* *[group]*
+**Usage:** `^@` *[optional: any number of words]* *[group]*
 
-Exactly the same as `^`, but a "return" will not be created in the execution scope. You probably don't ever actually want this.
+Exactly the same as `^`, but a "return" will be created in the execution scope as if a new function were being defined with `=`.
 
 ### :
 
@@ -290,7 +290,7 @@ Ternary operator. Captures the entire statement and splits it in three. At run t
 
 *...becomes*
 
-    tern (a b c) ^!(d e f) ^!(g h i)
+    tern (a b c) ^(d e f) ^(g h i)
 
 ### ||
 
@@ -364,7 +364,7 @@ Backtick is the "apply pair" operator. It captures two tokens to the right, and 
 
 `=` is the most complicated operator, and its behavior is based on trying to do "what you expect". It defines a new key on some object somewhere and sets its value. If a single token appears to the left of the `=`, this is a key on the scope object. If a multi-token expression is to the left of the `=`, the rightmost token is used as a key on the expression defined by the other tokens.
 
-If a `^` appears to the left of the `=`, all tokens to the right of `^` and the left of `=` are argument bindings for a closure, and the tokens to the right of `=` are the code group for the closure. In other words `x ^ = 3` is equivalent to `x = ^ (3)` and `x ^b c = 4` is equivalent to `x = ^ b c (4)`. Like with normal `^`, multiple `^`s are allowed.
+If a `^` appears to the left of the `=`, all tokens to the right of `^` and the left of `=` are argument bindings for a closure, and the tokens to the right of `=` are the code group for the closure. A closure created this way will have a `return`. In other words, `x ^ = 3` is equivalent to `x = ^@ (3)` and `x ^b c = 4` is equivalent to `x = ^@ b c (4)`. Like with normal `^`, multiple `^`s are allowed.
 
 If the first token on the left is `nonlocal`, this is a special flag to `=` that rather than defining a new key, it should set an existing key, setting the key on a parent if necessary, and failing if the existing key is not found. This for example makes it possible to set a variable in a parent scope, similar to the `nonlocal` directive in Python.
 

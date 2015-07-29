@@ -9,7 +9,7 @@
 
 # Expect: 北
 
-println: do: ^( "北京市".char.each ^!x( return x ) )
+println: do: ^@( "北京市".char.each ^x( return x ) )
 
 # Expect:
 # 97.

@@ -399,8 +399,8 @@ let builtinMacros = [
     L(90.), "?", question;
 
     (* Core *)
-    L(100.), "^",  closureConstruct true;
-    L(100.), "^!", closureConstruct false;
+    L(100.), "^",  closureConstruct false;
+    L(100.), "^@", closureConstruct true;
     L(105.), "=",  assignment;
     L(110.), ".",  atom;
 
