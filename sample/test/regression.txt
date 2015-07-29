@@ -45,6 +45,7 @@ macro/group.em
 macro/bool.em
 macro/tern.em
 macro/assign.em
+macro/assignLiteral.em
 macro/math/basic.em
 macro/math/unaryMinus.em
 macro/nonlocal.em

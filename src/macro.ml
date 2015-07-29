@@ -227,10 +227,15 @@ let assignment past at future =
                 | ({Token.contents=Token.Word "nonlocal"} as cmdToken)::moreLookups,"let" -> resultForCommand cmdToken Value.setKeyString moreLookups
 
                 (* Looks like a = b *)
-                | [({Token.contents=Token.Word name}) as wordAt],_ -> [cloneWord cmdAt cmd; cloneAtom wordAt name; rightside]
+                | [token],_ ->
+                    [cloneWord cmdAt cmd;
+                        (match token with
+                            | {Token.contents=Token.Word name} -> cloneAtom token name
+                            | token -> token); (* FIXME: Nothing now prevents assigning to a number in a plain scope? *)
+                        rightside]
 
                 (* Looks like a b ... = c *)
-                | ({Token.contents=Token.Word name} as firstToken)::moreLookups,_ ->
+                | firstToken::moreLookups,_ ->
                     (match (List.rev moreLookups) with
                         (* Note what's happening here: We're slicing off the FINAL element, first in the reversed list. *)
                         | finalToken::middleLookups ->
@@ -238,9 +243,6 @@ let assignment past at future =
 
                         (* Excluded by [{Token.word}] case above *)
                         | _ -> Token.failToken at "Internal failure: Reached impossible place" )
-
-                (* Apparently did something like 3 = *)
-                | token::_,_ -> Token.failToken token @@ "Don't know what to do with "^(Pretty.dumpCodeTreeTerse token)^" to left of ="
 
         in resultForCommand at "let" lookups
 
@@ -340,6 +342,7 @@ let atom past at future =
             arrangeToken at past (cloneAtom at a) moreFuture
         | _ -> Token.failToken at "Expected identifier after ."
 
+(* Splitter which performs an unrelated unary operation if nothing to the left. *)
 let makeDualModeSplitter unaryAtom binaryAtom : macroFunction = (fun past at future ->
     let prefixUnary = makeUnary unaryAtom in
     let splitter = makeSplitter binaryAtom in
