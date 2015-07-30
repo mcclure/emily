@@ -32,9 +32,9 @@ let macroTable = Hashtbl.create(1)
 (* All manufactured tokens should be made through clone, so that position information is retained *)
 let cloneAtom at s = Token.clone at @@ Token.Atom s
 let cloneWord at s = Token.clone at @@ Token.Word s
-let cloneGroup at = Token.cloneGroup at Token.NonClosure Token.Plain
+let cloneGroup at = Token.cloneGroup at Token.NonClosure Token.Plain []
 (* Note: makes no-return closures *)
-let cloneClosure at = Token.cloneGroup at (Token.ClosureWithBinding (false,[])) Token.Plain
+let cloneClosure at = Token.cloneGroup at (Token.ClosureWithBinding (false,[])) Token.Plain []
 
 (* Debug method gets to use this. *)
 let nullToken = Token.(makeToken {fileName=Unknown;lineNumber=0;lineOffset=0} (Symbol "_"))
@@ -211,7 +211,7 @@ let assignment past at future =
 
             (* Bindings exist: This is a function definition. *)
             | Some bindings  -> Token.cloneGroup at (Token.ClosureWithBinding (true,(List.rev bindings)))
-                    Token.Plain [process future]
+                    Token.Plain [] [process future]
 
         (* Recurse to try again with a different command. *)
         (* TODO: This is all wrong... set should be default, let should be the extension.
@@ -291,12 +291,12 @@ let closureConstruct withReturn =
                     openClosure (b::bindings) moreFuture
 
                 (* This is a group, we are done now. *)
-                | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.items}} :: moreFuture ->
+                | {Token.contents=Token.Group {Token.closure=Token.NonClosure;Token.kind;Token.groupInitializer;Token.items}} :: moreFuture ->
                     (match kind with
                         (* They asked for ^[], unsupported. *)
                         | Token.Box _ -> Token.failToken at @@ "Can't use object literal with ^"
                         (* Supported group *)
-                        | _ -> arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind items) moreFuture
+                        | _ -> arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind groupInitializer items) moreFuture
                     )
 
                 (* Reached end of line *)

@@ -141,7 +141,7 @@ let rec executeStep context stack =
 
 and executeStepWithFrames context stack frame moreFrames =
     (* Trace here ONLY if command line option requests it *)
-    if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ (if Options.(run.trackObjects) then " | Scope " ^ Pretty.dumpValue(frame.Value.scope) else "") ^ " | State " ^ (dumpRegisterState frame.Value.register) ^ " | Code " ^ (Pretty.dumpCodeTreeTerse ( Token.makeGroup {Token.fileName=Token.Unknown; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain frame.Value.code ));
+    if Options.(run.trace) then print_endline @@ "    Step | Depth " ^ (string_of_int @@ stackDepth stack) ^ (if Options.(run.trackObjects) then " | Scope " ^ Pretty.dumpValue(frame.Value.scope) else "") ^ " | State " ^ (dumpRegisterState frame.Value.register) ^ " | Code " ^ (Pretty.dumpCodeTreeTerse ( Token.makeGroup {Token.fileName=Token.Unknown; Token.lineNumber=0;Token.lineOffset=0} Token.NonClosure Token.Plain [] frame.Value.code ));
 
     (* Check the state of the top frame *)
     match frame.Value.register with
@@ -235,7 +235,7 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
                     let newScope = (groupScope context group.Token.kind frame.Value.scope) in
                     let items = match group.Token.kind with
                         | Token.Box _ ->
-                            let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; items=group.Token.items}) in
+                            let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; groupInitializer=[]; items=group.Token.items}) in
                             let word = Token.(clone token @@ Word Value.currentKeyString) in
                             [ [wrapperGroup]; [word] ]
                         | _ -> group.Token.items

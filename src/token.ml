@@ -50,6 +50,7 @@ type codeSequence = token list list
 and tokenGroup = {
     kind : tokenGroupKind;      (* Group kind *)
     closure : tokenClosureKind;  (* Closure kind, if any *)
+    groupInitializer : token list;    (* Used to create scope *)
     items : codeSequence; (* Group is a list of lines, lines are a list of tokens *)
 }
 
@@ -75,11 +76,11 @@ let makeToken position contents = {
 }
 
 (* Quick constructor for token, group type *)
-let makeGroup position closure kind items =
-    makeToken position ( Group { kind; closure; items } )
+let makeGroup position closure kind groupInitializer items =
+    makeToken position ( Group { kind; closure; groupInitializer; items } )
 
 let clone token contents = makeToken token.at contents
-let cloneGroup token closure kind items = makeGroup token.at closure kind items
+let cloneGroup token = makeGroup token.at (* Implied args: closure kind initializer items *)
 
 type tokenFailureKind =
     | IncompleteError
