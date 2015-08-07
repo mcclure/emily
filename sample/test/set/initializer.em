@@ -22,3 +22,19 @@ println: [ x | a = 7 ].a
 
 # Expect: 7.
 println: x.a
+
+# One last thing: Make sure that this/super work correctly with object initializers.
+# Expect:
+# 7.
+# 2.
+
+[x | test ^ = println: this.a]
+
+y = [ parent=x ]
+
+[y | test ^ = (
+    do: super.test
+    println: this.b
+)]
+
+do: y.test
