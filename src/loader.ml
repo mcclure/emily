@@ -107,7 +107,7 @@ and loadPackage starter (projectSource:loaderSource) (directory:loaderSource) pa
                         loadPackageDir starter projectSource path
                     else
                         let packageScope = Value.TableValue(ValueUtil.tableBlank Value.NoSet) in
-                        ignore @@ loadFile (boxSubStarter starter @@ ValueUtil.PopulateValue packageScope)
+                        ignore @@ loadFile (boxSubStarter starter @@ ValueUtil.PopulatingPackage packageScope)
                             projectSource directory path;
                         packageScope
                 with Sys_error s ->
@@ -143,7 +143,7 @@ let completeStarter withProjectLocation =
         let path = List.fold_left FilePath.concat packagePath ["emily";"core";"prototype";pathKey ^ ".em"] in
         let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
         ignore @@ loadFile
-            (boxSubStarter packageStarter @@ ValueUtil.PopulateValue proto)
+            (boxSubStarter packageStarter @@ ValueUtil.PopulatingPackage proto)
             NoSource (Source enclosing) path
     in
     Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;

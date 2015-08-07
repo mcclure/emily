@@ -189,7 +189,7 @@ let dualInherit parent1 parent2 =
     TableValue t
 
 (* Not unified with tableBlank because it returns a value not an object *)
-let objectPairBlank parent =
+let objectBlank parent =
     let obj = tableTrueBlank() in
     let objValue = ObjectValue obj in
     populateWithHas obj;
@@ -198,7 +198,7 @@ let objectPairBlank parent =
     (match parent with
         | Some value -> tableSetString obj Value.parentKeyString (value);
         | _ -> ());
-    obj,objValue
+    objValue
 
 (* FIXME: Pass around table objects rather than creating a dupe TableValue here *)
 let populateLetForScope storeIn writeTo =
@@ -216,7 +216,7 @@ let rec tableBlank kind : tableValue =
     );
     t
 
-type boxKind = PopulateValue of value | InheritValue of value
+type boxKind = PopulatingPackage of value | PopulatingObject of value
 
 let boxBlank boxKind boxParent =
     let t = tableBlank NoLet in
@@ -230,10 +230,10 @@ let boxBlank boxKind boxParent =
         objValue
     in
     let currentValue = match boxKind with
-        | PopulateValue v -> (* This is currently used for packages *)
+        | PopulatingPackage v -> (* This is currently used for packages *)
             handleObjectPair true (tableFrom v,v)
-        | InheritValue parent -> (* This is currently used for objects. FIXME, decouple canSeeOwnScope into its own thing? *)
-            handleObjectPair false @@ objectPairBlank @@ Some parent
+        | PopulatingObject v -> (* This is currently used for objects. FIXME, decouple canSeeOwnScope into its own thing? *)
+            handleObjectPair false (tableFrom v,v)
     in
     tableSet t currentKey currentValue;
     (* Access to a private value: *)

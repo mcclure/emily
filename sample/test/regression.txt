@@ -69,6 +69,7 @@ set/basic.em
 set/return.em
 set/curry.em
 set/fail/curry.em
+set/initializer.em
 set/has.em
 set/fail/has.em
 set/scope/scoped.em

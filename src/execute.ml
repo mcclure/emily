@@ -34,16 +34,19 @@ type anchoredValue = Value.value * Token.codePosition
 (* These three could technically move into value.ml but BuiltinObject depends on Value *)
 let scopeInheriting kind scopeParent =
     Value.TableValue(ValueUtil.tableInheriting kind scopeParent)
-let objectInheriting objParent scopeParent =
+let objectLiteralScope obj scopeParent =
     (* Should this be objectValue or tableValue, and *why*? *)
-    Value.TableValue(ValueUtil.boxBlank (ValueUtil.InheritValue objParent) scopeParent)
+    Value.TableValue(ValueUtil.boxBlank obj scopeParent)
 
 (* Given a parent scope and a token creates an appropriate inner group scope *)
-let groupScope context tokenKind scope =
+let groupScope context tokenKind scope initializerValue =
     match tokenKind with
-        | Token.Plain    -> scope
-        | Token.Scoped   -> scopeInheriting Value.WithLet scope
-        | Token.Box kind -> objectInheriting Value.(context.objectProto) scope
+        | Token.Plain    -> (match initializerValue with None -> scope | Some x -> x)
+        | Token.Scoped   -> scopeInheriting Value.WithLet
+            (match initializerValue with None -> scope | Some x -> x)
+        | Token.Box kind -> objectLiteralScope
+            (ValueUtil.PopulatingObject (match initializerValue with None -> ValueUtil.objectBlank (Some context.Value.objectProto) | Some x -> x))
+            scope
 
 (* Combine a value with an existing register var to make a new register var. *)
 (* Flattens pairs, on the assumption if a pair is present we're returning their applied value, *)
@@ -237,8 +240,8 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
                 (* Nonclosure groups are nontrivial to evaluate, and will require a new stack frame. *)
                 | Token.NonClosure ->
                     (* This creates the new frame with an enclosing scope designated. *)
-                    let pushFrame withScope =
-                        let newScope = (groupScope context group.Token.kind frame.Value.scope) in
+                    let pushFrame withInitializerValue =
+                        let newScope = (groupScope context group.Token.kind frame.Value.scope withInitializerValue) in
                         let items = match group.Token.kind with
                             | Token.Box _ ->
                                 let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; groupInitializer=[]; items=group.Token.items}) in
@@ -257,11 +260,11 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
                     in (match group.Token.groupInitializer with
                         (* For ordinary groups, it is known: *)
                         | [] ->
-                            pushFrame frame.Value.scope
-                        (* But groups with an initializer, we must evaluate code to get it: *)
+                            pushFrame None
+                        (* But groups with an initializer, we must evaluate code to get the scope: *)
                         | groupInitializer ->
                             let handoff _ _ = function f,_ ->
-                                pushFrame f
+                                pushFrame @@ Some f
                             in
                             executeStep context @@
                                 Value.{register=startRegister token.Token.at;
