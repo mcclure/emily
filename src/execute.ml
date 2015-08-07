@@ -55,7 +55,8 @@ let newStateFor register av = match register,av with
     | Value.FirstValue (v,rat,_),(v2,at) -> Value.PairValue (v, v2, rat, at)
 
 (* Constructor for a new frame *)
-let stackFrame scope code at = Value.{register=LineStart(Value.Null,at); code; scope}
+let startRegister at = Value.LineStart(Value.Null, at)
+let stackFrame scope code at = Value.{register=startRegister at; code; scope}
 
 (* Only call if it really is impossible, since this gives no debug feedback *)
 (* Mostly I call this if a nested match has to implement a case already excluded *)
@@ -232,20 +233,33 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
             match group.Token.closure with
                 (* Token is nontrivial to evaluate, and will require a new stack frame. *)
                 | Token.NonClosure ->
-                    let newScope = (groupScope context group.Token.kind frame.Value.scope) in
-                    let items = match group.Token.kind with
-                        | Token.Box _ ->
-                            let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; groupInitializer=[]; items=group.Token.items}) in
-                            let word = Token.(clone token @@ Word Value.currentKeyString) in
-                            [ [wrapperGroup]; [word] ]
-                        | _ -> group.Token.items
-                    in
+                    let pushFrame withScope =
+                        let items = match group.Token.kind with
+                            | Token.Box _ ->
+                                let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; groupInitializer=[]; items=group.Token.items}) in
+                                let word = Token.(clone token @@ Word Value.currentKeyString) in
+                                [ [wrapperGroup]; [word] ]
+                            | _ -> group.Token.items
+                        in
 
-                    (* Trace here ONLY if command line option requests it *)
-                    if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValueNewTable newScope;
+                        (* Trace here ONLY if command line option requests it *)
+                        if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValueNewTable withScope;
 
-                    (* New frame: Group descent *)
-                    executeStep context @@ (stackFrame newScope items token.Token.at)::(stackWithRegister frame.Value.register)
+                        (* New frame: Group descent *)
+                        executeStep context @@ (stackFrame withScope items token.Token.at)::(stackWithRegister frame.Value.register)
+                    in (match group.Token.groupInitializer with
+                        | [] ->
+                            let newScope = (groupScope context group.Token.kind frame.Value.scope) in
+                            pushFrame newScope
+                        | groupInitializer ->
+                            let handoff _ _ = function f,_ ->
+                                pushFrame f
+                            in
+                            executeStep context @@
+                                Value.{register=startRegister token.Token.at;
+                                    code=[groupInitializer]; scope=frame.scope}
+                                :: (stackWithRegister @@ Value.FirstValue(Value.BuiltinHandoffValue(handoff),token.Token.at,token.Token.at))
+                    )
                 | _ -> closureValue group
 
 (* apply item a to item b and return it to the current frame *)
