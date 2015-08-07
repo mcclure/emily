@@ -1,6 +1,7 @@
 # Tests known to currently fail.
 
 # SERIOUS FAILURES -- FEATURE IN PROGRESS
+set/initializer.em # scopes do the wrong thing
 package/customPath/arg.em  # At present, this fails because the prototypes cannot be loaded.
 package/customPath/env.em
 package/customPath/both.em

@@ -222,18 +222,23 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
 
     (* Identify token *)
     in match token.Token.contents with
-        (* Straightforward values that can be evaluated in place *)
+        (* Straightforward values that can be evaluated in place: *)
+        (* A bare word should be looked up from the scope. *)
         | Token.Word s ->   apply context (stackWithRegister frame.Value.register) frame.Value.scope frame.Value.scope (Value.AtomValue s, token.Token.at)
+        (* A literal value should be simply converted from Token to Value. *)
         | Token.String s -> simpleValue(Value.StringValue s)
         | Token.Atom s ->   simpleValue(Value.AtomValue s)
         | Token.Number f -> simpleValue(Value.FloatValue f)
+        (* Symbols are not allowed at this point, they can only survive if a macro inserted one. *)
         | Token.Symbol s -> Token.failToken token @@ "Faulty macro: Symbol "^s^" left unprocessed"
-        (* Not straightforward. *)
+        (* Not straightforward: This token is a parenthetical. *)
         | Token.Group group ->
             match group.Token.closure with
-                (* Token is nontrivial to evaluate, and will require a new stack frame. *)
+                (* Nonclosure groups are nontrivial to evaluate, and will require a new stack frame. *)
                 | Token.NonClosure ->
+                    (* This creates the new frame with an enclosing scope designated. *)
                     let pushFrame withScope =
+                        let newScope = (groupScope context group.Token.kind frame.Value.scope) in
                         let items = match group.Token.kind with
                             | Token.Box _ ->
                                 let wrapperGroup = Token.(clone token @@ Group {kind=Plain; closure=NonClosure; groupInitializer=[]; items=group.Token.items}) in
@@ -243,14 +248,17 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
                         in
 
                         (* Trace here ONLY if command line option requests it *)
-                        if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValueNewTable withScope;
+                        if Options.(run.trace) then print_endline @@ "Group --> " ^ Pretty.dumpValueNewTable newScope;
 
                         (* New frame: Group descent *)
-                        executeStep context @@ (stackFrame withScope items token.Token.at)::(stackWithRegister frame.Value.register)
+                        executeStep context @@ (stackFrame newScope items token.Token.at)::(stackWithRegister frame.Value.register)
+
+                    (* Now we need to pick that enclosing scope. *)
                     in (match group.Token.groupInitializer with
+                        (* For ordinary groups, it is known: *)
                         | [] ->
-                            let newScope = (groupScope context group.Token.kind frame.Value.scope) in
-                            pushFrame newScope
+                            pushFrame frame.Value.scope
+                        (* But groups with an initializer, we must evaluate code to get it: *)
                         | groupInitializer ->
                             let handoff _ _ = function f,_ ->
                                 pushFrame f
@@ -260,6 +268,7 @@ and evaluateTokenFromTokens context stack frame moreFrames line moreLines token 
                                     code=[groupInitializer]; scope=frame.scope}
                                 :: (stackWithRegister @@ Value.FirstValue(Value.BuiltinHandoffValue(handoff),token.Token.at,token.Token.at))
                     )
+                (* Parenthetical is defining a new function. *)
                 | _ -> closureValue group
 
 (* apply item a to item b and return it to the current frame *)
