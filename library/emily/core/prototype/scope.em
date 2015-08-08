@@ -60,3 +60,5 @@ atom   = internal.type.isAtom
 string = internal.type.isString
 number = internal.type.isNumber
 int ^x = number x && x == floor x # Sort of a virtual type, I suppose...?
+
+internal.setPropertyKey current .scope ^x(x)

@@ -52,5 +52,16 @@ println: floor 2.718281828
 print (atom .atom)       sp (atom "atom")          sp \
       (string "3.14159") sp (string 3.14159)       sp \
       (number 3.14159)   sp (number "3.14159")     sp \
-      (int 3)            sp (int 3.14159)          sp \
-      ln
+      (int 3)            sp (int 3.14159)          ln
+
+# Test scope manipulation
+
+# Expect: 3.
+
+a = 3
+println: scope.a
+
+# Expect: 4.
+
+scope.a = 4
+println: a
