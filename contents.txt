@@ -10,17 +10,19 @@ contents.txt
     This file
 
 develop/
-    Utility scripts for use in development. Scripts should be run from project root
-
-develop/regression.py
-    Unit testing script
+    Utility scripts for use in development. Scripts should be run from project root.
+    See develop/contents.txt
 
 doc/
-    Language, build etc documentation. I recommend starting with "build.md" or "intro.md"
-    Files are in Markdown, I recommend the Markdown Preview plugin for Chrome
+    Language, build etc documentation. I recommend starting with "build.md" or "intro.md".
+    Files are in Markdown, I recommend the Markdown Preview plugin for Chrome.
 
 install/
     After build, executable will go here
+
+library/
+    Files that will go into the built Emily standard library.
+    The "universal" directory tree will be merged with one or more optional directories.
 
 resources/
     Static files to be incorporated into package during build
@@ -40,6 +42,10 @@ src/_tags
 src/main.ml
     Program entry point
 
+myocamlbuild.ml
+    This is a source file which ocamlbuild requires at the root level for some reason
+
 _tags
 _build/
+_build_c/
     Intermediate build products, automatically created by make

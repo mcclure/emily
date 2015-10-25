@@ -18,6 +18,7 @@ string/unicode.em
 string/builtin.em
 string/fail/type.em
 string/fail/count.em
+string/fail/fail.em
 
 # Reader
 backslash/basic.em
@@ -50,10 +51,15 @@ macro/math/basic.em
 macro/math/unaryMinus.em
 macro/nonlocal.em
 macro/list.em
+macro/check.em
 macro/fail/unknown.em
 macro/fail/ternOpen.em
 macro/fail/ternNest.em
+macro/fail/colonWreck.em
 macro/fail/assignPath.em
+macro/fail/checkBlank.em
+macro/fail/checkConstant.em
+macro/fail/checkUndefined.em
 
 # Operators
 math/statement.em
@@ -128,3 +134,4 @@ ski/stars.em
 library/emily/array.em
 library/emily/functional.em
 library/emily/string.em
+library/emily/os.em

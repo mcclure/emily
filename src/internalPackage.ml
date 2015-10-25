@@ -10,7 +10,6 @@ let truefnValue = Value.BuiltinFunctionValue(fun x -> Value.True)
 
 let internalTable,internalValue = tablePair()
 
-
 let fakeRegisterLocation name = Token.{fileName=Internal name;lineNumber=0;lineOffset=0}
 let fakeRegisterFrom reg =
     Value.{register=reg;scope=Null;code=[]}
@@ -58,6 +57,27 @@ let () =
         | _ -> internalFail ()
     );
 
+    setAtomValue "fail" @@ Value.BuiltinHandoffValue(fun _ stack value ->
+        let message = match value with
+            | Value.StringValue s,_ -> "Program failed: " ^ s
+            | v,_ ->                   "Program failed with value: " ^ (Pretty.dumpValueForUser v)
+        in Execute.failWithStack stack message
+    );
+
+    (* This has to be a handoff because that's the only way to get context, needed to allocate an object *)
+    (* All this really does is convert Options.(run.args) into an Emily list *)
+    setAtomValue "getArgs" @@ Value.BuiltinHandoffValue(fun context stack fnat ->
+        let _, at = fnat in
+        let o = ValueUtil.objectBlank context in
+        let ot = Value.tableFrom o in
+        let args = Options.(run.args) in
+        Value.tableSetString ot "count" @@ Value.FloatValue(float_of_int @@ List.length args);
+        List.iteri (fun i str ->
+            Value.tableSet ot (Value.FloatValue(float_of_int i)) (Value.StringValue str)
+        ) args;
+        Execute.returnTo context stack (o,at)
+    );
+
     (* "Submodule" internal.out *)
     let outTable = insertTable "out" in
     setAtomFn ~target:outTable "print" @@ reusable (fun v -> print_string @@ Pretty.dumpValueForUser v);
@@ -96,6 +116,19 @@ let () =
     setAtomTest "greaterThanEqual" ( >= );
 
     setAtomMathFn "floor"  floor;
+
+    setAtomFn ~target:doubleTable "toString" @@ (function
+        | Value.FloatValue f1 -> Value.StringValue( string_of_float f1 )
+        | _ -> failwith "Can only perform that function on a number"
+    );
+
+    (* "Submodule" internal.string *)
+    let atomTable = insertTable "atom" in
+
+    setAtomFn ~target:atomTable "toString" @@ (function
+        | Value.AtomValue s -> Value.StringValue( s )
+        | _ -> failwith "Can only perform that function on an atom"
+    );
 
     (* "Submodule" internal.string *)
     let stringTable = insertTable "string" in
@@ -150,6 +183,32 @@ let () =
     setAtomFn ~target:typeTable "isAtom"   (fun v -> match v with Value.AtomValue   _ -> Value.True | _ -> Value.Null);
     setAtomFn ~target:typeTable "isString" (fun v -> match v with Value.StringValue _ -> Value.True | _ -> Value.Null);
     setAtomFn ~target:typeTable "isNumber" (fun v -> match v with Value.FloatValue  _ -> Value.True | _ -> Value.Null);
+
+    (* "Submodule" internal.type *)
+
+    if%const [%getenv "BUILD_INCLUDE_C_FFI"] <> "" then
+        let ffiTable = insertTable "ffi" in
+        let open FfiSupport in (
+            setAtomFn ~target:ffiTable "newForeign" (
+                function _ ->
+                    let foreigner = {name=None; args=[]; returning="void"} in
+                    let table = ValueUtil.tableBlank Value.NoSet in
+                    let setFfiParam what fn = Value.tableSetString table what @@ Value.BuiltinFunctionValue(
+                        function Value.AtomValue s | Value.StringValue s -> fn s; Value.Null
+                        | x -> failwith @@ "Need key "^Pretty.dumpValue(x)^" for ffi "^what^"; expected string or atom"
+                    ) in
+                    setFfiParam "name"      (fun s -> foreigner.name <- Some s);
+                    setFfiParam "return"    (fun s -> foreigner.returning <- s);
+                    setFfiParam "args"      (fun s -> foreigner.args <- s::foreigner.args);
+                    Value.tableSetString table "make" @@ Value.BuiltinFunctionValue(function _ ->
+                        match foreigner.name with
+                            | None -> failwith "No name provided for FFI function";
+                            | Some name ->
+                                valueForeign name (List.rev foreigner.args) foreigner.returning
+                    );
+                    Value.TableValue(table)
+            )
+        );
 
     (* Done *)
     ()

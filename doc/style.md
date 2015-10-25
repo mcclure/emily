@@ -10,7 +10,7 @@
         [hooks]
         pretxncommit.checkfiles=hg checkfiles
         [checkfiles]
-        checked_exts = .ml .em .py .pl .md .txt
+        checked_exts = .ml .em .py .pl .md .txt .h .c .cpp
         ignored_files = sample/test/parse/unicode/whitespace.em sample/test/backslash/basic.em sample/test/backslash/fail/eof.em doc/manual.md doc/tutorial.md
 
 - There is a `make test`. It runs all the test cases listed in `sample/regression.txt`. `make && make test` should be run frequently (maybe eventually I'll make myself a precommit hook for that, too).

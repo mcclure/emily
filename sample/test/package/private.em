@@ -2,9 +2,10 @@
 # Should change in lockstep with obj/literal/private
 # Expect:
 # (Inside)
-# 4.
-# 4.
-# 7.
+# 19. 17. 14.
+# 9. 4. 7.
+# 17. 17. 14.
+# 7. 4. 7.
 # <true> <true> <true>
 # <null> <null>
 # <true> <true> <true> <true>
@@ -12,7 +13,7 @@
 # <null> <true> <null> <true>
 # (Inner method)
 # (Outside)
-# 7.
+# 14. 7.
 # <true> <null> <null> <null>
 # <null> <null> <null> <true>
 
@@ -23,7 +24,7 @@ do: pkg.innerMethod
 println: "(Outside)"
 
 # Read back object member
-println: pkg.shadowed
+print (pkg.shadowed) sp (pkg.unshadowed) ln
 
 # By the way, this isn't a package, so it shouldn't have a private or a current.
 print (has .let) sp (has .private) sp (has .current) sp (has .shadowed) ln

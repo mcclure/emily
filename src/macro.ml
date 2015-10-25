@@ -184,7 +184,7 @@ let backtick past at future =
         | _ -> Token.failToken at "` must be followed by two symbols"
 
 (* Works like ocaml @@ or haskell $ *)
-let rec question past at future =
+let question past at future =
     let result colonAt cond a b =
         [cloneWord at "tern";
             newFuture at cond; newFutureClosure at a; newFutureClosure colonAt b]
@@ -198,6 +198,16 @@ let rec question past at future =
                 scan (token::a) moreRest
             | [] -> Token.failToken at ": expected somewhere to right of ?"
     in scan [] future
+
+(* Works like Perl // *)
+let ifndef past at future =
+    let target, key =
+        match past with
+            | ({Token.contents=Token.Word name} as token)::[] -> cloneWord at "scope", cloneAtom token name
+            | left::[] -> Token.failToken left "Either a variable name or a field access is expected to left of //"
+            | token::moreTokens -> newPast at moreTokens, token
+            | [] -> Token.failToken at "Nothing found to left of // operator"
+    in [cloneWord at "check"; target; key; newFutureClosure at future]
 
 (* Assignment operator-- semantics are relatively complex. See manual.md. *)
 let assignment past at future =
@@ -298,6 +308,11 @@ let closureConstruct withReturn =
                         (* Supported group *)
                         | _ -> arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) kind groupInitializer items) moreFuture
                     )
+
+                (* Found a :, so act like it's a group *)
+                (* FIXME: Merge with above? *)
+                | {Token.contents=Token.Symbol ":"} :: moreFuture ->
+                    arrangeToken at past (Token.cloneGroup at (Token.ClosureWithBinding(withReturn,(List.rev bindings))) Token.Plain [] [process moreFuture]) []
 
                 (* Reached end of line *)
                 | [] -> Token.failToken at @@ "Body missing for closure"
@@ -405,6 +420,9 @@ let builtinMacros = [
 
     R(65.), "==", makeSplitter "eq";
     R(65.), "!=", makeSplitterInvert "eq";
+
+    (* Orelse *)
+    L(67.), "//", ifndef;
 
     (* Boolean *)
     R(70.), "&&", makeShortCircuit "and";

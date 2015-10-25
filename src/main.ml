@@ -18,14 +18,18 @@ let () =
         ignore @@ Loader.executeProgramFrom location buf
     in
     if Options.(run.repl) then
-        ( if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then Repl.repl Options.(run.targets) )
+        ( if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then Repl.repl Options.(run.target) )
     else
         try
-            List.iter processOne
+            processOne
                 (* FIXME: This is maybe awkward? It is here so printPackage can work without a target. *)
                 (* It works by assuming an implicit -e '', which is only safe if we assume *)
                 (* option.ml would have failed already if that weren't ok. *)
-                (match Options.(run.targets) with [] -> [Options.Literal ""] | t -> t)
+                (match Options.(run.target) with None -> Options.Literal "" | Some t -> t);
+
+            (* In the standalone version, it appears this happens automatically on exit. *)
+            (* In the C-embed version, it does *not*, so call it here. *)
+            flush_all ()
         with
             | Token.CompilationError e ->
                 prerr_endline @@ Token.errorString e; exit 1

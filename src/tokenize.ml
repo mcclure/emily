@@ -145,7 +145,7 @@ let tokenize enclosingKind name buf : Token.token =
         let newLineProceed x = proceedWithLines (linesPlusLine()) [] in
 
         (* Complete processing the current group by completing the current codeSequence & feeding it to the groupSeed. *)
-        let closeGroup () = groupSeed (cleanup groupInitializer) ( cleanup (linesPlusLine()) ) in
+        let closeGroup () = groupSeed groupInitializer ( cleanup (linesPlusLine()) ) in
 
         (* Helper: Given a string->tokenContents mapping, make the token, add it to the line and recurse *)
         let addSingle constructor = addToLineProceed(makeTokenHere(constructor(matchedLexemes()))) in
@@ -241,7 +241,10 @@ let tokenize enclosingKind name buf : Token.token =
             (* If a | is seen, this demarcates the initializer *)
             | '|' -> if anyNonblank lines
                 then addSingle makeSymbol (* If we've passed our chance for an initializer, this is just a pipe *)
-                else proceedWithInitializer line lines [] (* Otherwise swap line into the initializer spot *)
+                else proceedWithInitializer ( (* Otherwise it's an initializer *)
+                    if Options.(run.stepMacro) then print_endline @@ "-- Macro processing for initializer in "^(Token.fileNameString name);
+                    Macro.process @@ cleanup line
+                ) lines [] (* Otherwise swap line into the initializer spot *)
 
             | Plus(Compl(Chars "#()[]{}\\;\""|digit|letterPattern|white_space))
                 -> addSingle makeSymbol

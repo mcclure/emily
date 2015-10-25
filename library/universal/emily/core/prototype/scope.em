@@ -17,6 +17,13 @@ loop ^f = if (do f) ^(loop f)
 
 while ^predicate body = if (do predicate) ^(do body; while predicate body)
 
+upto ^x perform = {
+    counter = 0
+    result = null
+    while ^(counter < x) ^( result = perform counter; counter = counter + 1; )
+    result # For consistency with while
+}
+
 and ^a b = tern (do a) b nullfn
 
 or ^a b = { aValue = do a; tern aValue ^(aValue) b }
@@ -29,11 +36,15 @@ xor ^ a b = {
     ) bValue
 }
 
+check ^obj key else = obj.has key ? obj key : do else
+
 sp = " "
 
 ln = "\n"
 
 true = internal.true
+
+fail = internal.fail
 
 print = internal.out.print
 
@@ -49,12 +60,18 @@ printsp ^s = {
     print s; printsp2
 }
 
+inherit ^x = [ parent=x ]
+
 thisTransplant = internal.thisTransplant
 thisInit       = internal.thisInit
 thisFreeze     = internal.thisFreeze
 thisUpdate     = internal.thisUpdate
 
 floor = internal.double.floor
+ceiling ^x = {
+    i = floor x
+    i < x ? i + 1 : i
+}
 
 atom   = internal.type.isAtom
 string = internal.type.isString

@@ -16,10 +16,12 @@ range ^base limit = [
                 i >= this.base && i < this.base + this.count
             ) : ()
         )
-        null field        # FIXME: Should be a way to fail / "throw"
+        fail "not in range"
     )
 ]
 
 rangeTo = range 0
 
 copy ^a = [ a.each ^x( x, ) ] # FIXME: This idiom...
+
+contains ^a key = ( a.each ^x: if (key == x) ^(return true); return null )

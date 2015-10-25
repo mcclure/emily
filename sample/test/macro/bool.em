@@ -17,3 +17,11 @@ println( !true || !true && !null )
 println( true  && null  || null  )
 println( !null && !true || !true )
 println( !null && !true || true %% true )
+
+# Whatever the ! grouping behavior is, verify it hasn't changed:
+
+# Expect: <null>
+println: !  null .has .plus
+
+# Expect: <true>
+println: ! (null .has .plus)

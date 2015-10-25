@@ -1,4 +1,4 @@
-# Test turing completeness by way of combinators (2). Expected output is 1,729 asterisks.
+# Test turing completeness by way of combinators (2).
 
 # Expect:
 # 1729.

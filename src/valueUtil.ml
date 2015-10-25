@@ -63,12 +63,14 @@ let snippetApply closure value =
 (* These first three snippet closures are relied on by the later ones *)
 
 (* Ternary function without short-circuiting... *)
+(* internal.tern exposes this *)
 let rawTern = snippetClosure 3 (function
     | [Null;_;v] -> v
     | [_;v;_] -> v
     | _ -> impossibleArg "rawTern")
 
 (* ...used to define the ternary function with short-circuiting: *)
+(* This is used by snippets that require tern, but tern in scopePrototype is separate. *)
 let tern = snippetTextClosure (Token.Internal "tern")
     ["rawTern", rawTern; "null", Null]
     ["pred"; "a"; "b"]
@@ -103,6 +105,19 @@ let rethisAssignObjectInsideLet _ x = rawRethisAssignObject x
 
 (* This next batch is the functions required to create a blank user table *)
 
+(* Setup for filter-based functions *)
+(* FIXME: Remove need for target *)
+let actTableSet (target:value) (t:tableValue) key value =
+    tableSet t key value;
+    if Options.(run.traceSet) then print_endline @@ "Set update "^Pretty.dumpValueNewTable target
+
+let actTableSetWith (modifier:value->value->value) (target:value) (t:tableValue) key value =
+    actTableSet target t key (modifier target value)
+
+let actPairTableSet t1v t1 t2v t2 key value =
+    actTableSet t1v t1 key value;
+    actTableSet t2v t2 key value
+
 (* Most tables need to be preopulated with a "has". Here's the has tester for a singular table: *)
 let rawHas = snippetClosure 2 (function
     | [TableValue t;key] | [ObjectValue t;key] -> boolCast (tableHas t key)
@@ -123,8 +138,7 @@ let makeHas obj = snippetApply hasConstruct obj
 (* Most tables need to be preopulated with a "set". Here's the setter for a singular table: *)
 let rawSet = snippetClosure 3 (function (* TODO: Unify with makeLet? *)
     | [TableValue t as tv;key;value] | [ObjectValue t as tv;key;value] ->
-        tableSet t key value;
-        if Options.(run.traceSet) then print_endline @@ "Set update "^Pretty.dumpValueNewTable tv;
+        actTableSet tv t key value;
         Null
     | [v;_;_] -> badArgTable "rawSet" v
     | _ -> impossibleArg "rawSet")
@@ -152,10 +166,9 @@ let makeObjectSet obj = snippetApply objectSetConstruct obj
 
 (* Many tables need to be prepopulated with a "let". Here's the let setter for a singular table: *)
 (* TODO: Don't 'make' like this? *)
-let makeLet (modifier:value->value->value) (target:value) (t:tableValue) = snippetClosure 2 (function
+let makeLet (action:value->value->unit) = snippetClosure 2 (function
     | [key;value] ->
-        tableSet t key (modifier target value);
-        if Options.(run.traceSet) then print_endline @@ "Let update "^Pretty.dumpValueNewTable target;
+        action key value;
         Null
     | _ -> impossibleArg "makeLet")
 
@@ -166,43 +179,20 @@ let populateWithSet t =
     populateWithHas t;
     tableSetString t Value.setKeyString (makeSet (TableValue t))
 
-(* Factory for super functions. Used for "private" *)
-let dualSwitch parent1 parent2 = snippetTextClosure (Token.Internal "dualParentConstruct")
-    ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
-    ["key"]
-    "(rawTern (parent1.has key) parent1 parent2) key"
-
-let dualInherit parent1 parent2 =
-    let parent = dualSwitch parent1 parent2 in
-    let dualSet = snippetTextClosure (Token.Internal "dualSetConstruct")
-        ["rawTern",rawTern; "parent1",parent1; "parent2",parent2]
-        ["key"]
-        "(rawTern (parent1.has key) parent1 parent2) .set key" in
-    let dualHas = snippetTextClosure (Token.Internal "dualHasConstruct")
-        ["tern",tern; "true",Value.True; "parent1",parent1; "parent2",parent2]
-        ["key"]
-        "tern (parent1.has key) ^(true) ^(parent2.has key)" in
-    let t = tableTrueBlank() in
-    tableSet t Value.hasKey dualHas;
-    tableSet t Value.setKey dualSet;
-    tableSet t Value.parentKey parent;
-    TableValue t
-
 (* Not unified with tableBlank because it returns a value not an object *)
-let objectBlank parent =
+let objectBlank context =
     let obj = tableTrueBlank() in
     let objValue = ObjectValue obj in
     populateWithHas obj;
     tableSetString obj Value.setKeyString (makeObjectSet objValue);
-    tableSetString obj Value.letKeyString (makeLet rethisAssignObjectInsideLet objValue obj);
-    (match parent with
-        | Some value -> tableSetString obj Value.parentKeyString (value);
-        | _ -> ());
+    tableSetString obj Value.letKeyString
+        (makeLet (actTableSetWith rethisAssignObjectInsideLet objValue obj));
+    tableSetString obj Value.parentKeyString (context.Value.objectProto);
     objValue
 
-(* FIXME: Pass around table objects rather than creating a dupe TableValue here *)
+(* FIXME: Once actTableSet no longer takes a table value, the dummy TableValue will not be needed *)
 let populateLetForScope storeIn writeTo =
-    tableSetString storeIn Value.letKeyString (makeLet ignoreFirst (TableValue writeTo) writeTo)
+    tableSetString storeIn Value.letKeyString (makeLet (actTableSet (TableValue writeTo) writeTo))
 
 (* Give me a simple table of the requested type, prepopulate with basics. *)
 let rec tableBlank kind : tableValue =
@@ -216,26 +206,29 @@ let rec tableBlank kind : tableValue =
     );
     t
 
-type boxKind = PopulatingPackage of value | PopulatingObject of value
+type boxTarget = Package | Object
+type boxSpec   = Populating of boxTarget*value
 
 let boxBlank boxKind boxParent =
+    let Populating(targetType,targetValue) = boxKind in
     let t = tableBlank NoLet in
-    let privateTable = tableBlank WithLet in
+    let privateTable = tableBlank NoLet in
     let privateValue = TableValue privateTable in
-    let handleObjectPair canSeeOwnScope (obj,objValue) =
-        tableSetString t Value.letKeyString (makeLet rawRethisAssignObjectDefinition objValue obj);
-        tableSet t thisKey   objValue;
-        tableSet t parentKey (dualInherit privateValue
-            @@ if canSeeOwnScope then dualInherit objValue boxParent else boxParent);
-        objValue
-    in
-    let currentValue = match boxKind with
-        | PopulatingPackage v -> (* This is currently used for packages *)
-            handleObjectPair true (tableFrom v,v)
-        | PopulatingObject v -> (* This is currently used for objects. FIXME, decouple canSeeOwnScope into its own thing? *)
-            handleObjectPair false (tableFrom v,v)
-    in
-    tableSet t currentKey currentValue;
+    let targetTable = tableFrom targetValue in
+    tableSet privateTable Value.letKey (makeLet @@ (* Another fallacious value usage *)
+        actPairTableSet privateValue privateTable (TableValue t) t
+    );
+    tableSet t Value.letKey (makeLet @@ (* See objects.md *)
+        if targetType=Package then
+            actPairTableSet targetValue targetTable (TableValue t) t
+        else
+            actTableSetWith rawRethisAssignObjectDefinition targetValue targetTable
+    );
+    if targetType=Package then
+        tableSet t exportLetKey (makeLet @@ actTableSet targetValue targetTable);
+    tableSet t thisKey   targetValue;
+    tableSet t parentKey boxParent;
+    tableSet t currentKey targetValue;
     (* Access to a private value: *)
     tableSet t privateKey privateValue;
     t

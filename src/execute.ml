@@ -45,7 +45,7 @@ let groupScope context tokenKind scope initializerValue =
         | Token.Scoped   -> scopeInheriting Value.WithLet
             (match initializerValue with None -> scope | Some x -> x)
         | Token.Box kind -> objectLiteralScope
-            (ValueUtil.PopulatingObject (match initializerValue with None -> ValueUtil.objectBlank (Some context.Value.objectProto) | Some x -> x))
+            ValueUtil.(Populating(Object,match initializerValue with None -> objectBlank context | Some x -> x))
             scope
 
 (* Combine a value with an existing register var to make a new register var. *)

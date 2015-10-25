@@ -35,3 +35,9 @@ r3 = p.copy r
 r3 1 = 100
 r3.each println
 println: r 1
+
+# Expect:
+# <true>
+# <null>
+println: p.contains [1,2,3,4,5] 3
+println: p.contains [1,2,8,4,5] 3

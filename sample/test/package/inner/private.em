@@ -4,20 +4,27 @@
 
 println: "(Inside)"
 
-# Test assigning private variable
-private.shadowed = 4
+# Plain assignment assigns to package+scope; private assignment assigns to private+scope.
+# In other words, whichever of these two assignments occur second for a single variable
+# is the one which survives in the current scope. Test these rules:
 
-# Test nonlocal set works as expected-- should fall through to outer scope
-shadowed = 7
+shadowed = 14
+{
+    shadowed = 19;        # Overwrites locally but does not last
+    private.shadowed = 17 # Overwrites nonlocally, lasts
+    print shadowed   sp (private.shadowed)   sp (current.shadowed)   ln
+}
 
-# Test private scope shadows current scope (is this confusing?)
-println: shadowed
+private.unshadowed = 4
+unshadowed = 7
+{
+    unshadowed = 9;    # Overwrites locally but does not last
+    print unshadowed sp (private.unshadowed) sp (current.unshadowed) ln
+}
 
-# Test private may be queried directly
-println: private.shadowed
-
-# Test package assignment did work
-println: current.shadowed
+# Test private, current and scope have the expected values following the above.
+print shadowed   sp (private.shadowed)   sp (current.shadowed)   ln
+print unshadowed sp (private.unshadowed) sp (current.unshadowed) ln
 
 # Test assigning package variable with unique name, for has test
 visible = 5

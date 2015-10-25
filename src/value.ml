@@ -127,6 +127,8 @@ let nonlocalKeyString = "nonlocal"
 let nonlocalKey = AtomValue nonlocalKeyString
 let privateKeyString = "private"
 let privateKey = AtomValue privateKeyString
+let exportLetKeyString = "exportLet"
+let exportLetKey = AtomValue exportLetKeyString
 
 let tableGet table key = CCHashtbl.get table key
 let tableSet table key value = Hashtbl.replace table key value

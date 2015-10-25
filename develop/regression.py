@@ -52,13 +52,14 @@ help += "-r [path]         # Set the project root\n"
 help += "-a          # Check all paths listed in standard " + stdfile + "\n"
 help += "-A          # Also check paths listed in " + badfile + "\n"
 help += "-v          # Print all output\n"
+help += "-i [path]   # Use custom emily interpreter\n"
 help += "-s          # Use system emily interpreter\n"
 help += "--untested  # Check repo hygiene-- list tests in sample/test not tested"
 
 parser = optparse.OptionParser(usage=help)
 for a in ["a", "A", "v", "s", "-untested"]: # Single letter args, flags
     parser.add_option("-"+a, action="store_true")
-for a in ["f", "t", "r"]: # Long args with arguments
+for a in ["f", "t", "r", "i"]: # Long args with arguments
     parser.add_option("-"+a, action="append")
 
 (options, cmds) = parser.parse_args()
@@ -112,6 +113,10 @@ if flag("untested"):
     sys.exit(0)
 
 stdcall = [projectRelative("install/bin/emily")]
+if flag("i") and flag("s"):
+    parser.error("Can't specify both -i and -s")
+if flag("i"):
+    stdcall = flag("i")
 if flag("s"):
     stdcall = ["emily"]
 

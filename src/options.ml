@@ -7,7 +7,8 @@ type executionTarget = Stdin | File of string | Literal of string
 
 type optionSpec = {
     (* Execution args *)
-    mutable targets : executionTarget list;
+    mutable target : executionTarget option;
+    mutable args : string list;
     mutable repl : bool;
     mutable stepMacro : bool;
     mutable trace : bool;
@@ -27,7 +28,7 @@ type optionSpec = {
 }
 
 let run = {
-    targets=[];
+    target=None; args=[];
     repl=false;
     stepMacro=false; trace=false; trackObjects=false; traceSet=false;
     packagePath=None;projectPath=None;
@@ -43,9 +44,6 @@ let buildPathSetSpec name action whatIs =
     (name, Arg.String(action), "Directory root for packages loaded from \"" ^ whatIs ^ "\"")
 
 let () =
-    let targets = ref [] in
-    let seenStdin = ref false in
-
     let usage = (fullVersion ^ {|
 
 Sample usage:
@@ -65,13 +63,14 @@ Options:|})
 
     in let executeArgs = [ (* Basic arguments *)
         ("-", Arg.Unit(fun () -> (* Arg's parser means the magic - argument must be passed in this way. *)
-            if !seenStdin then failwith "Attempted to parse stdin twice; that doesn't make sense?"
-                else seenStdin := true; targets := Stdin :: !targets
+            run.target <- Some Stdin;
+            raise ArgPlus.Complete
         ), ""); (* No summary, this shouldn't be listed with options. *)
 
         (* Args *)
         ("-e", Arg.String(fun f ->
-            targets := Literal f :: !targets
+            run.target <- Some(Literal f);
+            raise ArgPlus.Complete
         ), "Execute code inline");
 
     ] @ (if%const [%getenv "BUILD_INCLUDE_REPL"] <> "" then [
@@ -112,17 +111,18 @@ Options:|})
 
     in let args = executeArgs @ (keyMutateArgument environmentArgs) @ debugArgs
 
-    in let targetParse t = targets := File t :: !targets
+    in let targetParse t = (run.target <- Some(File t); raise ArgPlus.Complete)
 
     in
     ArgPlus.envParse (keyMutateEnvironment environmentArgs);
-    ArgPlus.argParse args targetParse usage (fun _ ->
+    ArgPlus.argParse args targetParse usage (fun progArgs ->
         (* Arguments are parsed; either short-circuit with an informational message, or store targets *)
+        (* FIXME: Is "withholding" run.targets in this way really the most elegant way to do this? *)
         if run.printMachineVersion then print_endline version else
         if run.printVersion then print_endline fullVersion else (
-            run.targets <- List.rev !targets;
-            if (run.dontNeedTargets) then () else match run.targets with
-                | [] -> raise @@ ArgPlus.Help 1 (* No targets! Fail and print help. *)
-                | _  -> ()
+            run.args <- progArgs;
+            if (run.dontNeedTargets) then () else match run.target with
+                | None -> raise @@ ArgPlus.Help 1 (* No targets! Fail and print help. *)
+                | _    -> ()
         )
     )

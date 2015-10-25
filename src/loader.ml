@@ -9,17 +9,10 @@ let nameAtom filename = Value.AtomValue (try
     with
         Invalid_argument _ -> filename)       (* If there is no extension do nothing *)
 
-(* TODO: This should be normalized. Strongly consider using extunix.realpath instead *)
-let readlink path = FileUtil.readlink path
-let bootPath = readlink @@ Sys.getcwd()
+(* See also path.ml *)
 let defaultPackagePath =
     let envPath = [%getenv "BUILD_PACKAGE_DIR"] in
-    if FilePath.is_relative envPath then
-        (* This will work as long as the executable was not executed from $PATH. *)
-        let exePath  = readlink @@
-            Filename.concat (Sys.getcwd()) (Filename.dirname @@ Array.get Sys.argv 0)
-        in Filename.concat exePath envPath
-    else envPath
+    Path.executableRelativePath envPath
 let packageRootPath () =
     match Options.(run.packagePath) with Some s -> s | _ -> defaultPackagePath
 
@@ -107,7 +100,7 @@ and loadPackage starter (projectSource:loaderSource) (directory:loaderSource) pa
                         loadPackageDir starter projectSource path
                     else
                         let packageScope = Value.TableValue(ValueUtil.tableBlank Value.NoSet) in
-                        ignore @@ loadFile (boxSubStarter starter @@ ValueUtil.PopulatingPackage packageScope)
+                        ignore @@ loadFile (boxSubStarter starter @@ ValueUtil.(Populating(Package,packageScope)))
                             projectSource directory path;
                         packageScope
                 with Sys_error s ->
@@ -119,7 +112,7 @@ and loadPackage starter (projectSource:loaderSource) (directory:loaderSource) pa
 let projectPathForLocation location =
     match Options.(run.projectPath) with
         | Some s -> s
-        | _ -> (match location with Cwd -> bootPath | Path str -> str)
+        | _ -> (match location with Cwd -> Path.bootPath | Path str -> str)
 let projectForLocation starter defaultLocation =
     loadPackage starter SelfSource NoSource @@ projectPathForLocation defaultLocation
 
@@ -143,7 +136,7 @@ let completeStarter withProjectLocation =
         let path = List.fold_left FilePath.concat packagePath ["emily";"core";"prototype";pathKey ^ ".em"] in
         let enclosing = loadPackageDir packageStarter NoSource @@ Filename.dirname path in
         ignore @@ loadFile
-            (boxSubStarter packageStarter @@ ValueUtil.PopulatingPackage proto)
+            (boxSubStarter packageStarter @@ ValueUtil.(Populating(Package,proto)))
             NoSource (Source enclosing) path
     in
     Value.tableSet rootScope Value.internalKey InternalPackage.internalValue;

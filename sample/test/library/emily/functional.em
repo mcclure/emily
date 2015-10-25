@@ -29,7 +29,8 @@ u = p.util
     (((s (k newline)) ((s ((s i) (k star))) (k i))) (((s ((s (k ((s i) (k (s ((s (k s)) k)))))) ((s ((s (k s)) k)) ((s ((s (k s)) k)) i)))) ((s (k ((s ((s (k s)) k)) ((s ((s (k s)) k)) i)))) (s ((s (k s)) k)))) (((s ((s (k s)) k)) i) ((s ((s (k s)) k)) ((s ((s (k s)) k)) i)))))
 }
 
-# FIXME: How on earth do you test v? I'm gonna skip it.
+# Test void just by ensuring this doesn't error or do anything else noticeable
+(u.void) println 3 "OK" 5 3 1
 
 # Expect:
 # 3.

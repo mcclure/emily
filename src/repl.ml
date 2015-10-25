@@ -23,7 +23,7 @@ input from the user.
 
 Control-D (EOF) exits the REPL, as does evaluating the word `quit`. *)
 
-let repl targets =
+let repl target =
 
     (* This is our global mutable REPL scope. Prepopulate it with some stuff: *)
     let starter = Loader.completeStarter Loader.Cwd in
@@ -49,8 +49,8 @@ let repl targets =
         let buf = Tokenize.tokenizeString Token.Cmdline s in
         Execute.execute starter buf in
 
-    (* Run all file targets -- skip all other targets *)
-    let runTargetFiles t =
+    (* Run file or -e target *)
+    let runTargetFile t =
         match t with
             | Options.File f -> ignore @@ runFile f
             | Options.Literal s -> ignore @@ runString s
@@ -59,7 +59,7 @@ let repl targets =
 
     (* Load any files provided by the user, before launching REPL *)
     let runUserFiles () =
-        List.iter runTargetFiles targets in
+        match target with None -> () | Some t -> runTargetFile t in
 
     let rec promptAndReadBuffer () = (
         (* Print a prompt, take a line of text, push to "lines" stack *)
