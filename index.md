@@ -1,3 +1,3 @@
 Here, watch this video.
 
-{% include youtube.html id=gMZsc3cvwKs %}
+{% include youtube.html id="gMZsc3cvwKs" %}
